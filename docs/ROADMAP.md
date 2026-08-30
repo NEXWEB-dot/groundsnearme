@@ -9,7 +9,7 @@ locally — health, CORS, 404/405, the auth and role gates, request validation a
 image upload guards were all exercised against a live instance. There is no Postgres
 on this machine (no `psql`, Docker or Supabase CLI), so anything requiring the
 database is still unverified. See
-[SETUP-RUNBOOK.md](SETUP-RUNBOOK.md#what-has-not-been-executed).
+[SETUP-RUNBOOK.md](SETUP-RUNBOOK.md#what-has-and-has-not-been-executed).
 
 | # | Step | Status |
 | --- | --- | --- |

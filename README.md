@@ -14,7 +14,7 @@ index.html               public homepage (reference; not built here)
 supabase/migrations/     24 migrations — Postgres is the source of truth
 supabase/seed.sql        dev data mirroring the frontend's mock objects
 workers/api/             the Cloudflare Worker: 45 routes in front of Supabase + R2
-tools/check-consistency.sh  static cross-artefact checks (9/9 passing)
+tools/check-consistency.sh  static cross-artefact checks (10/10 passing)
 ```
 
 ## Documentation
@@ -112,5 +112,5 @@ here — so the 24 migrations have not been applied, and everything that depends
 database is unverified: the exclusion constraint, the RLS policies, the guard
 triggers, and every RPC. Local requests that reach Supabase return `502` by design
 because `SUPABASE_URL` is still a placeholder.
-[SETUP-RUNBOOK.md](docs/SETUP-RUNBOOK.md#what-has-not-been-executed) lists what
+[SETUP-RUNBOOK.md](docs/SETUP-RUNBOOK.md#what-has-and-has-not-been-executed) lists what
 remains, in priority order.

@@ -4,9 +4,11 @@ Everything needed to take this repository from a clean checkout to a working API
 in the order the steps actually depend on each other. Roughly 45 minutes the first
 time, most of it waiting for Supabase and DNS.
 
-Nothing here was run against a live project from this machine — see
-[Verification](#verification) for what to check at each step and
-[What has not been executed](#what-has-not-been-executed) for an honest list.
+The Worker has been run locally and its unit tests pass; no step below has been run
+against a live Supabase project. See [Verification](#verification) for what to check
+at each step and
+[What has and has not been executed](#what-has-and-has-not-been-executed) for the
+honest list.
 
 ## Prerequisites
 
@@ -254,26 +256,51 @@ search path and re-run that file.
 | Images 404 from the CDN | custom domain not attached to the bucket, or `R2_PUBLIC_BASE_URL` points at a different bucket than the `IMAGES` binding |
 | `operator class "gist" does not exist for type uuid` | `extensions` not on the search path when `…0005` ran |
 
-## What has not been executed
+## What has and has not been executed
 
-Stated plainly because it affects how much trust to put in the above: no part of
-this stack has been run. This machine has no `node`, `npm`, `psql`, `docker`,
-`wrangler` or `supabase` binary, and its `python3` is a Windows Store stub, so:
+Stated plainly because it affects how much trust to put in the above.
+
+**Run, and passing.** Node 24 and `wrangler` are available here, so the Worker half of
+the stack has been exercised for real:
+
+- `npm test` — **62/62 passing** across the router, CORS, the error envelope, the
+  validators, the R2 key helpers and the Supabase client
+- `tools/check-consistency.sh` — **10/10**
+- `wrangler deploy --dry-run` — bundles clean at 87 KiB (19.9 KiB gzipped), every
+  binding resolves
+- `wrangler dev` — served locally, and these were checked against the live instance:
+
+| Checked | Result |
+| --- | --- |
+| `GET /v1/health` | `200`, `supabase_configured` and `images_configured` true |
+| Allowed origin | `Access-Control-Allow-Origin` echoed, `Vary: origin` |
+| Lookalike origin | no CORS headers at all |
+| Preflight | `204` for an allowed origin, `403` otherwise |
+| Unknown path | `404 NOT_FOUND` |
+| Wrong method | `405 METHOD_NOT_ALLOWED` |
+| No token on `/v1/me`, `/v1/owner/*`, `/v1/admin/*`, `/v1/finance/*` | `401` |
+| `player` / `owner` / `admin` on `/v1/finance/overview` | `403 FORBIDDEN` |
+| `superadmin` on `/v1/finance/overview` | passes the gate |
+| Token signed with the wrong secret | `401` |
+| `POST /v1/bookings` with `{}` or an impossible date | `400 VALIDATION_ERROR` |
+| Non-UUID in a path | `400 VALIDATION_ERROR` |
+| `image/gif` upload | `415 UNSUPPORTED_MEDIA_TYPE` |
+| 9 MB upload | `413 PAYLOAD_TOO_LARGE` |
+| Unreachable database | `502 UPSTREAM_ERROR` |
+
+**Not run.** There is no Postgres here — no `psql`, Docker or Supabase CLI — so
+everything that lives in the database is still unverified:
 
 - the 24 migrations have **not** been applied to any Postgres instance
-- `npm test` has **not** been run
-- the Worker has **not** been started with `wrangler dev` or deployed
-- no image has been through the R2 upload path
+- `bookings_no_overlap`, the RLS policies and the three guard triggers are
+  **unverified** — the double-booking guarantee has not been demonstrated
+- no RPC has been called against a real database
+- no image has been through the R2 upload path end to end (the guards were checked,
+  the bucket write was not)
+- the Worker has not been deployed
 
-What *has* been verified is static: `tools/check-consistency.sh` passes 9/9, which
-cross-checks env var usage, table names referenced by the Worker against the
-migrations, `$$` balance in every SQL file, service-role key containment, relative
-import resolution, router-to-handler wiring, `docs/API-CONTRACT.md` against the
-route table, and the seed against the frontend's mock data. Every factual claim in
-the docs was read out of the SQL or the Worker source rather than recalled.
-
-Runtime verification needs Node 20+ and a Supabase project. In priority order once
-those exist: `npm test`, then apply the migrations, then the `/v1/health` and
-`/v1/grounds` curls above, then two concurrent `POST /v1/bookings` for the same slot
-to see one `201` and one `409 SLOT_TAKEN`, then an `admin` token against
-`/v1/finance/overview` expecting `403`.
+Runtime verification needs a Supabase project. In priority order once one exists:
+apply the migrations, then the `/v1/health` and `/v1/grounds` curls above, then two
+concurrent `POST /v1/bookings` for the same slot to see one `201` and one
+`409 SLOT_TAKEN`, then an `admin` token against `/v1/finance/overview` expecting
+`403` — this time with a real profile row behind it rather than a JWT claim.

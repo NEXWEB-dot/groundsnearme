@@ -63,18 +63,21 @@ is an environment variable, not a data migration.
 cd workers/api && npm install && npm test
 ```
 
-Then follow [docs/SETUP-RUNBOOK.md](docs/SETUP-RUNBOOK.md) — Supabase project,
-migrations, superadmin bootstrap, R2 bucket, Worker vars and secrets, deploy.
+62 unit tests over the router, CORS, the error envelope, validation, the R2 key
+helpers and the Supabase client. Then follow
+[docs/SETUP-RUNBOOK.md](docs/SETUP-RUNBOOK.md) — Supabase project, migrations,
+superadmin bootstrap, R2 bucket, Worker vars and secrets, deploy.
 
 ```bash
 bash tools/check-consistency.sh
 ```
 
-Runs 9 static checks with no dependencies: env var usage, table names the Worker
+Runs 10 static checks with no dependencies: env var usage, table names the Worker
 references against the migrations, `$$` balance in every SQL file, service-role key
-containment, relative import resolution, router-to-handler wiring,
-`docs/API-CONTRACT.md` against the actual route table, and the seed against the
-frontend's mock data. Run it before any commit; documentation drift fails the build.
+containment, that no local secrets file is tracked by git, relative import resolution,
+router-to-handler wiring, `docs/API-CONTRACT.md` against the actual route table, and
+the seed against the frontend's mock data. Run it before any commit; documentation
+drift fails the build.
 
 ## Roles
 
@@ -94,10 +97,20 @@ invisible to other staff by construction rather than by a hidden route.
 Steps 1–3 of the build order are written; the dashboards (5–7) are not started. See
 [docs/ROADMAP.md](docs/ROADMAP.md).
 
-**Nothing here has been executed.** The machine this was written on has no `node`,
-`npm`, `psql`, `docker`, `wrangler` or `supabase`, so the migrations have not been
-applied, `npm test` has not run, and the Worker has never started. What has been
-verified is static: `tools/check-consistency.sh` passes 9/9, and every factual claim
-in the docs was read out of the SQL or the Worker source rather than recalled.
+**What has been run.** `npm test` passes 62/62 and
+`tools/check-consistency.sh` passes 10/10. The Worker bundles
+(`wrangler deploy --dry-run`, 87 KiB) and serves locally under `wrangler dev`, where
+the following were exercised against a real running instance: `/v1/health`, the CORS
+allowlist (allowed origin echoed, lookalike origin gets no headers, preflight 204 vs
+403), 404/405 handling, `401` on every protected route without a token, the
+`/v1/finance/overview` role gate (`player`/`owner`/`admin` → `403`, `superadmin`
+through), a forged token → `401`, request-body validation → `400`, and the image
+upload guards → `415`/`413`.
+
+**What has not been run.** No Postgres — there is no `psql`, Docker or Supabase CLI
+here — so the 24 migrations have not been applied, and everything that depends on the
+database is unverified: the exclusion constraint, the RLS policies, the guard
+triggers, and every RPC. Local requests that reach Supabase return `502` by design
+because `SUPABASE_URL` is still a placeholder.
 [SETUP-RUNBOOK.md](docs/SETUP-RUNBOOK.md#what-has-not-been-executed) lists what
-runtime verification will require, in priority order.
+remains, in priority order.

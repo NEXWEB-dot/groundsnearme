@@ -3,9 +3,12 @@
 Tracks the nine-step build order from the scope file against what is actually in this
 repository. Updated 30 August 2026.
 
-Nothing in this repo has been executed — no Node, npm, psql, Docker, wrangler or
-Supabase CLI on the machine it was written on. "Done" below means written and
-statically cross-checked (`tools/check-consistency.sh`, 9/9), not run. See
+The Worker has been run. `npm test` passes 62/62,
+`tools/check-consistency.sh` passes 10/10, and `wrangler dev` serves the routes
+locally — health, CORS, 404/405, the auth and role gates, request validation and the
+image upload guards were all exercised against a live instance. There is no Postgres
+on this machine (no `psql`, Docker or Supabase CLI), so anything requiring the
+database is still unverified. See
 [SETUP-RUNBOOK.md](SETUP-RUNBOOK.md#what-has-not-been-executed).
 
 | # | Step | Status |
@@ -62,8 +65,11 @@ renames columns to the mock data's field names in SQL (`lat`, `lng`, `type`, `ti
 Auth is a locally-verified Supabase JWT; requests then run against Supabase with the
 caller's own token, so RLS is the authority and the route-level role checks exist to
 fail fast with a readable message. CORS is an explicit origin allowlist — never `*`.
+Both were verified against a running `wrangler dev`: an `admin` token gets `403` on
+`/v1/finance/overview`, a token signed with the wrong secret gets `401`, and a
+lookalike origin receives no CORS headers at all.
 
-Remaining: `npm test`, then `wrangler dev`, then deploy.
+Remaining: `wrangler dev` against a real Supabase project, then deploy.
 
 ## 4 · Connect the frontend — blocked
 
@@ -108,8 +114,8 @@ logs the lead in `ground_leads`, then enters the details and uploads photos here
 
 `GET /v1/finance/overview` is written and gated twice: `requireSuperadmin()` in the
 route, and `is_superadmin()` **inside** `finance_overview()` so the gate does not
-depend on the route guard being wired correctly. An `admin` token gets `403`. That is
-the point of having two staff roles.
+depend on the route guard being wired correctly. An `admin` token gets `403` — checked
+against a running instance, not just read. That is the point of having two staff roles.
 
 One call returns everything the five requested views need: monthly commission,
 monthly revenue trend, per-ground breakdown (top 20), subscription revenue tracked
@@ -163,7 +169,7 @@ Deliberately not built:
 1. Create the Supabase project; apply the 24 migrations; run the seed on dev only.
 2. Set the superadmin email in `…0024` and promote the account.
 3. Create the R2 bucket and attach the public domain.
-4. Fill `wrangler.toml` vars, set the two secrets, `npm test`, deploy.
+4. Fill `wrangler.toml` vars, set the two secrets, deploy.
 5. Verify with the curls in [SETUP-RUNBOOK.md](SETUP-RUNBOOK.md#verification) —
    including two concurrent bookings for one slot, and an `admin` token against
    `/v1/finance/overview` expecting `403`.

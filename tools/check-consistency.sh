@@ -2,10 +2,11 @@
 # ---------------------------------------------------------------------------
 # GroundsNearMe — static consistency checks.
 #
-# There is no Node, psql, Docker, wrangler or Supabase CLI on this machine, so
-# nothing here executes the code. What it does instead is cross-check the three
-# artefacts that drift apart in practice: the SQL migrations, the Worker that
-# calls them, and the API contract the frontend binds to.
+# These cross-check the three artefacts that drift apart in practice: the SQL
+# migrations, the Worker that calls them, and the API contract the frontend
+# binds to. Nothing here executes the code — that is what `npm test` in
+# workers/api does (62 unit tests). This runs with no dependencies beyond bash,
+# so it works before `npm install` and in any CI image.
 #
 #   ./tools/check-consistency.sh
 #
@@ -85,14 +86,34 @@ done
 # ---------------------------------------------------------------------------
 head1 "4. The service-role key stays out of anything a browser can reach"
 
-allowed_service='src/lib/supabase.js|src/index.js|\.dev\.vars\.example|wrangler\.toml|docs/|tools/|README'
-offenders=$(grep -rl "SUPABASE_SERVICE_ROLE_KEY" "$ROOT" 2>/dev/null \
+# Only files that could actually be committed matter here. node_modules,
+# .wrangler build output and .git are generated or ignored, and scanning them
+# made this check fail for anyone who had ever run `wrangler dev`.
+allowed_service='src/lib/supabase\.js|src/index\.js|\.dev\.vars|wrangler\.toml|docs/|tools/|README|^\.gitignore$'
+offenders=$(find "$ROOT" \
+    \( -name node_modules -o -name .wrangler -o -name .git -o -name dist \) -prune -o \
+    -type f -print 2>/dev/null \
+  | xargs grep -l "SUPABASE_SERVICE_ROLE_KEY" 2>/dev/null \
   | sed "s#^$ROOT/##" | grep -vE "$allowed_service" || true)
 if [ -z "$offenders" ]; then
   ok "SUPABASE_SERVICE_ROLE_KEY referenced only in the Worker's server-side files"
 else
   bad "service-role key referenced in files that should not have it:"
   printf '        %s\n' $offenders
+fi
+
+# .dev.vars is where the real key goes locally, so it must never be tracked.
+# It was committed once with placeholder values, which is exactly how a real key
+# ends up in a commit later.
+if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  tracked_secrets=$(git -C "$ROOT" ls-files | grep -E '(^|/)\.dev\.vars$|(^|/)\.env$' || true)
+  if [ -z "$tracked_secrets" ]; then
+    ok ".dev.vars is not tracked by git — only .dev.vars.example is"
+  else
+    bad "a local secrets file is tracked by git:"
+    printf '        %s\n' $tracked_secrets
+    note "git rm --cached the file and add it to .gitignore"
+  fi
 fi
 
 sr_true=$(grep -rl "serviceRole: true" "$SRC" | sed "s#^$SRC/##" || true)

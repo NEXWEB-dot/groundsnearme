@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
   <meta name="description" content="Pakistan's first cricket ground booking platform. Find, see, and book any cricket ground in Karachi in under 60 seconds â€” no app required." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800;12..96,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.js"></script>
   <style>
     :root {
@@ -19,7 +19,7 @@
     html{scroll-behavior:smooth}
     body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--white);color:var(--ink);font-size:1rem;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
     img{display:block;max-width:100%} a{color:inherit;text-decoration:none} button{font-family:inherit}
-    .container{max-width:1200px;margin:0 auto;padding:0 48px}
+    .container{max-width:1240px;margin:0 auto;padding:0 40px}
     .eyebrow{font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime-dark);display:block;margin-bottom:16px}
     .display-heading{font-size:clamp(2.8rem,6vw,5rem);font-weight:800;letter-spacing:-0.03em;line-height:1.0;color:var(--ink)}
     .section-heading{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--ink)}
@@ -39,59 +39,366 @@
 
     /* NAV */
     #nav-wrapper{position:fixed;top:0;left:0;right:0;z-index:1000;padding-top:20px;pointer-events:none;transition:padding-top 0.4s cubic-bezier(0.22,1,0.36,1)}
-    nav.island{max-width:1160px;margin:0 auto;padding:0 40px;background:rgba(255,255,255,0.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;height:60px;pointer-events:all}
-    .nav-logo{font-size:1.1rem;font-weight:800;text-decoration:none;display:flex;align-items:center;flex-shrink:0}
-    .nav-logo .grounds{color:var(--emerald)}
-    .nav-logo .nearme{color:var(--lime-dark)}
-    .nav-links{display:flex;align-items:center;gap:32px;list-style:none}
-    .nav-links a{font-size:0.8125rem;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:0.01em;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
-    .nav-links a:hover{color:var(--emerald)}
+    nav.island{max-width:1200px;margin:0 auto;padding:0 28px;background:rgba(12, 34, 22, 0.45);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:space-between;height:58px;border-radius:999px;pointer-events:all;transition:background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease}
+    #nav-wrapper.scrolled nav.island{background:rgba(255,255,255,0.94);border-color:var(--border);box-shadow:0 12px 32px rgba(0,0,0,0.08)}
+    
+    .nav-brand-group{display:flex;align-items:center;gap:20px}
+    .nav-logo{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;letter-spacing:0.04em;text-decoration:none;display:flex;align-items:center;color:var(--white);text-transform:uppercase;transition:color 0.3s ease}
+    #nav-wrapper.scrolled .nav-logo{color:var(--emerald)}
+    .nav-divider{width:1px;height:16px;background:rgba(255,255,255,0.3);transition:background 0.3s ease}
+    #nav-wrapper.scrolled .nav-divider{background:var(--border)}
+    
+    .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
+    .nav-links a{font-size:0.8125rem;font-weight:600;color:rgba(255,255,255,0.85);text-decoration:none;letter-spacing:0.01em;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
+    .nav-links a:hover{color:var(--white)}
+    #nav-wrapper.scrolled .nav-links a{color:var(--muted)}
+    #nav-wrapper.scrolled .nav-links a:hover{color:var(--emerald)}
+
+    .btn-nav-contact{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.08);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--white);border-radius:999px;padding:8px 20px;font-size:0.8125rem;font-weight:700;letter-spacing:0.01em;text-decoration:none;transition:all 0.25s cubic-bezier(0.22,1,0.36,1)}
+    .btn-nav-contact:hover{background:rgba(255,255,255,0.22);border-color:var(--white);color:var(--white);transform:translateX(2px)}
+    #nav-wrapper.scrolled .btn-nav-contact{border-color:var(--emerald);background:var(--emerald);color:var(--white)}
+    #nav-wrapper.scrolled .btn-nav-contact:hover{background:var(--emerald-mid)}
+
     .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;z-index:1100}
-    .hamburger span{display:block;width:22px;height:2px;background:var(--emerald);transition:transform 0.35s cubic-bezier(0.22,1,0.36,1),opacity 0.25s cubic-bezier(0.22,1,0.36,1);transform-origin:center}
+    .hamburger span{display:block;width:22px;height:2px;background:var(--white);transition:transform 0.35s cubic-bezier(0.22,1,0.36,1),opacity 0.25s cubic-bezier(0.22,1,0.36,1),background 0.3s ease;transform-origin:center}
+    #nav-wrapper.scrolled .hamburger span{background:var(--emerald)}
     .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
     .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
     .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-    .mobile-nav-overlay{display:none;position:fixed;inset:0;background:rgba(13,74,44,0.97);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:40px}
-    .mobile-nav-overlay.open{display:flex}
-    .mobile-nav-overlay ul{list-style:none;display:flex;flex-direction:column;align-items:center;gap:8px}
-    .mobile-nav-overlay ul li{opacity:0;transform:translateY(20px);transition:opacity 0.4s cubic-bezier(0.22,1,0.36,1),transform 0.4s cubic-bezier(0.22,1,0.36,1)}
-    .mobile-nav-overlay.open ul li{opacity:1;transform:translateY(0)}
-    .mobile-nav-overlay ul li:nth-child(1){transition-delay:0.05s}
-    .mobile-nav-overlay ul li:nth-child(2){transition-delay:0.10s}
-    .mobile-nav-overlay ul li:nth-child(3){transition-delay:0.15s}
-    .mobile-nav-overlay ul li:nth-child(4){transition-delay:0.20s}
-    .mobile-nav-overlay a{font-size:1.5rem;font-weight:700;color:rgba(255,255,255,0.85);text-decoration:none;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
-    .mobile-nav-overlay a:hover{color:var(--lime)}
+    
+    /* MOBILE NAV OVERLAY (PREMIUM ANIMATION) */
+    .mobile-nav-overlay{
+      position:fixed;
+      inset:0;
+      z-index:1200;
+      background:radial-gradient(circle at 50% 25%, rgba(13, 58, 36, 0.96), rgba(5, 20, 12, 0.98));
+      backdrop-filter:blur(24px);
+      -webkit-backdrop-filter:blur(24px);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:24px 20px 36px;
+      opacity:0;
+      visibility:hidden;
+      transform:scale(0.97);
+      transition:opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events:none;
+    }
+    .mobile-nav-overlay.open{
+      opacity:1;
+      visibility:visible;
+      transform:scale(1);
+      pointer-events:all;
+    }
 
-    /* HERO */
-    #hero{min-height:100dvh;display:flex;align-items:center;padding-top:100px;padding-bottom:80px;background:var(--white);position:relative;overflow:hidden}
-    #hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(74,222,128,0.06),transparent 60%);pointer-events:none}
-    .hero-grid{display:grid;grid-template-columns:55fr 45fr;gap:64px;align-items:center}
-    .hero-stats-inline{display:flex;align-items:center;gap:24px;margin:28px 0 36px}
-    .hero-stat{display:flex;align-items:center;gap:8px;font-size:0.8125rem;font-weight:600;color:var(--muted)}
-    .hero-stat i{color:var(--emerald);font-size:14px}
-    .hero-stat-divider{width:1px;height:16px;background:var(--border)}
-    .hero-ctas{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-    .hero-right{display:flex;flex-direction:column;gap:16px}
-    .search-card .card-inner{padding:24px}
-    .search-card-title{font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--emerald);margin-bottom:20px}
-    .search-fields{display:flex;flex-direction:column;gap:12px}
-    .search-field{display:flex;flex-direction:column;gap:5px}
-    .search-field label{font-size:0.6875rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
-    .search-field select,.search-field input{font-family:inherit;font-size:0.9rem;font-weight:500;color:var(--ink);background:var(--off);border:1px solid var(--border);border-radius:0;padding:10px 14px;outline:none;appearance:none;-webkit-appearance:none;transition:border-color 0.2s cubic-bezier(0.22,1,0.36,1);width:100%}
-    .search-field select:focus,.search-field input:focus{border-color:var(--emerald)}
-    .field-icon-wrap{position:relative}
-    .field-icon-wrap i{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
-    .field-icon-wrap select,.field-icon-wrap input{padding-right:36px}
-    .btn-find{width:100%;justify-content:center;margin-top:8px}
-    .featured-preview .card-inner{padding:0;overflow:hidden}
-    .featured-img-area{background:var(--card-bg);height:120px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--border)}
-    .featured-img-label{font-size:0.75rem;font-weight:500;color:var(--muted)}
-    .featured-badge-slots{display:inline-flex;align-items:center;gap:5px;background:var(--lime);color:var(--emerald);font-size:0.625rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;padding:4px 8px;position:absolute;top:12px;right:12px}
-    .featured-info{padding:16px}
-    .featured-name{font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:4px}
-    .featured-area{font-size:0.8125rem;color:var(--muted);display:flex;align-items:center;gap:4px;margin-bottom:10px}
-    .featured-price{font-size:0.875rem;font-weight:600;color:var(--emerald)}
+    /* Overlay Header Pill */
+    .mobile-overlay-header{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      transform:translateY(-20px);
+      opacity:0;
+      transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+      transition-delay:0.04s;
+    }
+    .mobile-nav-overlay.open .mobile-overlay-header{
+      transform:translateY(0);
+      opacity:1;
+    }
+    .mobile-overlay-pill{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      width:100%;
+      max-width:440px;
+      height:54px;
+      padding:0 18px 0 24px;
+      background:rgba(12, 38, 24, 0.85);
+      border:1px solid rgba(255, 255, 255, 0.18);
+      border-radius:999px;
+      box-shadow:0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+    .mobile-overlay-logo{
+      font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;
+      font-size:1rem;
+      font-weight:800;
+      color:var(--white);
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+    }
+    .mobile-overlay-divider{
+      width:1px;
+      height:16px;
+      background:rgba(255, 255, 255, 0.25);
+      margin:0 12px;
+      flex-shrink:0;
+    }
+    .mobile-close-btn{
+      background:rgba(255, 255, 255, 0.08);
+      border:1px solid rgba(255, 255, 255, 0.2);
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--white);
+      cursor:pointer;
+      font-size:16px;
+      transition:transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+    }
+    .mobile-close-btn:hover, .mobile-close-btn:active{
+      transform:rotate(90deg) scale(1.08);
+      background:rgba(255, 255, 255, 0.2);
+    }
+
+    /* Overlay Body & Staggered Links */
+    .mobile-overlay-body{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px 0;
+    }
+    .mobile-nav-menu{
+      list-style:none;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:22px;
+      text-align:center;
+    }
+    .mobile-nav-menu li{
+      opacity:0;
+      transform:translateY(28px) scale(0.95);
+      filter:blur(6px);
+      transition:opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                  filter 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mobile-nav-overlay.open .mobile-nav-menu li{
+      opacity:1;
+      transform:translateY(0) scale(1);
+      filter:blur(0);
+    }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(1){ transition-delay:0.08s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(2){ transition-delay:0.14s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(3){ transition-delay:0.20s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(4){ transition-delay:0.26s; }
+
+    .mobile-nav-menu a{
+      font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;
+      font-size:clamp(1.6rem, 6.5vw, 2.15rem);
+      font-weight:800;
+      color:rgba(255, 255, 255, 0.95);
+      text-decoration:none;
+      letter-spacing:-0.02em;
+      display:inline-block;
+      transition:color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mobile-nav-menu a:hover, .mobile-nav-menu a:active{
+      color:var(--lime);
+      transform:scale(1.06);
+    }
+
+    /* Overlay Footer CTA Button */
+    .mobile-overlay-footer{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      transform:translateY(30px);
+      opacity:0;
+      transition:transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+      transition-delay:0.30s;
+    }
+    .mobile-nav-overlay.open .mobile-overlay-footer{
+      transform:translateY(0);
+      opacity:1;
+    }
+    .mobile-cta-btn{
+      width:100%;
+      max-width:440px;
+      height:56px;
+      background:var(--lime);
+      color:var(--emerald);
+      font-family:'Plus Jakarta Sans',sans-serif;
+      font-size:0.95rem;
+      font-weight:800;
+      letter-spacing:0.05em;
+      text-transform:uppercase;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      border-radius:6px;
+      text-decoration:none;
+      box-shadow:0 8px 24px rgba(74, 222, 128, 0.35);
+      transition:transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+    }
+    .mobile-cta-btn:hover, .mobile-cta-btn:active{
+      background:var(--lime-dark);
+      transform:translateY(-2px);
+      color:var(--emerald);
+    }
+    .mobile-cta-icon{
+      width:26px;
+      height:26px;
+      background:rgba(13, 74, 44, 0.16);
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      transition:transform 0.25s ease;
+    }
+    .mobile-cta-btn:hover .mobile-cta-icon{
+      transform:translateX(3px);
+    }
+
+    /* HERO SECTION */
+    #hero{
+      min-height:100dvh;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      background-color:#06140b;
+      background-image:linear-gradient(90deg, rgba(4, 15, 8, 0.85) 0%, rgba(4, 15, 8, 0.58) 42%, rgba(4, 15, 8, 0.22) 75%, rgba(4, 15, 8, 0.72) 100%), linear-gradient(180deg, rgba(4, 15, 8, 0.52) 0%, transparent 35%, rgba(4, 15, 8, 0.9) 100%), url('assets/hero-bg.jpg');
+      background-size:cover;
+      background-position:center center;
+      background-repeat:no-repeat;
+      color:var(--white);
+      padding-top:110px;
+      overflow:hidden;
+    }
+    .hero-main{
+      flex:1 0 auto;
+      display:flex;
+      align-items:flex-end;
+      padding:48px 0 36px;
+    }
+    .hero-grid{
+      width:100%;
+      display:grid;
+      grid-template-columns:1.25fr 0.95fr;
+      gap:48px;
+      align-items:flex-end;
+    }
+    .hero-left{display:flex;flex-direction:column;align-items:flex-start}
+    .hero-display-heading{
+      font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;
+      font-size:clamp(2.85rem, 5.6vw, 4.85rem);
+      font-weight:800;
+      line-height:1.02;
+      letter-spacing:-0.035em;
+      color:#ffffff;
+      margin-bottom:0;
+      text-shadow:0 3px 20px rgba(0, 0, 0, 0.35);
+      max-width:14ch;
+    }
+    .hero-subtitle{
+      font-size:clamp(1.05rem, 1.35vw, 1.25rem);
+      font-weight:500;
+      color:rgba(255, 255, 255, 0.92);
+      margin:18px 0 30px;
+      line-height:1.5;
+      text-shadow:0 2px 10px rgba(0, 0, 0, 0.3);
+      max-width:48ch;
+    }
+    .btn-hero-getstarted{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      background:#0d4a2c;
+      color:#ffffff;
+      font-family:'Plus Jakarta Sans',sans-serif;
+      font-weight:700;
+      font-size:0.95rem;
+      letter-spacing:0.01em;
+      padding:14px 34px;
+      border-radius:4px;
+      border:1px solid rgba(255,255,255,0.22);
+      box-shadow:0 4px 18px rgba(0,0,0,0.35);
+      cursor:pointer;
+      text-decoration:none;
+      transition:all 0.25s cubic-bezier(0.22,1,0.36,1);
+    }
+    .btn-hero-getstarted:hover{
+      background:#145e39;
+      transform:translateY(-2px);
+      box-shadow:0 8px 24px rgba(0,0,0,0.45);
+      color:#ffffff;
+    }
+
+    /* HERO STATS (BOTTOM RIGHT) */
+    .hero-stats-row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-end;
+      gap:44px;
+    }
+    .hero-stat-card{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    .hero-stat-number{
+      font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;
+      font-size:clamp(2rem, 3.2vw, 2.75rem);
+      font-weight:800;
+      color:#ffffff;
+      line-height:1;
+      letter-spacing:-0.02em;
+      text-shadow:0 2px 14px rgba(0, 0, 0, 0.35);
+      display:block;
+    }
+    .hero-stat-label{
+      font-size:0.8125rem;
+      font-weight:500;
+      color:rgba(255, 255, 255, 0.82);
+      margin-top:8px;
+      letter-spacing:0.01em;
+      text-shadow:0 1px 8px rgba(0, 0, 0, 0.3);
+      white-space:nowrap;
+    }
+
+    /* HERO BRANDS / INDOORS STRIP */
+    .hero-brands-section{
+      border-top:1px solid rgba(255, 255, 255, 0.24);
+      padding:22px 0 28px;
+      background:rgba(8, 20, 14, 0.25);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+    }
+    .hero-brands-grid{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:24px;
+      flex-wrap:wrap;
+    }
+    .brand-item{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:0.95rem;
+      font-weight:700;
+      color:rgba(255, 255, 255, 0.86);
+      letter-spacing:-0.01em;
+      transition:all 0.2s ease;
+      white-space:nowrap;
+    }
+    .brand-item i{
+      font-size:1.15rem;
+      color:rgba(255, 255, 255, 0.92);
+    }
+    .brand-item:hover{
+      color:#ffffff;
+      transform:translateY(-1px);
+    }
 
     /* HOW IT WORKS */
     #how-it-works{padding:120px 0;background:var(--off)}
@@ -194,8 +501,9 @@
     @media(max-width:1024px){
       .container{padding:0 32px}
       nav.island{padding:0 24px}
-      .hero-grid{grid-template-columns:1fr;gap:48px}
-      .hero-right{display:none}
+      .hero-grid{grid-template-columns:1fr;gap:40px}
+      .hero-right{display:flex;justify-content:flex-start}
+      .hero-stats-row{justify-content:flex-start;gap:36px}
       .grounds-grid,.steps-grid{grid-template-columns:repeat(2,1fr)}
       .stats-grid{grid-template-columns:repeat(2,1fr);gap:32px}
       .stat-item+.stat-item::before{display:none}
@@ -210,7 +518,11 @@
       nav.island{padding:0 20px}
       .nav-links,.nav-cta{display:none}
       .hamburger{display:flex}
-      #hero{padding-top:90px;padding-bottom:60px}
+      #hero{padding-top:90px;padding-bottom:0}
+      .hero-stats-row{gap:28px;flex-wrap:wrap}
+      .hero-stat-number{font-size:1.85rem}
+      .hero-stat-label{font-size:0.75rem}
+      .hero-brands-grid{justify-content:flex-start;gap:18px}
       #how-it-works,#featured-grounds,#matchmaking,#for-owners{padding:72px 0}
       #stats-bar{padding:56px 0}
       footer{padding-top:56px}
@@ -218,13 +530,14 @@
       .stats-grid{grid-template-columns:repeat(2,1fr)}
       .footer-top{grid-template-columns:1fr;gap:32px;padding-bottom:48px}
       .footer-bottom{flex-direction:column;gap:8px;text-align:center}
-      .hero-ctas{flex-direction:column;align-items:flex-start}
       .section-header{margin-bottom:40px}
       .owners-cta-row{flex-direction:column;align-items:flex-start}
     }
     @media(max-width:480px){
-      .hero-stats-inline{flex-direction:column;align-items:flex-start;gap:10px}
-      .hero-stat-divider{display:none}
+      .hero-stats-row{gap:20px}
+      .hero-stat-number{font-size:1.6rem}
+      .hero-stat-label{font-size:0.7rem}
+      .hero-brands-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
       .match-details{flex-direction:column;gap:12px}
     }
   </style>
@@ -233,34 +546,51 @@
 
   <!-- MOBILE OVERLAY -->
   <div class="mobile-nav-overlay" id="mobileOverlay" aria-hidden="true">
-    <ul>
-      <li><a href="#how-it-works" class="mobile-nav-link">How It Works</a></li>
-      <li><a href="#featured-grounds" class="mobile-nav-link">Find Grounds</a></li>
-      <li><a href="#for-owners" class="mobile-nav-link">List Your Ground</a></li>
-      <li><a href="#matchmaking" class="mobile-nav-link">Matchmaking</a></li>
-    </ul>
-    <a href="#for-owners" class="btn-primary mobile-nav-link">
-      List Your Ground
-      <span class="btn-icon"><i class="ph-thin ph-arrow-right"></i></span>
-    </a>
+    <div class="mobile-overlay-header">
+      <div class="mobile-overlay-pill">
+        <span class="mobile-overlay-logo">GroundsNearMe</span>
+        <span class="mobile-overlay-divider"></span>
+        <button class="mobile-close-btn" id="mobileCloseBtn" aria-label="Close menu">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="mobile-overlay-body">
+      <ul class="mobile-nav-menu">
+        <li><a href="#how-it-works" class="mobile-nav-link">How It Works</a></li>
+        <li><a href="#featured-grounds" class="mobile-nav-link">Find Grounds</a></li>
+        <li><a href="#for-owners" class="mobile-nav-link">List Your Ground</a></li>
+        <li><a href="#matchmaking" class="mobile-nav-link">Matchmaking</a></li>
+      </ul>
+    </div>
+
+    <div class="mobile-overlay-footer">
+      <a href="#for-owners" class="mobile-cta-btn mobile-nav-link">
+        List Your Ground
+        <span class="mobile-cta-icon"><i class="ph-bold ph-arrow-right"></i></span>
+      </a>
+    </div>
   </div>
 
   <!-- 1. NAV -->
   <div id="nav-wrapper">
     <nav class="island" role="navigation" aria-label="Main navigation">
-      <a href="/" class="nav-logo" aria-label="GroundsNearMe Home">
-        <span class="grounds">Grounds</span><span class="nearme">NearMe</span>
-      </a>
-      <ul class="nav-links">
-        <li><a href="#how-it-works">How It Works</a></li>
-        <li><a href="#featured-grounds">Find Grounds</a></li>
-        <li><a href="#for-owners">List Your Ground</a></li>
-        <li><a href="#matchmaking">Matchmaking</a></li>
-      </ul>
+      <div class="nav-brand-group">
+        <a href="/" class="nav-logo" aria-label="GroundsNearMe Home">
+          GroundsNearMe
+        </a>
+        <div class="nav-divider"></div>
+        <ul class="nav-links">
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="#featured-grounds">Browse Grounds</a></li>
+          <li><a href="#matchmaking">Matchmaking</a></li>
+          <li><a href="#for-owners">For Owners</a></li>
+        </ul>
+      </div>
       <div class="nav-cta">
-        <a href="#for-owners" class="btn-primary">
-          List Your Ground
-          <span class="btn-icon"><i class="ph-thin ph-arrow-right"></i></span>
+        <a href="#for-owners" class="btn-nav-contact">
+          Contact us <i class="ph-bold ph-arrow-right" style="font-size:12px"></i>
         </a>
       </div>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
@@ -271,80 +601,64 @@
 
   <!-- 2. HERO -->
   <section id="hero">
-    <div class="container">
-      <div class="hero-grid">
-        <div class="hero-left">
-          <span class="eyebrow reveal">Karachi's Cricket Directory</span>
-          <h1 class="display-heading reveal" style="transition-delay:0.05s;margin-bottom:0">
-            Every ground.<br>Live slots.<br>One tap.
-          </h1>
-          <div class="hero-stats-inline reveal" style="transition-delay:0.10s">
-            <div class="hero-stat"><i class="ph-thin ph-map-pin"></i> 150+ Grounds Listed</div>
-            <div class="hero-stat-divider"></div>
-            <div class="hero-stat"><i class="ph-thin ph-globe"></i> Zero App Required</div>
+    <div class="hero-main">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-left">
+            <h1 class="hero-display-heading reveal">
+              Every ground.<br>Live slots.<br>One tap.
+            </h1>
+            <p class="hero-subtitle reveal" style="transition-delay:0.08s">
+              Pakistan's first cricket ground booking platform.
+            </p>
+            <div class="reveal" style="transition-delay:0.14s">
+              <a href="#featured-grounds" class="btn-hero-getstarted">
+                Get started
+              </a>
+            </div>
           </div>
-          <p class="body-text reveal" style="transition-delay:0.15s;margin-bottom:36px">
-            No more phone calls. No more "is it available?" Find, see, and book any cricket ground in Karachi â€” in under 60 seconds.
-          </p>
-          <div class="hero-ctas reveal" style="transition-delay:0.20s">
-            <a href="#featured-grounds" class="btn-primary">
-              Find a Ground <span class="btn-icon"><i class="ph-thin ph-arrow-right"></i></span>
-            </a>
-            <a href="#for-owners" class="btn-ghost">List Your Ground</a>
+
+          <div class="hero-right">
+            <div class="hero-stats-row reveal" style="transition-delay:0.18s">
+              <div class="hero-stat-card">
+                <div class="hero-stat-number">150+</div>
+                <div class="hero-stat-label">Happy customer</div>
+              </div>
+              <div class="hero-stat-card">
+                <div class="hero-stat-number">50+</div>
+                <div class="hero-stat-label">Indoors</div>
+              </div>
+              <div class="hero-stat-card">
+                <div class="hero-stat-number">30+</div>
+                <div class="hero-stat-label">Areas</div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div class="hero-right reveal" style="transition-delay:0.25s">
-          <div class="card-outer search-card">
-            <div class="card-inner">
-              <p class="search-card-title">Search Grounds</p>
-              <div class="search-fields">
-                <div class="search-field">
-                  <label for="search-city">City</label>
-                  <div class="field-icon-wrap">
-                    <select id="search-city" name="city">
-                      <option value="karachi" selected>Karachi</option>
-                      <option value="lahore">Lahore (Coming Soon)</option>
-                      <option value="islamabad">Islamabad (Coming Soon)</option>
-                    </select>
-                    <i class="ph-thin ph-caret-down"></i>
-                  </div>
-                </div>
-                <div class="search-field">
-                  <label for="search-area">Area</label>
-                  <div class="field-icon-wrap">
-                    <input type="text" id="search-area" name="area" placeholder="e.g. Gulshan, Defence, Nazimabad" />
-                    <i class="ph-thin ph-map-pin"></i>
-                  </div>
-                </div>
-                <div class="search-field">
-                  <label for="search-date">Date</label>
-                  <div class="field-icon-wrap">
-                    <input type="date" id="search-date" name="date" />
-                    <i class="ph-thin ph-calendar"></i>
-                  </div>
-                </div>
-                <a href="#featured-grounds" class="btn-primary btn-find">
-                  Find Now <span class="btn-icon"><i class="ph-thin ph-magnifying-glass"></i></span>
-                </a>
-              </div>
-            </div>
+    <!-- HERO BOTTOM BRANDS / INDOORS TICKER -->
+    <div class="hero-brands-section">
+      <div class="container">
+        <div class="hero-brands-grid">
+          <div class="brand-item">
+            <i class="ph-bold ph-lightning"></i> Legends Arena
           </div>
-
-          <div class="card-outer featured-preview">
-            <div class="card-inner">
-              <div class="featured-img-area">
-                <span class="featured-img-label">Photo Coming Soon</span>
-                <div class="featured-badge-slots">
-                  <i class="ph-thin ph-circle" style="font-size:8px"></i> Slots Open
-                </div>
-              </div>
-              <div class="featured-info">
-                <div class="featured-name">Star Indoor Cricket</div>
-                <div class="featured-area"><i class="ph-thin ph-map-pin"></i> Gulshan-e-Iqbal, Karachi</div>
-                <div class="featured-price">PKR 2,500 / hour</div>
-              </div>
-            </div>
+          <div class="brand-item">
+            <i class="ph-bold ph-sparkle"></i> Star Indoor Cricket
+          </div>
+          <div class="brand-item">
+            <i class="ph-bold ph-polygon"></i> Smash Turf
+          </div>
+          <div class="brand-item">
+            <i class="ph-bold ph-diamond"></i> Super Over Arena
+          </div>
+          <div class="brand-item">
+            <i class="ph-bold ph-circle-half"></i> Velocity Box Turf
+          </div>
+          <div class="brand-item">
+            <i class="ph-bold ph-triangle"></i> Metro Box Cricket
           </div>
         </div>
       </div>
@@ -659,24 +973,24 @@
     // Hamburger / Mobile Overlay
     const hamburger = document.getElementById('hamburger');
     const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileCloseBtn = document.getElementById('mobileCloseBtn');
     const mobileLinks = document.querySelectorAll('.mobile-nav-link');
 
-    hamburger.addEventListener('click', () => {
-      const isOpen = hamburger.classList.toggle('open');
+    function toggleMobileMenu(open) {
+      const isOpen = open !== undefined ? open : !mobileOverlay.classList.contains('open');
       mobileOverlay.classList.toggle('open', isOpen);
+      hamburger.classList.toggle('open', isOpen);
       hamburger.setAttribute('aria-expanded', String(isOpen));
       mobileOverlay.setAttribute('aria-hidden', String(!isOpen));
       document.body.style.overflow = isOpen ? 'hidden' : '';
-    });
+    }
 
+    hamburger.addEventListener('click', () => toggleMobileMenu());
+    if (mobileCloseBtn) {
+      mobileCloseBtn.addEventListener('click', () => toggleMobileMenu(false));
+    }
     mobileLinks.forEach(link => {
-      link.addEventListener('click', () => {
-        hamburger.classList.remove('open');
-        mobileOverlay.classList.remove('open');
-        hamburger.setAttribute('aria-expanded', 'false');
-        mobileOverlay.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-      });
+      link.addEventListener('click', () => toggleMobileMenu(false));
     });
 
     // Scroll Reveal
@@ -722,10 +1036,16 @@
       { threshold: 0.4 }
     ).observe(document.getElementById('stats-bar'));
 
-    // Nav compact on scroll
+    // Nav compact and theme transition on scroll
     const navWrapper = document.getElementById('nav-wrapper');
     window.addEventListener('scroll', () => {
-      navWrapper.style.paddingTop = window.scrollY > 80 ? '8px' : '20px';
+      if (window.scrollY > 50) {
+        navWrapper.classList.add('scrolled');
+        navWrapper.style.paddingTop = '10px';
+      } else {
+        navWrapper.classList.remove('scrolled');
+        navWrapper.style.paddingTop = '20px';
+      }
     }, { passive: true });
 
     // Default date = today

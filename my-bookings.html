@@ -305,6 +305,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="js/mock-data.js"></script>
+  <script src="js/supabase.js"></script>
   <script>
     'use strict';
 
@@ -326,13 +327,6 @@
     hamburger.addEventListener('click', () => toggleMobileMenu());
     if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', () => toggleMobileMenu(false));
     mobileLinks.forEach(link => link.addEventListener('click', () => toggleMobileMenu(false)));
-
-    // Nav Scroll (Optional as it starts scrolled, but good for completeness)
-    const navWrapper = document.getElementById('nav-wrapper');
-    window.addEventListener('scroll', () => {
-      // Always keep it scrolled for this page, but if needed we can toggle it.
-      // Actually per requirements: The nav should start with `scrolled` class.
-    }, { passive: true });
 
     // Toast
     function showToast(msg) {
@@ -357,12 +351,21 @@
       revealEls.forEach(el => revealObserver.observe(el));
     }
 
-    // Load Data
-    function loadBookings() {
+    // Load Data from Supabase / Mock hybrid
+    async function loadBookings() {
       const user = MockAuth.ensureUser();
       document.getElementById('userName').textContent = user.name;
+
+      const container = document.getElementById('bookingsContainer');
+      container.innerHTML = `
+        <div style="text-align:center; padding: 60px 0; color: var(--muted); font-weight: 600;">
+          <i class="ph-thin ph-circle-notch" style="font-size:28px; color:var(--emerald); animation:spin 1s linear infinite; display:inline-block;"></i>
+          <p style="margin-top:12px;">Syncing your bookings…</p>
+        </div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+      `;
       
-      const allBookings = MockBookingStore.getPlayerBookings();
+      const allBookings = await SupabaseBookings.getPlayerBookings();
       const upcoming = [];
       const past = [];
 
@@ -376,10 +379,10 @@
         }
       });
 
-      renderBookings(upcoming, past);
+      await renderBookings(upcoming, past);
     }
 
-    function renderBookings(upcoming, past) {
+    async function renderBookings(upcoming, past) {
       const container = document.getElementById('bookingsContainer');
       container.innerHTML = '';
 
@@ -407,7 +410,6 @@
         html += `</div>`;
         container.innerHTML += html;
       } else if (past.length > 0) {
-        // If there are only past bookings, show an empty upcoming state section
         container.innerHTML += `
           <div class="bookings-group">
             <div class="group-heading reveal">Upcoming <span class="badge-count">0</span></div>
@@ -436,7 +438,9 @@
 
     function createBookingCard(booking, idx, isUpcoming) {
       const ground = findMockGround(booking.ground_id);
-      if (!ground) return '';
+      const groundName = ground ? ground.name : (booking.ground_name || 'Cricket Ground');
+      const coverImg = ground ? ground.cover_image_url : 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&q=80';
+      const groundUrl = ground ? `ground.html?id=${ground.slug || ground.id}` : `index.html#featured-grounds`;
 
       const delay = 0.05 * (idx + 1);
       
@@ -444,16 +448,16 @@
         ? `<span class="payment-badge badge-unpaid"><i class="ph-thin ph-wallet"></i> Pay at ground</span>`
         : `<span class="payment-badge badge-completed"><i class="ph-thin ph-check-circle"></i> Completed</span>`;
       
-      const price = Number(booking.total_amount || ground.price_per_hour).toLocaleString();
+      const price = Number(booking.total_amount || (ground ? ground.price_per_hour : 2500)).toLocaleString();
       
       const actionHtml = isUpcoming ? `
         <div class="booking-actions" id="actions-${booking.id}">
-          <a href="ground.html?id=${ground.id}" class="action-link">View Details <i class="ph-thin ph-arrow-right"></i></a>
+          <a href="${groundUrl}" class="action-link">View Details <i class="ph-thin ph-arrow-right"></i></a>
           <button class="btn-ghost danger" onclick="confirmCancel('${booking.id}')">Cancel Booking</button>
         </div>
       ` : `
         <div class="booking-actions">
-          <a href="ground.html?id=${ground.id}" class="action-link">Book Again <i class="ph-thin ph-arrow-right"></i></a>
+          <a href="${groundUrl}" class="action-link">Book Again <i class="ph-thin ph-arrow-right"></i></a>
         </div>
       `;
 
@@ -461,18 +465,18 @@
         <div class="card-outer booking-card reveal ${isUpcoming ? '' : 'past'}" id="card-${booking.id}" style="transition-delay:${delay}s">
           <div class="card-inner">
             <div class="booking-img">
-              <img src="${ground.cover_image_url}" alt="${ground.name}">
+              <img src="${coverImg}" alt="${groundName}">
             </div>
             <div class="booking-content">
               <div>
                 <div class="booking-top">
-                  <a href="ground.html?id=${ground.id}" class="ground-name">${ground.name}</a>
+                  <a href="${groundUrl}" class="ground-name">${groundName}</a>
                   <span class="booking-ref">Ref: ${booking.booking_ref}</span>
                 </div>
                 <div class="booking-info">
                   <div class="info-item">
                     <span class="info-label">Date & Time</span>
-                    <span class="info-value">${formatDisplayDate(booking.booking_date)} &middot; ${booking.start_time.slice(0,5)}${booking.end_time ? ' – ' + booking.end_time.slice(0,5) : ''}</span>
+                    <span class="info-value">${formatDisplayDate(booking.booking_date)} &middot; ${(booking.start_time || '').slice(0,5)}${booking.end_time ? ' – ' + booking.end_time.slice(0,5) : ''}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Price</span>
@@ -505,27 +509,27 @@
 
     window.resetActions = function(bookingId) {
       const booking = MockBookingStore.getBookingById(bookingId);
-      const ground = findMockGround(booking.ground_id);
+      const ground = booking ? findMockGround(booking.ground_id) : null;
+      const groundUrl = ground ? `ground.html?id=${ground.slug || ground.id}` : 'index.html#featured-grounds';
       const actionsDiv = document.getElementById('actions-' + bookingId);
-      if (actionsDiv && ground) {
+      if (actionsDiv) {
         actionsDiv.innerHTML = `
-          <a href="ground.html?id=${ground.id}" class="action-link">View Details <i class="ph-thin ph-arrow-right"></i></a>
+          <a href="${groundUrl}" class="action-link">View Details <i class="ph-thin ph-arrow-right"></i></a>
           <button class="btn-ghost danger" onclick="confirmCancel('${bookingId}')">Cancel Booking</button>
         `;
       }
     }
 
-    window.executeCancel = function(bookingId) {
-      if (MockBookingStore.cancelBooking(bookingId)) {
-        const card = document.getElementById('card-' + bookingId);
-        if (card) {
-          card.style.opacity = '0';
-          card.style.transform = 'translateY(20px)';
-          setTimeout(() => {
-            loadBookings();
-            showToast('Booking cancelled. Slot has been released.');
-          }, 400);
-        }
+    window.executeCancel = async function(bookingId) {
+      await SupabaseBookings.cancelBooking(bookingId);
+      const card = document.getElementById('card-' + bookingId);
+      if (card) {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          loadBookings();
+          showToast('Booking cancelled. Slot has been released.');
+        }, 400);
       }
     }
 

@@ -353,8 +353,10 @@
   </footer>
 
   <script src="js/mock-data.js"></script>
+  <script src="js/supabase.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+
       // 1. Navigation Auth State
       const isLoggedIn = MockAuth.isLoggedIn();
       if (isLoggedIn) {
@@ -388,12 +390,21 @@
         });
       });
 
-      // 2. Load Ground Data
+      // 2. Load Ground Data — try Supabase first, fall back to mock
       const urlParams = new URLSearchParams(window.location.search);
       const groundId = urlParams.get('id');
-      const ground = findMockGround(groundId);
 
       const mainContent = document.getElementById('main-content');
+      mainContent.innerHTML = `
+        <div style="text-align:center; padding: 100px 0; color: var(--muted); font-weight: 600;">
+          <i class="ph-thin ph-circle-notch" style="font-size:32px; color:var(--emerald); animation:spin 1s linear infinite;"></i>
+          <p style="margin-top:16px;">Loading ground details…</p>
+        </div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+      `;
+
+      const ground = await SupabaseGrounds.getById(groundId);
+
 
       if (!ground) {
         mainContent.innerHTML = `
@@ -585,10 +596,18 @@
         });
       }
 
-      function renderSlots() {
+      async function renderSlots() {
         selectedSlot = null;
         updateBookButton();
-        const slots = MockSlotStore.getSlotsForDate(ground.id, selectedDateStr);
+        slotsContainer.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--muted);">
+            <i class="ph-thin ph-circle-notch" style="font-size:24px; animation:spin 1s linear infinite; display:inline-block;"></i>
+            <p style="margin-top:8px; font-size:0.875rem;">Checking available slots…</p>
+          </div>
+        `;
+
+        const targetGroundId = ground.supabase_id || ground.id;
+        const slots = await LiveSlotStore.getSlotsForDate(targetGroundId, selectedDateStr);
         let slotsHtml = '';
 
         if (slots.length === 0) {
@@ -606,7 +625,6 @@
 
         slotsContainer.querySelectorAll('.slot-btn.available').forEach(btn => {
           btn.addEventListener('click', (e) => {
-            // Deselect others
             slotsContainer.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             selectedSlot = {
@@ -684,14 +702,21 @@
       btnCloseModal.addEventListener('click', closeModal);
       btnCancelModal.addEventListener('click', closeModal);
 
-      btnConfirmModal.addEventListener('click', () => {
-        MockAuth.ensureUser();
-        const booking = MockBookingStore.createBooking({
-          ground_id: ground.id,
+      btnConfirmModal.addEventListener('click', async () => {
+        const user = MockAuth.ensureUser();
+        btnConfirmModal.disabled = true;
+        btnConfirmModal.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Confirming...`;
+
+        const targetGroundId = ground.supabase_id || ground.id;
+        const booking = await SupabaseBookings.createBooking({
+          ground_id: targetGroundId,
           booking_date: selectedDateStr,
           start_time: selectedSlot.time,
           end_time: selectedSlot.endTime,
           duration_minutes: 60,
+          contact_name: user ? user.name : 'Player',
+          contact_phone: user ? user.phone : '03001234567',
+          notes: 'Booked via Website',
           price_per_hour: ground.price_per_hour,
           total_amount: ground.price_per_hour
         });
@@ -721,7 +746,7 @@
         `;
         
         // Auto update nav if just logged in
-        if (document.getElementById('desktopNavLinks').innerHTML.indexOf('My Bookings') === -1) {
+        if (document.getElementById('desktopNavLinks') && document.getElementById('desktopNavLinks').innerHTML.indexOf('My Bookings') === -1) {
           document.getElementById('desktopNavLinks').innerHTML += `<li><a href="my-bookings.html">My Bookings</a></li>`;
           document.getElementById('mobileNavMenu').innerHTML += `<li><a href="my-bookings.html" class="mobile-nav-link">My Bookings</a></li>`;
         }

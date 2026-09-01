@@ -12,6 +12,7 @@
 const MOCK_GROUNDS = [
   {
     id: 'g-001',
+    supabase_id: '90337fe0-eed4-4c1d-848b-90bc25225fab',
     name: 'Star Indoor Cricket',
     slug: 'star-indoor-cricket',
     status: 'active',
@@ -42,6 +43,7 @@ const MOCK_GROUNDS = [
   },
   {
     id: 'g-002',
+    supabase_id: '73ebb20b-a89e-48a6-b02f-9dfc10e6f022',
     name: 'Champions Arena',
     slug: 'champions-arena',
     status: 'active',
@@ -71,6 +73,7 @@ const MOCK_GROUNDS = [
   },
   {
     id: 'g-003',
+    supabase_id: 'c504d103-aca8-4211-b9c1-22c01774e36c',
     name: 'KCC Ground Nazimabad',
     slug: 'kcc-ground-nazimabad',
     status: 'active',
@@ -121,7 +124,7 @@ const MOCK_GROUNDS = [
     city: 'Karachi',
     area_id: 'a-004',
     area: { name: 'North Nazimabad', slug: 'north-nazimabad' },
-    latitude: 24.9420,
+    latitude: 24.9350,
     longitude: 67.0350,
     address: 'Block H, North Nazimabad, Near Hyderi Market, Karachi',
     created_at: '2026-08-01T11:00:00Z'
@@ -504,7 +507,7 @@ const MockSlotStore = {
  */
 function findMockGround(idOrSlug) {
   if (!idOrSlug) return MOCK_GROUNDS[0];
-  const exact = MOCK_GROUNDS.find(g => g.id === idOrSlug || g.slug === idOrSlug);
+  const exact = MOCK_GROUNDS.find(g => g.id === idOrSlug || g.slug === idOrSlug || g.supabase_id === idOrSlug);
   if (exact) return exact;
   const fuzzy = MOCK_GROUNDS.find(g => 
     (g.slug && g.slug.toLowerCase() === idOrSlug.toLowerCase()) || 

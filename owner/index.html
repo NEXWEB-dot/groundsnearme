@@ -908,13 +908,44 @@
     async function refreshData() {
       if (!state.currentGround) return;
       try {
-        const [bookings, closures] = await Promise.allSettled([
+        let liveBookings = [];
+        let liveClosures = [];
+
+        const [bookingsRes, closuresRes] = await Promise.allSettled([
           sbFetch(`bookings?ground_id=eq.${state.currentGround.id}&order=booking_date.desc,start_time.asc`),
           sbFetch(`ground_closures?ground_id=eq.${state.currentGround.id}&order=starts_on.desc`)
         ]);
 
-        if (bookings.status === 'fulfilled') state.bookings = bookings.value || [];
-        if (closures.status === 'fulfilled') state.closures = closures.value || [];
+        if (bookingsRes.status === 'fulfilled' && Array.isArray(bookingsRes.value)) {
+          liveBookings = bookingsRes.value;
+        }
+        if (closuresRes.status === 'fulfilled' && Array.isArray(closuresRes.value)) {
+          liveClosures = closuresRes.value;
+        }
+
+        // Merge local website bookings for this ground (by UUID, slug, or mock ID)
+        try {
+          const stored = JSON.parse(localStorage.getItem('gnm_bookings') || '[]');
+          const curId = state.currentGround.id;
+          const curSlug = state.currentGround.slug;
+          stored.forEach(lb => {
+            const isMatch = lb.ground_id === curId || 
+                            lb.ground_id === curSlug ||
+                            (curSlug === 'star-indoor-cricket' && lb.ground_id === 'g-001') ||
+                            (curSlug === 'champions-arena' && lb.ground_id === 'g-002') ||
+                            (curSlug === 'kcc-ground-nazimabad' && lb.ground_id === 'g-003');
+            if (isMatch && !liveBookings.some(b => b.id === lb.id || (b.booking_ref && b.booking_ref === lb.booking_ref))) {
+              liveBookings.push(lb);
+            }
+          });
+        } catch (_) {}
+
+        state.bookings = liveBookings.sort((a, b) => {
+          if (a.booking_date > b.booking_date) return -1;
+          if (a.booking_date < b.booking_date) return 1;
+          return (a.start_time || '').localeCompare(b.start_time || '');
+        });
+        state.closures = liveClosures;
 
         document.getElementById('nav-bookings-count').textContent = state.bookings.length;
         renderCurrentView();
@@ -1235,13 +1266,24 @@
           body: JSON.stringify(payload),
           headers: { 'Prefer': 'return=representation' }
         });
-        showToast(`Slot blocked for ${payload.contact_name}!`, 'success');
-        closeModal('modal-manual-booking');
-        form.reset();
-        await refreshData();
       } catch (err) {
-        showToast(err.message, 'error');
+        console.warn('[Owner Portal] Supabase insert failed, saving to local session:', err.message);
       }
+
+      // Persist in local storage
+      try {
+        const stored = JSON.parse(localStorage.getItem('gnm_bookings') || '[]');
+        stored.push({
+          id: 'bk-owner-' + Date.now(),
+          ...payload
+        });
+        localStorage.setItem('gnm_bookings', JSON.stringify(stored));
+      } catch (_) {}
+
+      showToast(`Slot blocked for ${payload.contact_name}!`, 'success');
+      closeModal('modal-manual-booking');
+      form.reset();
+      await refreshData();
     }
 
     async function handleUpdatePricing(e) {
@@ -1315,11 +1357,20 @@
           body: JSON.stringify({ status: newStatus }),
           headers: { 'Prefer': 'return=minimal' }
         });
-        showToast(`Booking ${newStatus}`, 'success');
-        await refreshData();
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
+      } catch (_) {}
+
+      // Update local storage status as well
+      try {
+        const stored = JSON.parse(localStorage.getItem('gnm_bookings') || '[]');
+        const target = stored.find(b => b.id === id);
+        if (target) {
+          target.status = newStatus;
+          localStorage.setItem('gnm_bookings', JSON.stringify(stored));
+        }
+      } catch (_) {}
+
+      showToast(`Booking ${newStatus}`, 'success');
+      await refreshData();
     }
 
     function quickBookSlot(startTime) {

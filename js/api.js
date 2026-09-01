@@ -40,6 +40,9 @@ const GNM = {
       this.renderGrounds();
       this.renderMatchmaking();
       this.updateStatsBar();
+      if (typeof revealObserver !== 'undefined') {
+        document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObserver.observe(el));
+      }
     } catch (err) {
       console.warn('Live data fetch failed, using fallback:', err);
     }
@@ -146,21 +149,22 @@ const GNM = {
       const waNumber = (g.whatsapp_number || '920000000000').replace(/\D/g, '');
       const waText = encodeURIComponent(`Hi, I found ${g.name} on GroundsNearMe and want to check slot availability.`);
       const waUrl = `https://wa.me/${waNumber}?text=${waText}`;
+      const detailUrl = `ground.html?id=${g.slug || g.id}`;
 
       return `
         <div class="card-outer venue-card reveal visible" style="transition-delay:${delay}s">
           <div class="card-inner">
-            <div class="venue-img-area">
+            <a href="${detailUrl}" class="venue-img-area" style="display:block; text-decoration:none; color:inherit; cursor:pointer;">
               ${g.cover_image_url ? `
                 <img src="${g.cover_image_url.startsWith('http') ? g.cover_image_url : GNM_CONFIG.r2BaseUrl + '/' + g.cover_image_url}" alt="${g.name}" style="width:100%; height:100%; object-fit:cover;" />
               ` : `
                 <span class="venue-img-label">${g.surface || 'Cricket Ground'}</span>
               `}
               <span class="venue-badge badge-open">Slots Open</span>
-            </div>
+            </a>
             <div class="venue-body">
               <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-                <h3 class="venue-name">${g.name}</h3>
+                <h3 class="venue-name"><a href="${detailUrl}" style="color:inherit; text-decoration:none;">${g.name}</a></h3>
                 ${g.listing_tier === 'pro' ? `<span class="badge badge-pro" style="font-size:10px; padding:2px 6px; background:var(--emerald); color:var(--lime); font-weight:800; border-radius:4px;">PRO</span>` : ''}
               </div>
               <div class="venue-area"><i class="ph-thin ph-map-pin"></i> ${g.area?.name || g.city || 'Karachi'}</div>
@@ -169,8 +173,8 @@ const GNM = {
                 ${amenities.slice(0, 4).map(a => `<span class="amenity-tag">${a}</span>`).join('')}
               </div>
               <div class="venue-footer">
-                <a href="${waUrl}" target="_blank" rel="noopener" class="venue-slots-link">
-                  Book on WhatsApp <i class="ph-thin ph-arrow-right"></i>
+                <a href="${detailUrl}" class="venue-slots-link">
+                  View Slots <i class="ph-thin ph-arrow-right"></i>
                 </a>
                 <a href="${waUrl}" target="_blank" rel="noopener" class="venue-wa-btn" aria-label="Chat on WhatsApp">
                   <i class="ph-thin ph-whatsapp-logo"></i>
@@ -242,6 +246,13 @@ const GNM = {
 // Global styles for dynamic filter pills
 const filterStyle = document.createElement('style');
 filterStyle.textContent = `
+  #gnm-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 24px 0 32px;
+  }
   .filter-pill {
     padding: 8px 16px;
     background: var(--white);
@@ -251,11 +262,12 @@ filterStyle.textContent = `
     font-weight: 700;
     cursor: pointer;
     border-radius: 999px;
-    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     display: inline-flex;
     align-items: center;
     gap: 6px;
     font-family: inherit;
+    white-space: nowrap;
   }
   .filter-pill:hover {
     border-color: var(--emerald);
@@ -266,6 +278,18 @@ filterStyle.textContent = `
     background: var(--emerald);
     color: var(--white);
     border-color: var(--emerald);
+  }
+  @media(max-width: 640px) {
+    #gnm-filter-bar {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 6px;
+      margin: 16px 0 24px;
+    }
+    #gnm-filter-bar::-webkit-scrollbar { display: none; }
+    .filter-pill { flex-shrink: 0; }
   }
 `;
 document.head.appendChild(filterStyle);

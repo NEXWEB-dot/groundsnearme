@@ -266,19 +266,19 @@
       flex-direction:column;
       justify-content:space-between;
       background-color:#06140b;
-      background-image:linear-gradient(90deg, rgba(4, 15, 8, 0.85) 0%, rgba(4, 15, 8, 0.58) 42%, rgba(4, 15, 8, 0.22) 75%, rgba(4, 15, 8, 0.72) 100%), linear-gradient(180deg, rgba(4, 15, 8, 0.52) 0%, transparent 35%, rgba(4, 15, 8, 0.9) 100%), url('assets/hero-bg.jpg');
+      background-image:linear-gradient(90deg, rgba(4, 15, 8, 0.88) 0%, rgba(4, 15, 8, 0.65) 45%, rgba(4, 15, 8, 0.3) 75%, rgba(4, 15, 8, 0.75) 100%), linear-gradient(180deg, rgba(4, 15, 8, 0.55) 0%, transparent 35%, rgba(4, 15, 8, 0.95) 100%), url('assets/hero-bg.jpg');
       background-size:cover;
       background-position:center center;
       background-repeat:no-repeat;
       color:var(--white);
-      padding-top:110px;
+      padding-top:100px;
       overflow:hidden;
     }
     .hero-main{
       flex:1 0 auto;
       display:flex;
-      align-items:flex-end;
-      padding:48px 0 36px;
+      align-items:center;
+      padding:40px 0 32px;
     }
     .hero-grid{
       width:100%;
@@ -296,7 +296,6 @@
       letter-spacing:-0.035em;
       color:#ffffff;
       margin-bottom:0;
-      text-shadow:0 3px 20px rgba(0, 0, 0, 0.35);
       max-width:14ch;
     }
     .hero-subtitle{
@@ -305,7 +304,6 @@
       color:rgba(255, 255, 255, 0.92);
       margin:18px 0 30px;
       line-height:1.5;
-      text-shadow:0 2px 10px rgba(0, 0, 0, 0.3);
       max-width:48ch;
     }
     .btn-hero-getstarted{
@@ -353,7 +351,6 @@
       color:#ffffff;
       line-height:1;
       letter-spacing:-0.02em;
-      text-shadow:0 2px 14px rgba(0, 0, 0, 0.35);
       display:block;
     }
     .hero-stat-label{
@@ -362,42 +359,53 @@
       color:rgba(255, 255, 255, 0.82);
       margin-top:8px;
       letter-spacing:0.01em;
-      text-shadow:0 1px 8px rgba(0, 0, 0, 0.3);
       white-space:nowrap;
     }
 
     /* HERO BRANDS / INDOORS STRIP */
     .hero-brands-section{
-      border-top:1px solid rgba(255, 255, 255, 0.24);
-      padding:22px 0 28px;
-      background:rgba(8, 20, 14, 0.25);
-      backdrop-filter:blur(6px);
-      -webkit-backdrop-filter:blur(6px);
+      border-top:1px solid rgba(255, 255, 255, 0.15);
+      padding:14px 0;
+      background:rgba(8, 20, 14, 0.45);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+      width:100%;
     }
     .hero-brands-grid{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:24px;
-      flex-wrap:wrap;
+      gap:12px;
+      overflow-x:auto;
+      scrollbar-width:none;
+      -ms-overflow-style:none;
+      padding:2px 0;
     }
+    .hero-brands-grid::-webkit-scrollbar{display:none;}
     .brand-item{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      font-size:0.95rem;
+      font-size:0.875rem;
       font-weight:700;
-      color:rgba(255, 255, 255, 0.86);
+      color:rgba(255, 255, 255, 0.9);
       letter-spacing:-0.01em;
-      transition:all 0.2s ease;
+      padding:6px 14px;
+      background:rgba(255, 255, 255, 0.08);
+      border:1px solid rgba(255, 255, 255, 0.14);
+      border-radius:999px;
+      transition:all 0.2s cubic-bezier(0.22,1,0.36,1);
       white-space:nowrap;
+      flex-shrink:0;
     }
     .brand-item i{
-      font-size:1.15rem;
-      color:rgba(255, 255, 255, 0.92);
+      font-size:1.05rem;
+      color:var(--lime);
     }
     .brand-item:hover{
       color:#ffffff;
+      background:rgba(255, 255, 255, 0.18);
+      border-color:var(--lime);
       transform:translateY(-1px);
     }
 
@@ -502,7 +510,7 @@
     @media(max-width:1024px){
       .container{padding:0 32px}
       nav.island{padding:0 24px}
-      .hero-grid{grid-template-columns:1fr;gap:40px}
+      .hero-grid{grid-template-columns:1fr;gap:36px}
       .hero-right{display:flex;justify-content:flex-start}
       .hero-stats-row{justify-content:flex-start;gap:36px}
       .grounds-grid,.steps-grid{grid-template-columns:repeat(2,1fr)}
@@ -519,11 +527,13 @@
       nav.island{padding:0 20px}
       .nav-links,.nav-cta{display:none}
       .hamburger{display:flex}
-      #hero{padding-top:90px;padding-bottom:0}
-      .hero-stats-row{gap:28px;flex-wrap:wrap}
-      .hero-stat-number{font-size:1.85rem}
-      .hero-stat-label{font-size:0.75rem}
-      .hero-brands-grid{justify-content:flex-start;gap:18px}
+      #hero{padding-top:84px;min-height:auto;}
+      .hero-main{padding:32px 0 28px;}
+      .hero-grid{gap:28px;}
+      .hero-stats-row{gap:24px;flex-wrap:wrap;justify-content:flex-start;}
+      .hero-stat-number{font-size:1.75rem}
+      .hero-stat-label{font-size:0.75rem;margin-top:4px;}
+      .hero-brands-grid{justify-content:flex-start;gap:10px;padding-bottom:2px;}
       #how-it-works,#featured-grounds,#matchmaking,#for-owners{padding:72px 0}
       #stats-bar{padding:56px 0}
       footer{padding-top:56px}
@@ -535,10 +545,10 @@
       .owners-cta-row{flex-direction:column;align-items:flex-start}
     }
     @media(max-width:480px){
-      .hero-stats-row{gap:20px}
-      .hero-stat-number{font-size:1.6rem}
+      .hero-display-heading{font-size:2.5rem;}
+      .hero-stats-row{gap:18px;}
+      .hero-stat-number{font-size:1.5rem}
       .hero-stat-label{font-size:0.7rem}
-      .hero-brands-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
       .match-details{flex-direction:column;gap:12px}
     }
   </style>
@@ -713,12 +723,12 @@
 
         <div class="card-outer venue-card reveal" style="transition-delay:0.05s">
           <div class="card-inner">
-            <div class="venue-img-area">
+            <a href="ground.html?id=star-indoor-cricket" class="venue-img-area" style="display:block; text-decoration:none; color:inherit;">
               <span class="venue-img-label">Photo Coming Soon</span>
               <span class="venue-badge badge-open">Slots Open</span>
-            </div>
+            </a>
             <div class="venue-body">
-              <h3 class="venue-name">Star Indoor Cricket</h3>
+              <h3 class="venue-name"><a href="ground.html?id=star-indoor-cricket" style="color:inherit; text-decoration:none;">Star Indoor Cricket</a></h3>
               <div class="venue-area"><i class="ph-thin ph-map-pin"></i> Gulshan-e-Iqbal, Karachi</div>
               <div class="venue-price">PKR 2,500 / hour</div>
               <div class="venue-amenities">
@@ -727,7 +737,7 @@
                 <span class="amenity-tag">Parking</span>
               </div>
               <div class="venue-footer">
-                <a href="https://wa.me/920000000001" class="venue-slots-link">View Slots <i class="ph-thin ph-arrow-right"></i></a>
+                <a href="ground.html?id=star-indoor-cricket" class="venue-slots-link">View Slots <i class="ph-thin ph-arrow-right"></i></a>
                 <a href="https://wa.me/920000000001" class="venue-wa-btn" aria-label="WhatsApp"><i class="ph-thin ph-whatsapp-logo"></i></a>
               </div>
             </div>
@@ -736,12 +746,12 @@
 
         <div class="card-outer venue-card reveal" style="transition-delay:0.10s">
           <div class="card-inner">
-            <div class="venue-img-area">
+            <a href="ground.html?id=champions-arena" class="venue-img-area" style="display:block; text-decoration:none; color:inherit;">
               <span class="venue-img-label">Photo Coming Soon</span>
               <span class="venue-badge badge-open">Slots Open</span>
-            </div>
+            </a>
             <div class="venue-body">
-              <h3 class="venue-name">Champions Arena</h3>
+              <h3 class="venue-name"><a href="ground.html?id=champions-arena" style="color:inherit; text-decoration:none;">Champions Arena</a></h3>
               <div class="venue-area"><i class="ph-thin ph-map-pin"></i> DHA Phase 6, Karachi</div>
               <div class="venue-price">PKR 3,200 / hour</div>
               <div class="venue-amenities">
@@ -750,7 +760,7 @@
                 <span class="amenity-tag">Scorer</span>
               </div>
               <div class="venue-footer">
-                <a href="https://wa.me/920000000002" class="venue-slots-link">View Slots <i class="ph-thin ph-arrow-right"></i></a>
+                <a href="ground.html?id=champions-arena" class="venue-slots-link">View Slots <i class="ph-thin ph-arrow-right"></i></a>
                 <a href="https://wa.me/920000000002" class="venue-wa-btn" aria-label="WhatsApp"><i class="ph-thin ph-whatsapp-logo"></i></a>
               </div>
             </div>
@@ -759,12 +769,12 @@
 
         <div class="card-outer venue-card reveal" style="transition-delay:0.15s">
           <div class="card-inner">
-            <div class="venue-img-area">
+            <a href="ground.html?id=kcc-ground-nazimabad" class="venue-img-area" style="display:block; text-decoration:none; color:inherit;">
               <span class="venue-img-label">Photo Coming Soon</span>
               <span class="venue-badge badge-full">Full Today</span>
-            </div>
+            </a>
             <div class="venue-body">
-              <h3 class="venue-name">KCC Ground Nazimabad</h3>
+              <h3 class="venue-name"><a href="ground.html?id=kcc-ground-nazimabad" style="color:inherit; text-decoration:none;">KCC Ground Nazimabad</a></h3>
               <div class="venue-area"><i class="ph-thin ph-map-pin"></i> Nazimabad, Karachi</div>
               <div class="venue-price">PKR 1,800 / hour</div>
               <div class="venue-amenities">
@@ -773,7 +783,7 @@
                 <span class="amenity-tag">Dressing Room</span>
               </div>
               <div class="venue-footer">
-                <a href="https://wa.me/920000000003" class="venue-slots-link">View Slots <i class="ph-thin ph-arrow-right"></i></a>
+                <a href="ground.html?id=kcc-ground-nazimabad" class="venue-slots-link">View Slots <i class="ph-thin ph-arrow-right"></i></a>
                 <a href="https://wa.me/920000000003" class="venue-wa-btn" aria-label="WhatsApp"><i class="ph-thin ph-whatsapp-logo"></i></a>
               </div>
             </div>
@@ -968,6 +978,7 @@
     </div>
   </footer>
 
+  <script src="js/mock-data.js"></script>
   <script>
     'use strict';
 
@@ -1058,7 +1069,24 @@
       const d = String(t.getDate()).padStart(2, '0');
       dateInput.value = dateInput.min = y + '-' + m + '-' + d;
     }
+
+    // Dynamic My Bookings Nav Link if logged in
+    if (typeof MockAuth !== 'undefined' && MockAuth.isLoggedIn()) {
+      const navLinks = document.querySelector('.nav-links');
+      if (navLinks && !navLinks.innerHTML.includes('My Bookings')) {
+        const li = document.createElement('li');
+        li.innerHTML = '<a href="my-bookings.html">My Bookings</a>';
+        navLinks.appendChild(li);
+      }
+      const mobileMenu = document.querySelector('.mobile-nav-menu');
+      if (mobileMenu && !mobileMenu.innerHTML.includes('My Bookings')) {
+        const li = document.createElement('li');
+        li.innerHTML = '<a href="my-bookings.html" class="mobile-nav-link">My Bookings</a>';
+        mobileMenu.appendChild(li);
+      }
+    }
   </script>
   <script src="js/api.js"></script>
+  <script src="js/auth-shell.js"></script>
 </body>
 </html>

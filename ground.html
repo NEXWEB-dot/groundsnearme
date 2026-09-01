@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ground Detail — GroundsNearMe</title>
+  <meta name="description" content="View ground details, photos, and book available slots instantly." />
+  <link rel="icon" type="image/jpeg" href="assets/favicon.jpg" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800;12..96,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.js"></script>
+
+  <style>
+    :root {
+      --white:#ffffff; --off:#f7f8f6; --emerald:#0d4a2c; --emerald-mid:#1a6b40;
+      --lime:#4ade80; --lime-dark:#22c55e; --ink:#0d1a0f; --muted:#4a5c50;
+      --border:#d8e8dc; --card-bg:#f0f7f3;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--white);color:var(--ink);font-size:1rem;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    img{display:block;max-width:100%} a{color:inherit;text-decoration:none} button{font-family:inherit}
+    .container{max-width:1240px;margin:0 auto;padding:0 40px}
+    .eyebrow{font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime-dark);display:block;margin-bottom:16px}
+    .section-heading{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--ink)}
+    
+    .card-outer{background:var(--card-bg);border:1px solid var(--border);padding:6px;border-radius:0;}
+    .card-inner{background:var(--white);border:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);padding:20px;border-radius:0;}
+    
+    .btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--lime);color:var(--emerald);font-family:inherit;font-weight:800;font-size:0.875rem;letter-spacing:0.04em;text-transform:uppercase;padding:14px 28px;border-radius:0;border:none;cursor:pointer;transition:background 0.25s cubic-bezier(0.22,1,0.36,1),transform 0.15s cubic-bezier(0.22,1,0.36,1);text-decoration:none}
+    .btn-primary:hover:not(:disabled){background:var(--lime-dark)}
+    .btn-primary:active:not(:disabled){transform:scale(0.98)}
+    .btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+    
+    .btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--emerald);font-family:inherit;font-weight:700;font-size:0.875rem;letter-spacing:0.04em;text-transform:uppercase;padding:13px 28px;border-radius:0;border:1.5px solid var(--emerald);cursor:pointer;transition:background 0.25s cubic-bezier(0.22,1,0.36,1),color 0.25s cubic-bezier(0.22,1,0.36,1);text-decoration:none}
+    .btn-ghost:hover{background:var(--emerald);color:var(--white)}
+
+    .reveal{opacity:0;transform:translateY(32px);transition:opacity 700ms cubic-bezier(0.22,1,0.36,1),transform 700ms cubic-bezier(0.22,1,0.36,1)}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+
+    /* NAV (Copied from Index & adapted for Scrolled state by default) */
+    #nav-wrapper{position:fixed;top:0;left:0;right:0;z-index:1000;padding-top:20px;pointer-events:none;transition:padding-top 0.4s cubic-bezier(0.22,1,0.36,1)}
+    nav.island{max-width:1200px;margin:0 auto;padding:0 28px;background:rgba(255,255,255,0.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);box-shadow:0 12px 32px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:space-between;height:58px;border-radius:999px;pointer-events:all}
+    .nav-brand-group{display:flex;align-items:center;gap:20px}
+    .nav-logo{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;letter-spacing:0.04em;text-decoration:none;display:flex;align-items:center;color:var(--emerald);text-transform:uppercase;}
+    .nav-divider{width:1px;height:16px;background:var(--border);}
+    .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
+    .nav-links a{font-size:0.8125rem;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:0.01em;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
+    .nav-links a:hover{color:var(--emerald)}
+    
+    .btn-nav-contact{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--emerald);background:var(--emerald);color:var(--white);border-radius:999px;padding:8px 20px;font-size:0.8125rem;font-weight:700;letter-spacing:0.01em;text-decoration:none;transition:all 0.25s cubic-bezier(0.22,1,0.36,1)}
+    .btn-nav-contact:hover{background:var(--emerald-mid);color:var(--white);transform:translateX(2px)}
+    
+    .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;z-index:1100}
+    .hamburger span{display:block;width:22px;height:2px;background:var(--emerald);transition:transform 0.35s cubic-bezier(0.22,1,0.36,1),opacity 0.25s cubic-bezier(0.22,1,0.36,1);transform-origin:center}
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+    /* MOBILE NAV OVERLAY */
+    .mobile-nav-overlay{
+      position:fixed;inset:0;z-index:1200;
+      background:radial-gradient(circle at 50% 25%, rgba(13, 58, 36, 0.96), rgba(5, 20, 12, 0.98));
+      backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      display:flex;flex-direction:column;justify-content:space-between;
+      padding:24px 20px 36px;opacity:0;visibility:hidden;transform:scale(0.97);
+      transition:opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events:none;
+    }
+    .mobile-nav-overlay.open{opacity:1;visibility:visible;transform:scale(1);pointer-events:all;}
+    .mobile-overlay-header{width:100%;display:flex;justify-content:center;transform:translateY(-20px);opacity:0;transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;transition-delay:0.04s;}
+    .mobile-nav-overlay.open .mobile-overlay-header{transform:translateY(0);opacity:1;}
+    .mobile-overlay-pill{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:440px;height:54px;padding:0 18px 0 24px;background:rgba(12, 38, 24, 0.85);border:1px solid rgba(255, 255, 255, 0.18);border-radius:999px;box-shadow:0 10px 30px rgba(0, 0, 0, 0.35);}
+    .mobile-overlay-logo{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:800;color:var(--white);letter-spacing:0.04em;text-transform:uppercase;}
+    .mobile-overlay-divider{width:1px;height:16px;background:rgba(255, 255, 255, 0.25);margin:0 12px;flex-shrink:0;}
+    .mobile-close-btn{background:rgba(255, 255, 255, 0.08);border:1px solid rgba(255, 255, 255, 0.2);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--white);cursor:pointer;font-size:16px;transition:transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;}
+    .mobile-close-btn:hover, .mobile-close-btn:active{transform:rotate(90deg) scale(1.08);background:rgba(255, 255, 255, 0.2);}
+    .mobile-overlay-body{flex:1;display:flex;align-items:center;justify-content:center;padding:24px 0;}
+    .mobile-nav-menu{list-style:none;display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center;}
+    .mobile-nav-menu li{opacity:0;transform:translateY(28px) scale(0.95);filter:blur(6px);transition:opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s cubic-bezier(0.16, 1, 0.3, 1);}
+    .mobile-nav-overlay.open .mobile-nav-menu li{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(1){ transition-delay:0.08s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(2){ transition-delay:0.14s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(3){ transition-delay:0.20s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(4){ transition-delay:0.26s; }
+    .mobile-nav-menu a{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:clamp(1.6rem, 6.5vw, 2.15rem);font-weight:800;color:rgba(255, 255, 255, 0.95);text-decoration:none;letter-spacing:-0.02em;display:inline-block;transition:color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);}
+    .mobile-nav-menu a:hover, .mobile-nav-menu a:active{color:var(--lime);transform:scale(1.06);}
+    .mobile-overlay-footer{width:100%;display:flex;justify-content:center;transform:translateY(30px);opacity:0;transition:transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;transition-delay:0.30s;}
+    .mobile-nav-overlay.open .mobile-overlay-footer{transform:translateY(0);opacity:1;}
+    .mobile-cta-btn{width:100%;max-width:440px;height:56px;background:var(--lime);color:var(--emerald);font-family:'Plus Jakarta Sans',sans-serif;font-size:0.95rem;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:6px;text-decoration:none;box-shadow:0 8px 24px rgba(74, 222, 128, 0.35);transition:transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;}
+    .mobile-cta-btn:hover, .mobile-cta-btn:active{background:var(--lime-dark);transform:translateY(-2px);color:var(--emerald);}
+    .mobile-cta-icon{width:26px;height:26px;background:rgba(13, 74, 44, 0.16);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;transition:transform 0.25s ease;}
+    .mobile-cta-btn:hover .mobile-cta-icon{transform:translateX(3px);}
+
+    /* PAGE CONTENT STYLES */
+    .page-wrapper{padding-top:140px;padding-bottom:120px;}
+    
+    .breadcrumb{font-size:0.875rem;font-weight:600;color:var(--muted);margin-bottom:32px;display:flex;align-items:center;gap:8px;}
+    .breadcrumb a{color:var(--emerald);text-decoration:none;}
+    .breadcrumb a:hover{text-decoration:underline;}
+    .breadcrumb i{font-size:12px;}
+
+    /* GROUND HERO / INFO GRID */
+    .ground-top-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;margin-bottom:64px;}
+    
+    /* Left: Gallery */
+    .gallery-container{display:flex;flex-direction:column;gap:16px;}
+    .hero-img-wrap{background:var(--card-bg);border:1px solid var(--border);aspect-ratio:16/10;overflow:hidden;}
+    .hero-img-wrap img{width:100%;height:100%;object-fit:cover;transition:opacity 0.3s ease;}
+    .thumbnails-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
+    .thumb-wrap{flex:0 0 auto;width:120px;aspect-ratio:16/10;border:1px solid var(--border);background:var(--card-bg);cursor:pointer;opacity:0.6;transition:opacity 0.2s ease;}
+    .thumb-wrap:hover, .thumb-wrap.active{opacity:1;}
+    .thumb-wrap img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
+
+    /* Right: Info */
+    .ground-info .card-inner{padding:40px;display:flex;flex-direction:column;gap:24px;height:100%;}
+    .ground-name{font-family:'Bricolage Grotesque', sans-serif;font-size:clamp(2rem, 3vw, 2.5rem);font-weight:800;letter-spacing:-0.03em;color:var(--ink);line-height:1.1;}
+    .ground-meta-row{display:flex;flex-direction:column;gap:8px;}
+    .meta-location{display:flex;align-items:center;gap:6px;font-size:0.9375rem;font-weight:600;color:var(--muted);}
+    .meta-location i{color:var(--emerald);font-size:18px;}
+    .meta-badge{display:inline-block;align-self:flex-start;background:var(--card-bg);border:1px solid var(--border);color:var(--emerald);font-size:0.6875rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;padding:6px 12px;}
+    
+    .price-box{padding-top:24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding-bottom:24px;}
+    .price-label{font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+    .price-val{font-size:1.75rem;font-weight:800;color:var(--emerald);letter-spacing:-0.02em;}
+    
+    .amenities-section{flex-grow:1;}
+    .amenities-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;}
+    .amenity-item{display:flex;align-items:center;gap:8px;font-size:0.875rem;font-weight:600;color:var(--ink);}
+    .amenity-item i{font-size:20px;color:var(--emerald);}
+    
+    .contact-action{margin-top:auto;}
+    .btn-wa{width:100%;background:var(--card-bg);border:1px solid var(--border);color:var(--emerald);font-weight:700;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;text-transform:uppercase;letter-spacing:0.04em;font-size:0.875rem;transition:all 0.2s ease;}
+    .btn-wa:hover{background:var(--emerald);color:var(--white);border-color:var(--emerald);}
+
+    /* SLOTS SECTION */
+    .section-spacing{margin-bottom:80px;}
+    .section-title-wrap{margin-bottom:32px;}
+    .slots-container .card-inner{padding:40px;}
+    
+    .date-picker-row{display:flex;align-items:center;gap:16px;margin-bottom:32px;flex-wrap:wrap;}
+    .date-input-wrap{position:relative;}
+    .date-input{padding:12px 16px;border:1px solid var(--border);background:var(--card-bg);color:var(--ink);font-family:inherit;font-weight:600;font-size:0.9375rem;outline:none;cursor:pointer;}
+    .date-input:focus{border-color:var(--emerald);}
+    .day-pills{display:flex;gap:8px;flex-wrap:wrap;}
+    .day-pill{background:var(--card-bg);border:1px solid var(--border);padding:10px 20px;font-size:0.875rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all 0.2s ease;}
+    .day-pill:hover{border-color:var(--emerald);color:var(--emerald);}
+    .day-pill.active{background:var(--emerald);border-color:var(--emerald);color:var(--white);}
+
+    .slots-grid{display:grid;grid-template-columns:repeat(5, 1fr);gap:12px;margin-bottom:32px;}
+    .slot-btn{padding:16px 12px;background:var(--white);border:1px solid var(--emerald);color:var(--emerald);font-size:0.9375rem;font-weight:700;text-align:center;cursor:pointer;transition:all 0.2s ease;}
+    .slot-btn.available:hover{background:var(--card-bg);}
+    .slot-btn.booked{background:var(--off);border-color:var(--border);color:var(--muted);cursor:not-allowed;}
+    .slot-btn.selected{background:var(--lime);border-color:var(--emerald);color:var(--emerald);font-weight:800;}
+    
+    .booking-cta-wrap{margin-top:24px;}
+    #btn-book-slot{width:100%;font-size:1rem;padding:18px;}
+
+    /* ABOUT & LOCATION */
+    .content-card .card-inner{padding:40px;}
+    .desc-text{font-size:1rem;line-height:1.8;color:var(--muted);}
+    
+    .map-placeholder{margin-top:24px;width:100%;height:300px;background:var(--off);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:12px;font-weight:600;}
+    .map-placeholder i{font-size:32px;color:var(--emerald);}
+    .address-text{font-size:1rem;color:var(--ink);font-weight:600;display:flex;align-items:center;gap:8px;}
+
+    /* MODAL */
+    .modal-overlay{position:fixed;inset:0;background:rgba(13, 26, 15, 0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:all 0.3s ease;}
+    .modal-overlay.open{opacity:1;visibility:visible;}
+    .modal-dialog{background:var(--white);border:1px solid var(--border);width:100%;max-width:480px;border-radius:0;transform:translateY(20px);transition:transform 0.3s ease;}
+    .modal-overlay.open .modal-dialog{transform:translateY(0);}
+    
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);}
+    .modal-title{font-family:'Bricolage Grotesque', sans-serif;font-size:1.25rem;font-weight:800;color:var(--ink);}
+    .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);transition:color 0.2s;}
+    .modal-close:hover{color:var(--ink);}
+    
+    .modal-body{padding:24px;}
+    .summary-row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:0.9375rem;}
+    .summary-label{color:var(--muted);font-weight:600;}
+    .summary-val{color:var(--ink);font-weight:700;text-align:right;}
+    .summary-total{margin-top:20px;padding-top:16px;border-top:1px dashed var(--border);font-size:1.125rem;}
+    .summary-total .summary-val{color:var(--emerald);font-weight:800;}
+    
+    .pay-notice{margin-top:24px;background:var(--card-bg);border-left:4px solid var(--emerald);padding:16px;font-size:0.875rem;font-weight:600;color:var(--emerald-mid);}
+    
+    .modal-footer{padding:20px 24px;border-top:1px solid var(--border);display:flex;gap:16px;}
+    .modal-footer button{flex:1;}
+    
+    /* Success State */
+    .success-icon-wrap{display:flex;justify-content:center;margin-bottom:20px;}
+    .success-icon-wrap i{font-size:64px;color:var(--lime-dark);}
+    .success-title{text-align:center;font-family:'Bricolage Grotesque', sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:12px;}
+    .ref-box{background:var(--card-bg);border:1px solid var(--border);padding:12px;text-align:center;font-family:monospace;font-size:1.125rem;font-weight:700;color:var(--emerald);letter-spacing:0.05em;margin-bottom:24px;}
+    
+    /* FOOTER (Copied exactly) */
+    footer{background:var(--emerald);padding:80px 0 0;margin-top:80px;}
+    .footer-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:48px;padding-bottom:64px;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .footer-brand-logo{font-size:1.125rem;font-weight:800;margin-bottom:12px}
+    .footer-brand-logo .grounds{color:var(--white)}
+    .footer-brand-logo .nearme{color:var(--lime-dark)}
+    .footer-tagline{font-size:0.875rem;color:rgba(255,255,255,0.55);line-height:1.6;max-width:26ch}
+    .footer-col-title{font-size:0.6875rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:20px}
+    .footer-links{list-style:none;display:flex;flex-direction:column;gap:10px}
+    .footer-links a{font-size:0.875rem;color:rgba(255,255,255,0.7);text-decoration:none;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
+    .footer-links a:hover{color:var(--white)}
+    .footer-bottom{padding:24px 0;display:flex;align-items:center;justify-content:space-between}
+    .footer-copy{font-size:0.8125rem;color:rgba(255,255,255,0.4)}
+    .footer-made{font-size:0.8125rem;color:rgba(255,255,255,0.4)}
+
+    @media(max-width:1024px){
+      .container{padding:0 32px}
+      .ground-top-grid{grid-template-columns:1fr;}
+      .slots-grid{grid-template-columns:repeat(4, 1fr);}
+    }
+    @media(max-width:768px){
+      .container{padding:0 20px}
+      .nav-links,.btn-nav-contact{display:none}
+      .hamburger{display:flex}
+      .slots-grid{grid-template-columns:repeat(3, 1fr);}
+      .page-wrapper{padding-top:100px;padding-bottom:72px;}
+      .footer-top{grid-template-columns:1fr 1fr;gap:40px}
+    }
+    @media(max-width:480px){
+      .slots-grid{grid-template-columns:repeat(2, 1fr);}
+      .modal-footer{flex-direction:column-reverse;}
+      .footer-top{grid-template-columns:1fr;gap:32px;}
+      .footer-bottom{flex-direction:column;gap:8px;text-align:center;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV OVERLAY -->
+  <div class="mobile-nav-overlay" id="mobileOverlay" aria-hidden="true">
+    <div class="mobile-overlay-header">
+      <div class="mobile-overlay-pill">
+        <span class="mobile-overlay-logo">GroundsNearMe</span>
+        <span class="mobile-overlay-divider"></span>
+        <button class="mobile-close-btn" id="mobileCloseBtn" aria-label="Close menu">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+    </div>
+    <div class="mobile-overlay-body">
+      <ul class="mobile-nav-menu" id="mobileNavMenu">
+        <li><a href="index.html#how-it-works" class="mobile-nav-link">How It Works</a></li>
+        <li><a href="index.html#featured-grounds" class="mobile-nav-link">Find Grounds</a></li>
+        <li><a href="index.html#matchmaking" class="mobile-nav-link">Matchmaking</a></li>
+        <li><a href="index.html#for-owners" class="mobile-nav-link">List Your Ground</a></li>
+      </ul>
+    </div>
+
+    <div class="mobile-overlay-footer">
+      <a href="index.html#for-owners" class="mobile-cta-btn mobile-nav-link">
+        List Your Ground
+        <span class="mobile-cta-icon"><i class="ph-bold ph-arrow-right"></i></span>
+      </a>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div id="nav-wrapper" class="scrolled">
+    <nav class="island" role="navigation">
+      <div class="nav-brand-group">
+        <a href="index.html" class="nav-logo">
+          GroundsNearMe
+        </a>
+        <div class="nav-divider"></div>
+        <ul class="nav-links" id="desktopNavLinks">
+          <li><a href="index.html#how-it-works">How It Works</a></li>
+          <li><a href="index.html#featured-grounds">Browse Grounds</a></li>
+          <li><a href="index.html#for-owners">For Owners</a></li>
+        </ul>
+      </div>
+      <div class="nav-cta" id="navCtaArea">
+        <a href="index.html#for-owners" class="btn-nav-contact">
+          Contact us <i class="ph-bold ph-arrow-right" style="font-size:12px"></i>
+        </a>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="container" id="main-content">
+      <!-- Injected by JS -->
+      <div id="loading-state" style="text-align:center; padding: 100px 0; color: var(--muted); font-weight: 600;">
+        Loading ground details...
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="bookingModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Booking Summary</h3>
+        <button class="modal-close" id="btnCloseModal"><i class="ph-bold ph-x" style="font-size:20px;"></i></button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Content injected by JS -->
+      </div>
+      <div class="modal-footer" id="modalFooter">
+        <button class="btn-ghost" id="btnCancelBooking">Cancel</button>
+        <button class="btn-primary" id="btnConfirmBooking">Confirm Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-col-brand">
+          <div class="footer-brand-logo"><span class="grounds">Grounds</span><span class="nearme">NearMe</span></div>
+          <p class="footer-tagline">Pakistan's first true booking platform for cricket grounds. Stop calling, start playing.</p>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Players</div>
+          <ul class="footer-links">
+            <li><a href="index.html#featured-grounds">Find a Ground</a></li>
+            <li><a href="index.html#how-it-works">How it Works</a></li>
+            <li><a href="index.html#matchmaking">Matchmaking</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Owners</div>
+          <ul class="footer-links">
+            <li><a href="index.html#for-owners">List Your Ground</a></li>
+            <li><a href="#">Owner Login</a></li>
+            <li><a href="#">Success Stories</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Company</div>
+          <ul class="footer-links">
+            <li><a href="#">About Us</a></li>
+            <li><a href="#">Contact</a></li>
+            <li><a href="#">Terms & Privacy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="footer-copy">&copy; 2026 GroundsNearMe. All rights reserved.</div>
+        <div class="footer-made">Made for Karachi's cricketers.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/mock-data.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Navigation Auth State
+      const isLoggedIn = MockAuth.isLoggedIn();
+      if (isLoggedIn) {
+        document.getElementById('desktopNavLinks').innerHTML += `<li><a href="my-bookings.html">My Bookings</a></li>`;
+        document.getElementById('mobileNavMenu').innerHTML += `<li><a href="my-bookings.html" class="mobile-nav-link">My Bookings</a></li>`;
+      }
+
+      // Mobile Nav
+      const hamburger = document.getElementById('hamburger');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+      const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+
+      function toggleMobileMenu() {
+        const isOpen = mobileOverlay.classList.contains('open');
+        if (isOpen) {
+          mobileOverlay.classList.remove('open');
+          hamburger.classList.remove('open');
+          document.body.style.overflow = '';
+        } else {
+          mobileOverlay.classList.add('open');
+          hamburger.classList.add('open');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+
+      hamburger.addEventListener('click', toggleMobileMenu);
+      mobileCloseBtn.addEventListener('click', toggleMobileMenu);
+      document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          if (mobileOverlay.classList.contains('open')) toggleMobileMenu();
+        });
+      });
+
+      // 2. Load Ground Data
+      const urlParams = new URLSearchParams(window.location.search);
+      const groundId = urlParams.get('id');
+      const ground = findMockGround(groundId);
+
+      const mainContent = document.getElementById('main-content');
+
+      if (!ground) {
+        mainContent.innerHTML = `
+          <div style="text-align:center; padding: 100px 0;">
+            <h2 class="section-heading">Ground Not Found</h2>
+            <p class="body-text" style="margin: 20px auto;">We couldn't find the ground you were looking for.</p>
+            <a href="index.html" class="btn-primary">Return to Home</a>
+          </div>
+        `;
+        return;
+      }
+
+      document.title = `${ground.name} — GroundsNearMe`;
+
+      // Render Ground Detail
+      const formatCurrency = (val) => `PKR ${Number(val).toLocaleString()}`;
+      
+      let galleryHtml = '';
+      let thumbsHtml = '';
+      if (ground.gallery_images && ground.gallery_images.length > 0) {
+        const heroImg = ground.gallery_images[0];
+        galleryHtml = `
+          <div class="hero-img-wrap">
+            <img src="${heroImg}" alt="${ground.name}" id="mainGalleryImg" />
+          </div>
+        `;
+        if (ground.gallery_images.length > 1) {
+          thumbsHtml = `<div class="thumbnails-row">`;
+          ground.gallery_images.forEach((img, idx) => {
+            thumbsHtml += `<div class="thumb-wrap ${idx === 0 ? 'active' : ''}" onclick="changeGalleryImage('${img}', this)">
+              <img src="${img}" alt="Thumbnail ${idx+1}" />
+            </div>`;
+          });
+          thumbsHtml += `</div>`;
+        }
+      } else {
+        galleryHtml = `<div class="hero-img-wrap"><img src="${ground.cover_image_url}" alt="${ground.name}" id="mainGalleryImg" /></div>`;
+      }
+
+      let amenitiesHtml = '';
+      if (ground.amenities) {
+        ground.amenities.forEach(am => {
+          amenitiesHtml += `<div class="amenity-item"><i class="${getAmenityIcon(am)}"></i> ${am}</div>`;
+        });
+      }
+
+      // Initial Date Setup
+      const today = getTodayStr();
+      let selectedDateStr = today;
+      let selectedSlot = null;
+
+      // Build Page Structure
+      mainContent.innerHTML = `
+        <div class="breadcrumb reveal">
+          <a href="index.html">Home</a> <i class="ph-bold ph-caret-right"></i>
+          <a href="index.html#featured-grounds">Grounds</a> <i class="ph-bold ph-caret-right"></i>
+          <span>${ground.name}</span>
+        </div>
+
+        <div class="ground-top-grid">
+          <div class="gallery-container reveal" style="transition-delay:0.1s">
+            ${galleryHtml}
+            ${thumbsHtml}
+          </div>
+
+          <div class="ground-info reveal" style="transition-delay:0.2s">
+            <div class="card-outer" style="height:100%;">
+              <div class="card-inner">
+                <div class="ground-meta-row">
+                  <span class="meta-badge">${ground.ground_type === 'both' ? 'Indoor & Outdoor' : ground.ground_type}</span>
+                  <h1 class="ground-name">${ground.name}</h1>
+                  <div class="meta-location"><i class="ph-thin ph-map-pin"></i> ${ground.area.name}</div>
+                </div>
+
+                <div class="price-box">
+                  <div class="price-label">Standard Rate</div>
+                  <div class="price-val">${formatCurrency(ground.price_per_hour)} <span style="font-size:1rem; font-weight:600; color:var(--muted)">/ hour</span></div>
+                </div>
+
+                <div class="amenities-section">
+                  <div style="font-size:0.8125rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:8px;">Surface & Amenities</div>
+                  <div style="font-weight:700; color:var(--ink); margin-bottom:12px;">Surface: ${ground.surface}</div>
+                  <div class="amenities-grid">
+                    ${amenitiesHtml}
+                  </div>
+                </div>
+
+                <div class="contact-action">
+                  <a href="https://wa.me/${ground.whatsapp_number}" target="_blank" class="btn-wa">
+                    <i class="ph-bold ph-whatsapp-logo" style="font-size:20px;"></i> Contact Owner
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-spacing reveal">
+          <div class="card-outer slots-container">
+            <div class="card-inner">
+              <div class="section-title-wrap">
+                <h2 class="section-heading" style="font-size:2rem;">Select a Slot</h2>
+              </div>
+              
+              <div class="date-picker-row">
+                <div class="date-input-wrap">
+                  <input type="date" id="slotDatePicker" class="date-input" min="${today}" value="${today}" />
+                </div>
+                <div class="day-pills" id="dayPillsContainer">
+                  <!-- Generated by JS -->
+                </div>
+              </div>
+
+              <div class="slots-grid" id="slotsGridContainer">
+                <!-- Generated by JS -->
+              </div>
+
+              <div class="booking-cta-wrap">
+                <button id="btn-book-slot" class="btn-primary" disabled>
+                  Select a slot to book
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-spacing reveal">
+          <div class="card-outer content-card">
+            <div class="card-inner">
+              <span class="eyebrow">About This Ground</span>
+              <p class="desc-text">${ground.description}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-spacing reveal">
+          <div class="card-outer content-card">
+            <div class="card-inner">
+              <span class="eyebrow">Location</span>
+              <div class="address-text"><i class="ph-thin ph-map-pin"></i> ${ground.address}</div>
+              <div class="map-placeholder">
+                <i class="ph-thin ph-map-trifold"></i>
+                Map view coming soon
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Expose gallery image changer to window
+      window.changeGalleryImage = function(src, el) {
+        document.getElementById('mainGalleryImg').src = src;
+        document.querySelectorAll('.thumb-wrap').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+      };
+
+      // 3. Slot Booking Logic
+      const dpInput = document.getElementById('slotDatePicker');
+      const pillsContainer = document.getElementById('dayPillsContainer');
+      const slotsContainer = document.getElementById('slotsGridContainer');
+      const btnBook = document.getElementById('btn-book-slot');
+
+      function renderDayPills() {
+        let pillsHtml = '';
+        const curDateObj = new Date(selectedDateStr + 'T00:00:00');
+        
+        for (let i = 0; i < 7; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() + i);
+          const dStr = d.toISOString().split('T')[0];
+          
+          let label = '';
+          if (i === 0) label = 'Today';
+          else if (i === 1) label = 'Tomorrow';
+          else label = d.toLocaleDateString('en-US', { weekday: 'short' });
+
+          const isActive = dStr === selectedDateStr ? 'active' : '';
+          pillsHtml += `<button class="day-pill ${isActive}" data-date="${dStr}">${label}</button>`;
+        }
+        pillsContainer.innerHTML = pillsHtml;
+
+        pillsContainer.querySelectorAll('.day-pill').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            selectedDateStr = e.target.getAttribute('data-date');
+            dpInput.value = selectedDateStr;
+            renderSlots();
+            renderDayPills();
+          });
+        });
+      }
+
+      function renderSlots() {
+        selectedSlot = null;
+        updateBookButton();
+        const slots = MockSlotStore.getSlotsForDate(ground.id, selectedDateStr);
+        let slotsHtml = '';
+
+        if (slots.length === 0) {
+          slotsHtml = `<div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--muted);">No slots available for this date.</div>`;
+        } else {
+          slots.forEach((s, idx) => {
+            if (s.status === 'booked') {
+              slotsHtml += `<button class="slot-btn booked" disabled>${s.label}<br><span style="font-size:0.75rem; font-weight:600;">Booked</span></button>`;
+            } else {
+              slotsHtml += `<button class="slot-btn available" data-time="${s.time}" data-endtime="${s.endTime}" data-label="${s.label}">${s.label}</button>`;
+            }
+          });
+        }
+        slotsContainer.innerHTML = slotsHtml;
+
+        slotsContainer.querySelectorAll('.slot-btn.available').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            // Deselect others
+            slotsContainer.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedSlot = {
+              time: btn.getAttribute('data-time'),
+              endTime: btn.getAttribute('data-endtime'),
+              label: btn.getAttribute('data-label')
+            };
+            updateBookButton();
+          });
+        });
+      }
+
+      function updateBookButton() {
+        if (selectedSlot) {
+          btnBook.disabled = false;
+          btnBook.textContent = `Book This Slot — ${formatCurrency(ground.price_per_hour)}`;
+        } else {
+          btnBook.disabled = true;
+          btnBook.textContent = `Select a slot to book`;
+        }
+      }
+
+      dpInput.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (isUpcoming(val)) {
+          selectedDateStr = val;
+          renderSlots();
+          renderDayPills();
+        } else {
+          e.target.value = selectedDateStr; // revert
+          alert("Please select today or a future date.");
+        }
+      });
+
+      renderDayPills();
+      renderSlots();
+
+      // 4. Booking Modal Flow
+      const modal = document.getElementById('bookingModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalBody = document.getElementById('modalBody');
+      const modalFooter = document.getElementById('modalFooter');
+      const btnCloseModal = document.getElementById('btnCloseModal');
+      const btnCancelModal = document.getElementById('btnCancelBooking');
+      const btnConfirmModal = document.getElementById('btnConfirmBooking');
+
+      function openModal() {
+        if (!selectedSlot) return;
+        
+        modalTitle.textContent = 'Booking Summary';
+        modalBody.innerHTML = `
+          <div class="summary-row"><span class="summary-label">Ground</span> <span class="summary-val">${ground.name}</span></div>
+          <div class="summary-row"><span class="summary-label">Date</span> <span class="summary-val">${formatDisplayDate(selectedDateStr)}</span></div>
+          <div class="summary-row"><span class="summary-label">Time</span> <span class="summary-val">${selectedSlot.label}</span></div>
+          <div class="summary-row"><span class="summary-label">Duration</span> <span class="summary-val">1 Hour</span></div>
+          
+          <div class="summary-row summary-total">
+            <span class="summary-label" style="color:var(--ink)">Total Amount</span>
+            <span class="summary-val">${formatCurrency(ground.price_per_hour)}</span>
+          </div>
+
+          <div class="pay-notice">
+            Pay at the ground — ${formatCurrency(ground.price_per_hour)} due directly to the venue on arrival. No online payment required.
+          </div>
+        `;
+        modalFooter.style.display = 'flex';
+        modal.classList.add('open');
+      }
+
+      function closeModal() {
+        modal.classList.remove('open');
+      }
+
+      btnBook.addEventListener('click', openModal);
+      btnCloseModal.addEventListener('click', closeModal);
+      btnCancelModal.addEventListener('click', closeModal);
+
+      btnConfirmModal.addEventListener('click', () => {
+        MockAuth.ensureUser();
+        const booking = MockBookingStore.createBooking({
+          ground_id: ground.id,
+          booking_date: selectedDateStr,
+          start_time: selectedSlot.time,
+          end_time: selectedSlot.endTime,
+          duration_minutes: 60,
+          price_per_hour: ground.price_per_hour,
+          total_amount: ground.price_per_hour
+        });
+
+        // Show success state
+        modalTitle.textContent = '';
+        modalFooter.style.display = 'none';
+        modalBody.innerHTML = `
+          <div class="success-icon-wrap">
+            <i class="ph-bold ph-check-circle"></i>
+          </div>
+          <h3 class="success-title">Booking Confirmed!</h3>
+          <div class="ref-box">REF: ${booking.booking_ref}</div>
+          
+          <div class="summary-row"><span class="summary-label">Ground</span> <span class="summary-val">${ground.name}</span></div>
+          <div class="summary-row"><span class="summary-label">Date</span> <span class="summary-val">${formatDisplayDate(selectedDateStr)}</span></div>
+          <div class="summary-row"><span class="summary-label">Time</span> <span class="summary-val">${selectedSlot.label}</span></div>
+          
+          <div style="text-align:center; margin-top:24px; color:var(--emerald); font-weight:700;">
+            ${formatCurrency(ground.price_per_hour)} — Pay at the ground
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:32px;">
+            <a href="my-bookings.html" class="btn-primary" style="width:100%">View My Bookings</a>
+            <a href="index.html#featured-grounds" class="btn-ghost" style="width:100%">Browse More Grounds</a>
+          </div>
+        `;
+        
+        // Auto update nav if just logged in
+        if (document.getElementById('desktopNavLinks').innerHTML.indexOf('My Bookings') === -1) {
+          document.getElementById('desktopNavLinks').innerHTML += `<li><a href="my-bookings.html">My Bookings</a></li>`;
+          document.getElementById('mobileNavMenu').innerHTML += `<li><a href="my-bookings.html" class="mobile-nav-link">My Bookings</a></li>`;
+        }
+      });
+
+      // 5. Reveal Animations
+      const revealElems = document.querySelectorAll('.reveal');
+      const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: '0px 0px -40px 0px', threshold: 0.12 });
+
+      revealElems.forEach(el => revealObserver.observe(el));
+    });
+  </script>
+</body>
+</html>

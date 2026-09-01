@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In — GroundsNearMe</title>
+  <meta name="description" content="Log in to your GroundsNearMe account to manage your cricket bookings and join matches." />
+  <link rel="icon" type="image/jpeg" href="assets/favicon.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800;12..96,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.js"></script>
+
+  <style>
+    :root {
+      --white:#ffffff; --off:#f7f8f6; --emerald:#0d4a2c; --emerald-mid:#1a6b40;
+      --lime:#4ade80; --lime-dark:#22c55e; --ink:#0d1a0f; --muted:#4a5c50;
+      --border:#d8e8dc; --card-bg:#f0f7f3; --danger:#ef4444; --danger-bg:#fef2f2;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--off);color:var(--ink);font-size:1rem;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column}
+    img{display:block;max-width:100%} a{color:inherit;text-decoration:none} button,input{font-family:inherit}
+    .container{max-width:1240px;margin:0 auto;padding:0 40px}
+    
+    .card-outer{background:var(--card-bg);border:1px solid var(--border);padding:6px;border-radius:0;transition:transform 600ms cubic-bezier(0.22,1,0.36,1)}
+    .card-inner{background:var(--white);border:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);padding:36px;border-radius:0}
+    
+    .btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--lime);color:var(--emerald);font-family:inherit;font-weight:800;font-size:0.875rem;letter-spacing:0.04em;text-transform:uppercase;padding:14px 28px;border-radius:0;border:none;cursor:pointer;transition:background 0.25s cubic-bezier(0.22,1,0.36,1),transform 0.15s cubic-bezier(0.22,1,0.36,1);text-decoration:none;width:100%}
+    .btn-primary:hover{background:var(--lime-dark)}
+    .btn-primary:active{transform:scale(0.99)}
+    
+    .btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--emerald);font-family:inherit;font-weight:700;font-size:0.8125rem;letter-spacing:0.04em;text-transform:uppercase;padding:10px 20px;border-radius:0;border:1.5px solid var(--emerald);cursor:pointer;transition:background 0.25s cubic-bezier(0.22,1,0.36,1),color 0.25s cubic-bezier(0.22,1,0.36,1);text-decoration:none}
+    .btn-ghost:hover{background:var(--emerald);color:var(--white)}
+
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity 700ms cubic-bezier(0.22,1,0.36,1),transform 700ms cubic-bezier(0.22,1,0.36,1)}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+
+    /* NAV */
+    #nav-wrapper{position:fixed;top:0;left:0;right:0;z-index:1000;padding-top:10px;pointer-events:none}
+    nav.island{max-width:1200px;margin:0 auto;padding:0 28px;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;height:58px;border-radius:999px;pointer-events:all;box-shadow:0 12px 32px rgba(0,0,0,0.06)}
+    .nav-brand-group{display:flex;align-items:center;gap:20px}
+    .nav-logo{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;letter-spacing:0.04em;text-decoration:none;display:flex;align-items:center;color:var(--emerald);text-transform:uppercase}
+    .nav-divider{width:1px;height:16px;background:var(--border)}
+    .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
+    .nav-links a{font-size:0.8125rem;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:0.01em;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
+    .nav-links a:hover{color:var(--emerald)}
+
+    .btn-nav-contact{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--emerald);background:var(--emerald);color:var(--white);border-radius:999px;padding:8px 20px;font-size:0.8125rem;font-weight:700;letter-spacing:0.01em;text-decoration:none;transition:all 0.25s cubic-bezier(0.22,1,0.36,1)}
+    .btn-nav-contact:hover{background:var(--emerald-mid)}
+
+    .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;z-index:1100}
+    .hamburger span{display:block;width:22px;height:2px;background:var(--emerald);transition:transform 0.35s cubic-bezier(0.22,1,0.36,1),opacity 0.25s cubic-bezier(0.22,1,0.36,1);transform-origin:center}
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+    /* MOBILE NAV OVERLAY */
+    .mobile-nav-overlay{position:fixed;inset:0;z-index:1200;background:radial-gradient(circle at 50% 25%, rgba(13, 58, 36, 0.96), rgba(5, 20, 12, 0.98));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);display:flex;flex-direction:column;justify-content:space-between;padding:24px 20px 36px;opacity:0;visibility:hidden;transform:scale(0.97);transition:opacity 0.35s cubic-bezier(0.16,1,0.3,1),transform 0.35s cubic-bezier(0.16,1,0.3,1),visibility 0.35s cubic-bezier(0.16,1,0.3,1);pointer-events:none}
+    .mobile-nav-overlay.open{opacity:1;visibility:visible;transform:scale(1);pointer-events:all}
+    .mobile-overlay-header{width:100%;display:flex;justify-content:center}
+    .mobile-overlay-pill{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:440px;height:54px;padding:0 18px 0 24px;background:rgba(12, 38, 24, 0.85);border:1px solid rgba(255, 255, 255, 0.18);border-radius:999px;box-shadow:0 10px 30px rgba(0, 0, 0, 0.35)}
+    .mobile-overlay-logo{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:800;color:var(--white);letter-spacing:0.04em;text-transform:uppercase}
+    .mobile-close-btn{background:rgba(255, 255, 255, 0.08);border:1px solid rgba(255, 255, 255, 0.2);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--white);cursor:pointer;font-size:16px}
+    .mobile-nav-menu{list-style:none;display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center;padding:24px 0}
+    .mobile-nav-menu a{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:clamp(1.6rem, 6.5vw, 2.15rem);font-weight:800;color:rgba(255, 255, 255, 0.95);text-decoration:none}
+    .mobile-nav-menu a:hover{color:var(--lime)}
+
+    /* AUTH SHELL & FORM */
+    .auth-page{flex:1;display:flex;align-items:center;justify-content:center;padding:120px 20px 80px}
+    .auth-container{width:100%;max-width:460px}
+    
+    .auth-header{text-align:center;margin-bottom:28px}
+    .auth-icon-wrap{width:48px;height:48px;background:var(--card-bg);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px}
+    .auth-icon-wrap i{font-size:24px;color:var(--emerald)}
+    .auth-title{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1.75rem;font-weight:800;letter-spacing:-0.02em;color:var(--ink);margin-bottom:6px}
+    .auth-subtitle{font-size:0.875rem;color:var(--muted);line-height:1.5}
+
+    .form-group{margin-bottom:20px}
+    .form-label{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);margin-bottom:8px}
+    .input-wrapper{position:relative;display:flex;align-items:center}
+    .input-icon{position:absolute;left:14px;color:var(--muted);font-size:18px;pointer-events:none}
+    .form-input{width:100%;padding:13px 14px 13px 44px;background:var(--white);border:1.5px solid var(--border);color:var(--ink);font-size:0.9375rem;border-radius:0;outline:none;transition:border-color 0.2s cubic-bezier(0.22,1,0.36,1),background 0.2s ease}
+    .form-input:focus{border-color:var(--emerald);background:var(--white)}
+    .form-input::placeholder{color:#9cb0a3}
+    
+    .password-toggle{position:absolute;right:14px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px;display:flex;align-items:center;justify-content:center}
+    .password-toggle:hover{color:var(--emerald)}
+
+    .alert-box{display:none;background:var(--danger-bg);border:1px solid rgba(239, 68, 68, 0.3);border-left:4px solid var(--danger);padding:12px 14px;font-size:0.8125rem;font-weight:600;color:#991b1b;margin-bottom:20px;line-height:1.4}
+    .alert-box.show{display:flex;align-items:center;gap:8px}
+
+    .demo-pill-btn{width:100%;margin-top:14px;background:var(--card-bg);border:1px dashed var(--border);color:var(--emerald);padding:10px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s ease}
+    .demo-pill-btn:hover{border-color:var(--emerald);background:#e6f3eb}
+
+    .auth-footer-link{text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);font-size:0.875rem;color:var(--muted)}
+    .auth-footer-link a{color:var(--emerald);font-weight:800;text-decoration:none}
+    .auth-footer-link a:hover{text-decoration:underline}
+
+    /* FOOTER */
+    footer{background:var(--emerald);padding:60px 0 0;margin-top:auto}
+    .footer-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .footer-brand-logo{font-size:1.125rem;font-weight:800;margin-bottom:10px}
+    .footer-brand-logo .grounds{color:var(--white)}
+    .footer-brand-logo .nearme{color:var(--lime-dark)}
+    .footer-tagline{font-size:0.8125rem;color:rgba(255,255,255,0.55);line-height:1.6;max-width:26ch}
+    .footer-col-title{font-size:0.6875rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:16px}
+    .footer-links{list-style:none;display:flex;flex-direction:column;gap:8px}
+    .footer-links a{font-size:0.8125rem;color:rgba(255,255,255,0.7);text-decoration:none}
+    .footer-links a:hover{color:var(--white)}
+    .footer-bottom{padding:20px 0;display:flex;align-items:center;justify-content:space-between}
+    .footer-copy,.footer-made{font-size:0.75rem;color:rgba(255,255,255,0.4)}
+
+    @media(max-width:768px){
+      .container{padding:0 20px}
+      .nav-links,.btn-nav-contact{display:none}
+      .hamburger{display:flex}
+      .footer-top{grid-template-columns:1fr;gap:28px}
+      .footer-bottom{flex-direction:column;gap:8px;text-align:center}
+      .card-inner{padding:28px 20px}
+      .auth-page{padding-top:100px}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MOBILE OVERLAY -->
+  <div class="mobile-nav-overlay" id="mobileOverlay" aria-hidden="true">
+    <div class="mobile-overlay-header">
+      <div class="mobile-overlay-pill">
+        <span class="mobile-overlay-logo">GroundsNearMe</span>
+        <button class="mobile-close-btn" id="mobileCloseBtn" aria-label="Close menu">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+    </div>
+    <ul class="mobile-nav-menu">
+      <li><a href="index.html#how-it-works" class="mobile-nav-link">How It Works</a></li>
+      <li><a href="index.html#featured-grounds" class="mobile-nav-link">Find Grounds</a></li>
+      <li><a href="index.html#matchmaking" class="mobile-nav-link">Matchmaking</a></li>
+      <li><a href="my-bookings.html" class="mobile-nav-link">My Bookings</a></li>
+      <li><a href="register.html" class="mobile-nav-link">Create Account</a></li>
+    </ul>
+  </div>
+
+  <!-- NAV -->
+  <div id="nav-wrapper">
+    <nav class="island" role="navigation" aria-label="Main navigation">
+      <div class="nav-brand-group">
+        <a href="index.html" class="nav-logo">GroundsNearMe</a>
+        <div class="nav-divider"></div>
+        <ul class="nav-links">
+          <li><a href="index.html#how-it-works">How It Works</a></li>
+          <li><a href="index.html#featured-grounds">Browse Grounds</a></li>
+          <li><a href="index.html#matchmaking">Matchmaking</a></li>
+          <li><a href="my-bookings.html">My Bookings</a></li>
+        </ul>
+      </div>
+      <div class="nav-cta">
+        <a href="register.html" class="btn-ghost" style="padding:7px 16px; font-size:0.75rem;">Register</a>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- AUTH MAIN -->
+  <main class="auth-page">
+    <div class="auth-container">
+      <div class="auth-header reveal">
+        <div class="auth-icon-wrap">
+          <i class="ph-thin ph-user"></i>
+        </div>
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Log in to view your cricket bookings and manage match requests.</p>
+      </div>
+
+      <div class="card-outer reveal" style="transition-delay:0.08s">
+        <div class="card-inner">
+          <div class="alert-box" id="errorAlert" role="alert">
+            <i class="ph-bold ph-warning-circle" style="font-size:18px; flex-shrink:0;"></i>
+            <span id="errorMessage">Please check your inputs and try again.</span>
+          </div>
+
+          <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="loginIdentifier">Phone Number or Email</label>
+              <div class="input-wrapper">
+                <i class="ph-thin ph-phone input-icon"></i>
+                <input 
+                  type="text" 
+                  id="loginIdentifier" 
+                  name="identifier" 
+                  class="form-input" 
+                  placeholder="0300 1234567 or email@domain.com" 
+                  autocomplete="username"
+                  required 
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="loginPassword">Password</label>
+              <div class="input-wrapper">
+                <i class="ph-thin ph-lock-key input-icon"></i>
+                <input 
+                  type="password" 
+                  id="loginPassword" 
+                  name="password" 
+                  class="form-input" 
+                  placeholder="••••••••" 
+                  autocomplete="current-password"
+                  required 
+                />
+                <button type="button" class="password-toggle" id="togglePassword" aria-label="Toggle password visibility">
+                  <i class="ph-thin ph-eye" id="passwordEyeIcon"></i>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnSubmit">
+              <span>Log In</span>
+              <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>
+            </button>
+
+            <button type="button" class="demo-pill-btn" onclick="fillDemoCredentials()">
+              <i class="ph-bold ph-lightning" style="color:var(--lime-dark)"></i>
+              <span>Quick Demo Fill (Tariq Al-Mansoor)</span>
+            </button>
+
+            <div class="auth-footer-link">
+              Don't have an account? <a href="register.html">Create Account</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <div class="footer-brand-logo"><span class="grounds">Grounds</span><span class="nearme">NearMe</span></div>
+          <p class="footer-tagline">Every cricket ground in Karachi. One tap away.</p>
+        </div>
+        <div>
+          <p class="footer-col-title">Platform</p>
+          <ul class="footer-links">
+            <li><a href="index.html#how-it-works">How It Works</a></li>
+            <li><a href="index.html#featured-grounds">Browse Grounds</a></li>
+            <li><a href="my-bookings.html">My Bookings</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-col-title">For Owners</p>
+          <ul class="footer-links">
+            <li><a href="index.html#for-owners">List Your Ground</a></li>
+            <li><a href="owner/index.html">Owner Portal</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-col-title">Support</p>
+          <ul class="footer-links">
+            <li><a href="https://wa.me/92XXXXXXXXXX">WhatsApp Support</a></li>
+            <li><a href="mailto:hello@groundsnearme.pk">hello@groundsnearme.pk</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2026 GroundsNearMe &middot; groundsnearme.pk</p>
+        <p class="footer-made">Made in Karachi &#x1F3CF;</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/mock-data.js"></script>
+  <script>
+    'use strict';
+
+    // Mobile nav toggle
+    const hamburger = document.getElementById('hamburger');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+
+    function toggleMobileMenu(open) {
+      const isOpen = open !== undefined ? open : !mobileOverlay.classList.contains('open');
+      mobileOverlay.classList.toggle('open', isOpen);
+      hamburger.classList.toggle('open', isOpen);
+      hamburger.setAttribute('aria-expanded', String(isOpen));
+      mobileOverlay.setAttribute('aria-hidden', String(!isOpen));
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    }
+
+    hamburger.addEventListener('click', () => toggleMobileMenu());
+    if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', () => toggleMobileMenu(false));
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+      link.addEventListener('click', () => toggleMobileMenu(false));
+    });
+
+    // Password visibility toggle
+    const passwordInput = document.getElementById('loginPassword');
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const passwordEyeIcon = document.getElementById('passwordEyeIcon');
+
+    togglePasswordBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      passwordEyeIcon.className = isPassword ? 'ph-thin ph-eye-slash' : 'ph-thin ph-eye';
+    });
+
+    // Demo credentials helper
+    function fillDemoCredentials() {
+      document.getElementById('loginIdentifier').value = '0312-5551234';
+      document.getElementById('loginPassword').value = 'cricket2026';
+      hideError();
+    }
+
+    function showError(msg) {
+      const alert = document.getElementById('errorAlert');
+      const msgEl = document.getElementById('errorMessage');
+      msgEl.textContent = msg;
+      alert.classList.add('show');
+    }
+
+    function hideError() {
+      document.getElementById('errorAlert').classList.remove('show');
+    }
+
+    // Login Submission
+    function handleLogin(e) {
+      e.preventDefault();
+      hideError();
+
+      const identifier = document.getElementById('loginIdentifier').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('btnSubmit');
+
+      if (!identifier) {
+        showError('Please enter your mobile number or email address.');
+        document.getElementById('loginIdentifier').focus();
+        return;
+      }
+
+      if (!password) {
+        showError('Please enter your password.');
+        document.getElementById('loginPassword').focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>Logging in...</span>`;
+
+      setTimeout(() => {
+        try {
+          const user = MockAuth.login(identifier, password);
+          
+          // Check for redirect param
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirect = urlParams.get('redirect') || 'my-bookings.html';
+          
+          window.location.href = redirect;
+        } catch (err) {
+          showError(err.message || 'Login failed. Please verify your credentials.');
+          btn.disabled = false;
+          btn.innerHTML = `<span>Log In</span> <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>`;
+        }
+      }, 350);
+    }
+
+    // Scroll reveal observer
+    const revealEls = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver(
+      entries => entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      }),
+      { threshold: 0.12 }
+    );
+    revealEls.forEach(el => revealObserver.observe(el));
+  </script>
+</body>
+</html>

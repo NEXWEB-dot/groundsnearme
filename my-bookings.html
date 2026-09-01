@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Bookings — GroundsNearMe</title>
+  <link rel="icon" type="image/jpeg" href="assets/favicon.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800;12..96,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.0.3/src/index.js"></script>
+  <style>
+    :root {
+      --white:#ffffff; --off:#f7f8f6; --emerald:#0d4a2c; --emerald-mid:#1a6b40;
+      --lime:#4ade80; --lime-dark:#22c55e; --ink:#0d1a0f; --muted:#4a5c50;
+      --border:#d8e8dc; --card-bg:#f0f7f3;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--white);color:var(--ink);font-size:1rem;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    img{display:block;max-width:100%} a{color:inherit;text-decoration:none} button{font-family:inherit}
+    .container{max-width:1240px;margin:0 auto;padding:0 40px}
+    .eyebrow{font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime-dark);display:block;margin-bottom:16px}
+    .section-heading{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--ink)}
+    
+    .card-outer{background:var(--card-bg);border:1px solid var(--border);padding:6px;border-radius:0;transition:transform 600ms cubic-bezier(0.22,1,0.36,1)}
+    .card-outer:hover{transform:translateY(-4px)}
+    .card-inner{background:var(--white);border:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);padding:20px;border-radius:0}
+    
+    .btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--lime);color:var(--emerald);font-family:inherit;font-weight:800;font-size:0.875rem;letter-spacing:0.04em;text-transform:uppercase;padding:14px 28px;border-radius:0;border:none;cursor:pointer;transition:background 0.25s cubic-bezier(0.22,1,0.36,1),transform 0.15s cubic-bezier(0.22,1,0.36,1);text-decoration:none}
+    .btn-primary:hover{background:var(--lime-dark)}
+    .btn-primary:active{transform:scale(0.98)}
+    
+    .btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--emerald);font-family:inherit;font-weight:700;font-size:0.75rem;letter-spacing:0.04em;text-transform:uppercase;padding:8px 16px;border-radius:0;border:1px solid var(--emerald);cursor:pointer;transition:background 0.25s cubic-bezier(0.22,1,0.36,1),color 0.25s cubic-bezier(0.22,1,0.36,1);text-decoration:none}
+    .btn-ghost:hover{background:var(--emerald);color:var(--white)}
+    .btn-ghost.danger:hover{background:#ef4444;border-color:#ef4444;color:var(--white)}
+
+    .reveal{opacity:0;transform:translateY(32px);transition:opacity 700ms cubic-bezier(0.22,1,0.36,1),transform 700ms cubic-bezier(0.22,1,0.36,1)}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+
+    /* NAV */
+    #nav-wrapper{position:fixed;top:0;left:0;right:0;z-index:1000;padding-top:10px;pointer-events:none;transition:padding-top 0.4s cubic-bezier(0.22,1,0.36,1)}
+    nav.island{max-width:1200px;margin:0 auto;padding:0 28px;background:rgba(255,255,255,0.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;height:58px;border-radius:999px;pointer-events:all;box-shadow:0 12px 32px rgba(0,0,0,0.08)}
+    
+    .nav-brand-group{display:flex;align-items:center;gap:20px}
+    .nav-logo{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;letter-spacing:0.04em;text-decoration:none;display:flex;align-items:center;color:var(--emerald);text-transform:uppercase}
+    .nav-divider{width:1px;height:16px;background:var(--border)}
+    
+    .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
+    .nav-links a{font-size:0.8125rem;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:0.01em;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
+    .nav-links a:hover, .nav-links a.active{color:var(--emerald)}
+
+    .btn-nav-contact{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--emerald);background:var(--emerald);color:var(--white);border-radius:999px;padding:8px 20px;font-size:0.8125rem;font-weight:700;letter-spacing:0.01em;text-decoration:none;transition:all 0.25s cubic-bezier(0.22,1,0.36,1)}
+    .btn-nav-contact:hover{background:var(--emerald-mid)}
+
+    .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;z-index:1100}
+    .hamburger span{display:block;width:22px;height:2px;background:var(--emerald);transition:transform 0.35s cubic-bezier(0.22,1,0.36,1),opacity 0.25s cubic-bezier(0.22,1,0.36,1);transform-origin:center}
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    
+    /* MOBILE NAV OVERLAY */
+    .mobile-nav-overlay{
+      position:fixed; inset:0; z-index:1200;
+      background:radial-gradient(circle at 50% 25%, rgba(13, 58, 36, 0.96), rgba(5, 20, 12, 0.98));
+      backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+      display:flex; flex-direction:column; justify-content:space-between; padding:24px 20px 36px;
+      opacity:0; visibility:hidden; transform:scale(0.97);
+      transition:opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events:none;
+    }
+    .mobile-nav-overlay.open{opacity:1; visibility:visible; transform:scale(1); pointer-events:all;}
+    .mobile-overlay-header{width:100%; display:flex; justify-content:center; transform:translateY(-20px); opacity:0; transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; transition-delay:0.04s;}
+    .mobile-nav-overlay.open .mobile-overlay-header{transform:translateY(0); opacity:1;}
+    .mobile-overlay-pill{display:flex; align-items:center; justify-content:space-between; width:100%; max-width:440px; height:54px; padding:0 18px 0 24px; background:rgba(12, 38, 24, 0.85); border:1px solid rgba(255, 255, 255, 0.18); border-radius:999px; box-shadow:0 10px 30px rgba(0, 0, 0, 0.35);}
+    .mobile-overlay-logo{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif; font-size:1rem; font-weight:800; color:var(--white); letter-spacing:0.04em; text-transform:uppercase;}
+    .mobile-overlay-divider{width:1px; height:16px; background:rgba(255, 255, 255, 0.25); margin:0 12px; flex-shrink:0;}
+    .mobile-close-btn{background:rgba(255, 255, 255, 0.08); border:1px solid rgba(255, 255, 255, 0.2); width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--white); cursor:pointer; font-size:16px; transition:transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;}
+    .mobile-close-btn:hover{transform:rotate(90deg) scale(1.08); background:rgba(255, 255, 255, 0.2);}
+    .mobile-overlay-body{flex:1; display:flex; align-items:center; justify-content:center; padding:24px 0;}
+    .mobile-nav-menu{list-style:none; display:flex; flex-direction:column; align-items:center; gap:22px; text-align:center;}
+    .mobile-nav-menu li{opacity:0; transform:translateY(28px) scale(0.95); filter:blur(6px); transition:opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s cubic-bezier(0.16, 1, 0.3, 1);}
+    .mobile-nav-overlay.open .mobile-nav-menu li{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(1){ transition-delay:0.08s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(2){ transition-delay:0.14s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(3){ transition-delay:0.20s; }
+    .mobile-nav-overlay.open .mobile-nav-menu li:nth-child(4){ transition-delay:0.26s; }
+    .mobile-nav-menu a{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif; font-size:clamp(1.6rem, 6.5vw, 2.15rem); font-weight:800; color:rgba(255, 255, 255, 0.95); text-decoration:none; letter-spacing:-0.02em; display:inline-block; transition:color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);}
+    .mobile-nav-menu a:hover{color:var(--lime); transform:scale(1.06);}
+    .mobile-overlay-footer{width:100%; display:flex; justify-content:center; transform:translateY(30px); opacity:0; transition:transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease; transition-delay:0.30s;}
+    .mobile-nav-overlay.open .mobile-overlay-footer{transform:translateY(0); opacity:1;}
+    .mobile-cta-btn{width:100%; max-width:440px; height:56px; background:var(--lime); color:var(--emerald); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.95rem; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:12px; border-radius:6px; text-decoration:none; box-shadow:0 8px 24px rgba(74, 222, 128, 0.35); transition:transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;}
+    .mobile-cta-btn:hover{background:var(--lime-dark); transform:translateY(-2px); color:var(--emerald);}
+    .mobile-cta-icon{width:26px; height:26px; background:rgba(13, 74, 44, 0.16); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; transition:transform 0.25s ease;}
+    .mobile-cta-btn:hover .mobile-cta-icon{transform:translateX(3px);}
+
+    /* PAGE HEADER */
+    .page-header{background:var(--off); padding:130px 0 48px;}
+    .page-header .container{display:flex; flex-direction:column; align-items:center; text-align:center;}
+    .subtitle{font-size:0.9rem; font-weight:600; color:var(--muted); margin-top:8px;}
+
+    /* BOOKINGS CONTENT */
+    .bookings-section{background:var(--white); padding:80px 0;}
+    .bookings-container{max-width:900px; margin:0 auto; padding:0 40px;}
+    .bookings-group{margin-bottom:64px;}
+    .group-heading{display:flex; align-items:center; gap:12px; font-size:1.5rem; font-weight:800; color:var(--ink); margin-bottom:24px;}
+    .badge-count{background:var(--card-bg); border:1px solid var(--border); color:var(--emerald); font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:0;}
+
+    /* BOOKING CARD */
+    .booking-card{margin-bottom:16px; display:flex;}
+    .booking-card .card-inner{display:flex; padding:0; flex:1;}
+    .booking-img{width:180px; aspect-ratio:16/9; flex-shrink:0;}
+    .booking-img img{width:100%; height:100%; object-fit:cover;}
+    .booking-content{padding:20px; flex:1; display:flex; flex-direction:column; justify-content:space-between;}
+    
+    .booking-top{display:flex; justify-content:space-between; align-items:flex-start;}
+    .ground-name{font-size:1.125rem; font-weight:800; color:var(--ink); text-decoration:none;}
+    .ground-name:hover{text-decoration:underline;}
+    .booking-ref{font-size:0.75rem; color:var(--muted); font-weight:600;}
+    
+    .booking-info{display:flex; gap:24px; margin:16px 0;}
+    .info-item{display:flex; flex-direction:column; gap:4px;}
+    .info-label{font-size:0.625rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted);}
+    .info-value{font-size:0.875rem; font-weight:600; color:var(--ink);}
+    
+    .payment-badge{display:inline-flex; align-items:center; gap:6px; font-size:0.6875rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:4px 10px; border-radius:0;}
+    .badge-unpaid{background:var(--card-bg); color:var(--emerald); border:1px solid var(--border);}
+    .badge-completed{background:var(--emerald); color:var(--white); border:1px solid var(--emerald-mid);}
+
+    .booking-actions{display:flex; justify-content:flex-end; gap:12px; margin-top:16px; border-top:1px solid var(--border); padding-top:16px;}
+    .action-link{font-size:0.8125rem; font-weight:700; color:var(--emerald); text-decoration:none; display:flex; align-items:center; gap:4px;}
+    .action-link:hover{text-decoration:underline;}
+
+    .booking-card.past{opacity:0.85;}
+    .booking-card.past .card-outer:hover{transform:none;}
+    
+    .confirm-overlay{display:flex; align-items:center; justify-content:flex-end; gap:12px;}
+    .confirm-text{font-size:0.8125rem; font-weight:600; color:var(--ink); margin-right:auto;}
+
+    /* EMPTY STATE */
+    .empty-state{text-align:center; padding:48px 24px;}
+    .empty-icon{font-size:48px; color:var(--emerald); margin-bottom:16px;}
+    .empty-title{font-size:1.5rem; font-weight:800; color:var(--ink); margin-bottom:8px;}
+    .empty-desc{font-size:0.9375rem; color:var(--muted); max-width:400px; margin:0 auto 24px;}
+
+    /* TOAST */
+    .toast{position:fixed; bottom:-100px; right:24px; background:var(--ink); color:var(--white); padding:14px 20px; font-size:0.8125rem; font-weight:600; z-index:3000; border-radius:0; transition:bottom 0.4s cubic-bezier(0.22,1,0.36,1);}
+    .toast.show{bottom:24px;}
+
+    /* FOOTER */
+    footer{background:var(--emerald);padding:80px 0 0}
+    .footer-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:48px;padding-bottom:64px;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .footer-brand-logo{font-size:1.125rem;font-weight:800;margin-bottom:12px}
+    .footer-brand-logo .grounds{color:var(--white)}
+    .footer-brand-logo .nearme{color:var(--lime-dark)}
+    .footer-tagline{font-size:0.875rem;color:rgba(255,255,255,0.55);line-height:1.6;max-width:26ch}
+    .footer-col-title{font-size:0.6875rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:20px}
+    .footer-links{list-style:none;display:flex;flex-direction:column;gap:10px}
+    .footer-links a{font-size:0.875rem;color:rgba(255,255,255,0.7);text-decoration:none;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
+    .footer-links a:hover{color:var(--white)}
+    .footer-bottom{padding:24px 0;display:flex;align-items:center;justify-content:space-between}
+    .footer-copy{font-size:0.8125rem;color:rgba(255,255,255,0.4)}
+    .footer-made{font-size:0.8125rem;color:rgba(255,255,255,0.4)}
+
+    /* RESPONSIVE */
+    @media(max-width:1024px){
+      .container{padding:0 32px;}
+      .bookings-container{padding:0 32px;}
+      nav.island{padding:0 24px}
+      .footer-top{grid-template-columns:1fr 1fr;gap:40px}
+    }
+    @media(max-width:768px){
+      .container{padding:0 20px;}
+      .bookings-container{padding:0 20px;}
+      nav.island{padding:0 20px}
+      .nav-links,.nav-cta{display:none}
+      .hamburger{display:flex}
+      .booking-card .card-inner{flex-direction:column;}
+      .booking-img{width:100%; aspect-ratio:16/9;}
+      .booking-info{flex-direction:column; gap:12px;}
+      .footer-top{grid-template-columns:1fr;gap:32px;padding-bottom:48px}
+      .footer-bottom{flex-direction:column;gap:8px;text-align:center}
+      .confirm-overlay{flex-direction:column; align-items:stretch; gap:8px;}
+      .confirm-text{margin-bottom:8px;}
+      .booking-actions{flex-direction:column;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MOBILE OVERLAY -->
+  <div class="mobile-nav-overlay" id="mobileOverlay" aria-hidden="true">
+    <div class="mobile-overlay-header">
+      <div class="mobile-overlay-pill">
+        <span class="mobile-overlay-logo">GroundsNearMe</span>
+        <span class="mobile-overlay-divider"></span>
+        <button class="mobile-close-btn" id="mobileCloseBtn" aria-label="Close menu">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="mobile-overlay-body">
+      <ul class="mobile-nav-menu">
+        <li><a href="index.html#how-it-works" class="mobile-nav-link">How It Works</a></li>
+        <li><a href="index.html#featured-grounds" class="mobile-nav-link">Find Grounds</a></li>
+        <li><a href="index.html#for-owners" class="mobile-nav-link">List Your Ground</a></li>
+        <li><a href="my-bookings.html" class="mobile-nav-link active">My Bookings</a></li>
+      </ul>
+    </div>
+
+    <div class="mobile-overlay-footer">
+      <a href="index.html#for-owners" class="mobile-cta-btn mobile-nav-link">
+        List Your Ground
+        <span class="mobile-cta-icon"><i class="ph-bold ph-arrow-right"></i></span>
+      </a>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div id="nav-wrapper" class="scrolled">
+    <nav class="island" role="navigation" aria-label="Main navigation">
+      <div class="nav-brand-group">
+        <a href="index.html" class="nav-logo" aria-label="GroundsNearMe Home">
+          GroundsNearMe
+        </a>
+        <div class="nav-divider"></div>
+        <ul class="nav-links">
+          <li><a href="index.html#how-it-works">How It Works</a></li>
+          <li><a href="index.html#featured-grounds">Browse Grounds</a></li>
+          <li><a href="index.html#matchmaking">Matchmaking</a></li>
+          <li><a href="my-bookings.html" class="active">My Bookings</a></li>
+        </ul>
+      </div>
+      <div class="nav-cta">
+        <a href="index.html#for-owners" class="btn-nav-contact">
+          Contact us <i class="ph-bold ph-arrow-right" style="font-size:12px"></i>
+        </a>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <section class="page-header">
+    <div class="container">
+      <span class="eyebrow reveal">Your Account</span>
+      <h1 class="section-heading reveal" style="transition-delay: 0.05s;">My Bookings</h1>
+      <p class="subtitle reveal" id="userName" style="transition-delay: 0.1s;"></p>
+    </div>
+  </section>
+
+  <!-- BOOKINGS CONTENT -->
+  <section class="bookings-section">
+    <div class="bookings-container" id="bookingsContainer">
+      <!-- Injected by JS -->
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <div class="footer-brand-logo"><span class="grounds">Grounds</span><span class="nearme">NearMe</span></div>
+          <p class="footer-tagline">Every cricket ground in Karachi. One tap away.</p>
+        </div>
+        <div>
+          <p class="footer-col-title">Platform</p>
+          <ul class="footer-links">
+            <li><a href="index.html#how-it-works">How It Works</a></li>
+            <li><a href="index.html#featured-grounds">Browse Grounds</a></li>
+            <li><a href="index.html#matchmaking">Matchmaking</a></li>
+            <li><a href="index.html#featured-grounds">Areas We Cover</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-col-title">For Owners</p>
+          <ul class="footer-links">
+            <li><a href="index.html#for-owners">List Your Ground</a></li>
+            <li><a href="index.html#for-owners">Owner Dashboard</a></li>
+            <li><a href="https://wa.me/92XXXXXXXXXX">Contact Us</a></li>
+            <li><a href="index.html#for-owners">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-col-title">Connect</p>
+          <ul class="footer-links">
+            <li><a href="https://wa.me/92XXXXXXXXXX">WhatsApp</a></li>
+            <li><a href="#">Instagram</a></li>
+            <li><a href="#">Facebook</a></li>
+            <li><a href="mailto:hello@groundsnearme.pk">Email Us</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2026 GroundsNearMe &middot; groundsnearme.pk</p>
+        <p class="footer-made">Made in Karachi &#x1F3CF;</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/mock-data.js"></script>
+  <script>
+    'use strict';
+
+    // Mobile Menu
+    const hamburger = document.getElementById('hamburger');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+    const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+
+    function toggleMobileMenu(open) {
+      const isOpen = open !== undefined ? open : !mobileOverlay.classList.contains('open');
+      mobileOverlay.classList.toggle('open', isOpen);
+      hamburger.classList.toggle('open', isOpen);
+      hamburger.setAttribute('aria-expanded', String(isOpen));
+      mobileOverlay.setAttribute('aria-hidden', String(!isOpen));
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    }
+
+    hamburger.addEventListener('click', () => toggleMobileMenu());
+    if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', () => toggleMobileMenu(false));
+    mobileLinks.forEach(link => link.addEventListener('click', () => toggleMobileMenu(false)));
+
+    // Nav Scroll (Optional as it starts scrolled, but good for completeness)
+    const navWrapper = document.getElementById('nav-wrapper');
+    window.addEventListener('scroll', () => {
+      // Always keep it scrolled for this page, but if needed we can toggle it.
+      // Actually per requirements: The nav should start with `scrolled` class.
+    }, { passive: true });
+
+    // Toast
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Scroll Reveal Initializer
+    function initReveal() {
+      const revealEls = document.querySelectorAll('.reveal:not(.visible)');
+      const revealObserver = new IntersectionObserver(
+        entries => entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObserver.unobserve(entry.target);
+          }
+        }),
+        { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+      );
+      revealEls.forEach(el => revealObserver.observe(el));
+    }
+
+    // Load Data
+    function loadBookings() {
+      const user = MockAuth.ensureUser();
+      document.getElementById('userName').textContent = user.name;
+      
+      const allBookings = MockBookingStore.getPlayerBookings();
+      const upcoming = [];
+      const past = [];
+
+      const today = getTodayStr();
+
+      allBookings.forEach(b => {
+        if (b.booking_date >= today && b.status !== 'cancelled') {
+          upcoming.push(b);
+        } else if (b.booking_date < today || b.status === 'completed') {
+          past.push(b);
+        }
+      });
+
+      renderBookings(upcoming, past);
+    }
+
+    function renderBookings(upcoming, past) {
+      const container = document.getElementById('bookingsContainer');
+      container.innerHTML = '';
+
+      if (upcoming.length === 0 && past.length === 0) {
+        container.innerHTML = `
+          <div class="card-outer reveal">
+            <div class="card-inner empty-state">
+              <i class="ph-thin ph-baseball empty-icon"></i>
+              <h2 class="empty-title">No bookings yet</h2>
+              <p class="empty-desc">Time to find your next pitch! Browse cricket grounds near you and book your first slot in seconds.</p>
+              <a href="index.html#featured-grounds" class="btn-primary">Browse Grounds</a>
+            </div>
+          </div>
+        `;
+        initReveal();
+        return;
+      }
+
+      if (upcoming.length > 0) {
+        let html = `
+          <div class="bookings-group">
+            <div class="group-heading reveal">Upcoming <span class="badge-count">${upcoming.length}</span></div>
+        `;
+        upcoming.forEach((b, idx) => html += createBookingCard(b, idx, true));
+        html += `</div>`;
+        container.innerHTML += html;
+      } else if (past.length > 0) {
+        // If there are only past bookings, show an empty upcoming state section
+        container.innerHTML += `
+          <div class="bookings-group">
+            <div class="group-heading reveal">Upcoming <span class="badge-count">0</span></div>
+            <div class="card-outer reveal">
+              <div class="card-inner empty-state" style="padding: 32px 16px;">
+                <p class="empty-desc" style="margin-bottom:16px;">No upcoming bookings.</p>
+                <a href="index.html#featured-grounds" class="btn-primary">Book a Slot</a>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (past.length > 0) {
+        let html = `
+          <div class="bookings-group">
+            <div class="group-heading reveal">Past Bookings <span class="badge-count">${past.length}</span></div>
+        `;
+        past.forEach((b, idx) => html += createBookingCard(b, idx, false));
+        html += `</div>`;
+        container.innerHTML += html;
+      }
+
+      initReveal();
+    }
+
+    function createBookingCard(booking, idx, isUpcoming) {
+      const ground = findMockGround(booking.ground_id);
+      if (!ground) return '';
+
+      const delay = 0.05 * (idx + 1);
+      
+      const badgeHtml = isUpcoming 
+        ? `<span class="payment-badge badge-unpaid"><i class="ph-thin ph-wallet"></i> Pay at ground</span>`
+        : `<span class="payment-badge badge-completed"><i class="ph-thin ph-check-circle"></i> Completed</span>`;
+      
+      const price = Number(booking.total_amount || ground.price_per_hour).toLocaleString();
+      
+      const actionHtml = isUpcoming ? `
+        <div class="booking-actions" id="actions-${booking.id}">
+          <a href="ground.html?id=${ground.id}" class="action-link">View Details <i class="ph-thin ph-arrow-right"></i></a>
+          <button class="btn-ghost danger" onclick="confirmCancel('${booking.id}')">Cancel Booking</button>
+        </div>
+      ` : `
+        <div class="booking-actions">
+          <a href="ground.html?id=${ground.id}" class="action-link">Book Again <i class="ph-thin ph-arrow-right"></i></a>
+        </div>
+      `;
+
+      return `
+        <div class="card-outer booking-card reveal ${isUpcoming ? '' : 'past'}" id="card-${booking.id}" style="transition-delay:${delay}s">
+          <div class="card-inner">
+            <div class="booking-img">
+              <img src="${ground.cover_image_url}" alt="${ground.name}">
+            </div>
+            <div class="booking-content">
+              <div>
+                <div class="booking-top">
+                  <a href="ground.html?id=${ground.id}" class="ground-name">${ground.name}</a>
+                  <span class="booking-ref">Ref: ${booking.booking_ref}</span>
+                </div>
+                <div class="booking-info">
+                  <div class="info-item">
+                    <span class="info-label">Date & Time</span>
+                    <span class="info-value">${formatDisplayDate(booking.booking_date)} &middot; ${booking.start_time.slice(0,5)}${booking.end_time ? ' – ' + booking.end_time.slice(0,5) : ''}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Price</span>
+                    <span class="info-value">PKR ${price}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Status</span>
+                    ${badgeHtml}
+                  </div>
+                </div>
+              </div>
+              ${actionHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    window.confirmCancel = function(bookingId) {
+      const actionsDiv = document.getElementById('actions-' + bookingId);
+      if (!actionsDiv) return;
+      actionsDiv.innerHTML = `
+        <div class="confirm-overlay">
+          <span class="confirm-text">Are you sure? This will release the slot.</span>
+          <button class="btn-ghost" onclick="resetActions('${bookingId}')">Keep Booking</button>
+          <button class="btn-ghost danger" onclick="executeCancel('${bookingId}')">Yes, Cancel</button>
+        </div>
+      `;
+    }
+
+    window.resetActions = function(bookingId) {
+      const booking = MockBookingStore.getBookingById(bookingId);
+      const ground = findMockGround(booking.ground_id);
+      const actionsDiv = document.getElementById('actions-' + bookingId);
+      if (actionsDiv && ground) {
+        actionsDiv.innerHTML = `
+          <a href="ground.html?id=${ground.id}" class="action-link">View Details <i class="ph-thin ph-arrow-right"></i></a>
+          <button class="btn-ghost danger" onclick="confirmCancel('${bookingId}')">Cancel Booking</button>
+        `;
+      }
+    }
+
+    window.executeCancel = function(bookingId) {
+      if (MockBookingStore.cancelBooking(bookingId)) {
+        const card = document.getElementById('card-' + bookingId);
+        if (card) {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(20px)';
+          setTimeout(() => {
+            loadBookings();
+            showToast('Booking cancelled. Slot has been released.');
+          }, 400);
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initReveal();
+      loadBookings();
+    });
+  </script>
+</body>
+</html>

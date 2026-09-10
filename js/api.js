@@ -71,7 +71,7 @@ const GNM = {
 
   async loadMatchmaking() {
     try {
-      this.games = await this.fetch('open_games?select=id,title,host_handle,skill_level,format,match_date,start_time,status,area:areas(name,slug),ground:grounds(name)&status=eq.open&order=match_date.asc,start_time.asc&limit=6');
+      this.games = await this.fetch('open_games?select=id,title,host_handle,looking_for,skill_level,format,players_needed,whatsapp_number,match_date,start_time,status,area:areas(name,slug),ground:grounds(name)&status=eq.open&order=match_date.asc,start_time.asc&limit=6');
     } catch (e) {
       console.error('Error loading matchmaking:', e);
     }
@@ -200,45 +200,124 @@ const GNM = {
     }).join('');
   },
 
+  escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  },
+
   renderMatchmaking() {
     const rightCol = document.querySelector('#matchmaking .matchmaking-right');
-    if (!rightCol || this.games.length === 0) return;
+    if (!rightCol) return;
 
-    rightCol.innerHTML = this.games.slice(0, 2).map((game, i) => `
-      <div class="card-outer match-card reveal visible" style="transition-delay:${(0.05 * (i + 1)).toFixed(2)}s">
+    if (!this.games || this.games.length === 0) {
+      rightCol.innerHTML = `
+        <div class="card-outer match-card reveal visible" style="padding:40px 24px; text-align:center;">
+          <div class="card-inner" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <div style="width:48px; height:48px; border-radius:50%; background:var(--card-bg); color:var(--emerald); display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
+              <i class="ph-thin ph-users-three"></i>
+            </div>
+            <h3 style="font-size:1.1rem; font-weight:800; margin:0;">No Open Matches Right Now</h3>
+            <p style="color:var(--muted); font-size:0.875rem; margin:0; max-width:320px;">
+              Looking for extra players or want to challenge an opposition team this weekend?
+            </p>
+            <button onclick="openCreateMatchModal()" class="btn-primary" style="margin-top:8px; padding:10px 22px; font-size:0.875rem;">
+              Post a Match Request
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    rightCol.innerHTML = this.games.slice(0, 4).map((game, i) => {
+      const waNumber = (game.whatsapp_number || '923362308445').replace(/[^0-9]/g, '');
+      const handle = game.host_handle || 'cricket_captain';
+      const waMsg = encodeURIComponent(`Hi @${handle}, I saw your game on GroundsNearMe: "${game.title}". I would like to join!`);
+      const waUrl = `https://wa.me/${waNumber}?text=${waMsg}`;
+      const badgeText = game.looking_for === 'opposition' ? 'Needs Team' : (game.players_needed ? `${game.players_needed} Needed` : 'Open');
+      const groundInfo = game.ground?.name ? ` · ${game.ground.name}` : '';
+
+      return `
+      <div class="card-outer match-card reveal visible" style="transition-delay:${(0.05 * (i + 1)).toFixed(2)}s; margin-bottom:16px;">
         <div class="card-inner">
           <div class="match-card-header">
             <div>
-              <div class="match-post-title">${game.title}</div>
-              <div class="match-poster">@${game.host_handle || 'cricket_captain'}</div>
+              <div class="match-post-title">${this.escapeHtml(game.title)}</div>
+              <div class="match-poster">@${this.escapeHtml(handle)}</div>
             </div>
-            <span class="match-badge-new">Open</span>
+            <span class="match-badge-new" style="${game.looking_for === 'opposition' ? 'background:#fef3c7; color:#b45309;' : ''}">${badgeText}</span>
           </div>
           <div class="match-details">
             <div class="match-detail">
               <span class="match-detail-label">Skill Level</span>
-              <span class="match-detail-value uppercase" style="font-size:12px; font-weight:700;">${game.skill_level}</span>
+              <span class="match-detail-value uppercase" style="font-size:12px; font-weight:700;">${this.escapeHtml(game.skill_level)}</span>
             </div>
             <div class="match-detail">
               <span class="match-detail-label">Area</span>
-              <span class="match-detail-value">${game.area?.name || 'Karachi'}</span>
+              <span class="match-detail-value">${this.escapeHtml((game.area?.name || 'Karachi') + groundInfo)}</span>
             </div>
             <div class="match-detail">
               <span class="match-detail-label">Format</span>
-              <span class="match-detail-value">${game.format}</span>
+              <span class="match-detail-value">${this.escapeHtml(game.format || 'Tape Ball')}</span>
             </div>
           </div>
           <div class="match-footer">
             <div class="match-interest">
-              <i class="ph-thin ph-calendar"></i> ${game.match_date} at ${(game.start_time || '').slice(0, 5)}
+              <i class="ph-thin ph-calendar"></i> ${game.match_date} · ${(game.start_time || '').slice(0, 5)}
             </div>
-            <a href="https://wa.me/923362308445?text=${encodeURIComponent('Hi, I want to join match: ' + game.title)}" target="_blank" rel="noopener noreferrer" class="btn-join" aria-label="Join match ${game.title} via WhatsApp">
-              Join Game <i class="ph-thin ph-arrow-right" style="font-size:11px"></i>
+            <a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="btn-join" aria-label="Join match ${this.escapeHtml(game.title)} via WhatsApp">
+              Join Game <i class="ph-thin ph-whatsapp-logo" style="font-size:13px"></i>
             </a>
           </div>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
+  },
+
+  async createMatch(data) {
+    const session = JSON.parse(sessionStorage.getItem('gnm_supabase_session') || 'null');
+    const token = session?.access_token || GNM_CONFIG.supabaseAnon;
+    const handle = (data.host_handle || 'player_' + Math.random().toString(36).substring(2, 6)).toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+    const payload = {
+      title: data.title.trim(),
+      host_handle: handle,
+      looking_for: data.looking_for || 'players',
+      skill_level: data.skill_level || 'any',
+      format: data.format || 'Tape Ball',
+      area_id: data.area_id || null,
+      match_date: data.match_date,
+      start_time: data.start_time || '20:00:00',
+      players_needed: data.looking_for === 'players' ? (parseInt(data.players_needed, 10) || 2) : null,
+      whatsapp_number: data.whatsapp_number ? data.whatsapp_number.replace(/[^0-9]/g, '') : '923362308445',
+      status: 'open'
+    };
+
+    const res = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/open_games`, {
+      method: 'POST',
+      headers: {
+        'apikey': GNM_CONFIG.supabaseAnon,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to post match');
+    }
+
+    await this.loadMatchmaking();
+    this.renderMatchmaking();
+    return await res.json();
   },
 
   updateStatsBar() {

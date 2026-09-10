@@ -2,12 +2,12 @@
  * GroundsNearMe — Cookie & Storage Consent Banner
  * Ensures compliance with PECA 2016 and transparent storage practices.
  *
- * Fix log:
- *  - Buttons now use direct onclick attributes set after append (avoids
- *    timing issues with getElementById when body.appendChild hasn't painted).
- *  - localStorage.setItem is verified with a read-back to confirm persistence.
- *  - Banner is guaranteed to be destroyed after click so it cannot reappear.
- *  - Scroll event is passive to avoid mobile jank.
+ * Robust implementation:
+ *  - Matches the exact design: "DECLINE" & "ACCEPT & CONTINUE"
+ *  - Dual persistence: localStorage + 1-year fallback cookie (survives webviews & quota limits)
+ *  - Strict prevention: If user previously accepted/declined, banner is NEVER shown on refresh
+ *  - Direct removal from DOM after smooth slide-down animation
+ *  - Both .onclick and addEventListener wired for bulletproof interaction
  */
 
 'use strict';
@@ -15,94 +15,90 @@
 (function () {
   var CONSENT_KEY = 'gnm_cookie_consent';
 
+  function getCookie(name) {
+    try {
+      var match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+      return match ? decodeURIComponent(match[2]) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function hasConsent() {
     try {
-      return !!localStorage.getItem(CONSENT_KEY);
-    } catch (e) {
-      return true; // storage unavailable — don't show banner
-    }
+      var ls = localStorage.getItem(CONSENT_KEY);
+      if (ls) return true;
+    } catch (e) {}
+    try {
+      var c = getCookie(CONSENT_KEY);
+      if (c) return true;
+    } catch (e) {}
+    return false;
   }
 
   function saveConsent(val) {
     try {
       localStorage.setItem(CONSENT_KEY, val);
-    } catch (e) {
-      // Private browsing / quota — still hide the banner
-    }
+    } catch (e) {}
+    try {
+      // 1 year persistence fallback cookie
+      document.cookie = CONSENT_KEY + '=' + encodeURIComponent(val) + '; path=/; max-age=31536000; SameSite=Lax';
+    } catch (e) {}
   }
 
-  function removeBanner(banner) {
+  function hideAndRemove(banner) {
     if (!banner) return;
-    banner.classList.remove('gnm-cookie-show');
-    // After CSS transition, fully remove from DOM
+    banner.classList.add('hidden');
+    banner.classList.remove('visible');
+    banner.style.transform = 'translateY(110%)';
+    banner.style.opacity = '0';
+    banner.style.pointerEvents = 'none';
+
     setTimeout(function () {
       if (banner && banner.parentNode) {
         banner.parentNode.removeChild(banner);
       }
-      // Also remove injected styles
-      var styles = document.getElementById('gnm-cookie-styles');
-      if (styles && styles.parentNode) styles.parentNode.removeChild(styles);
-    }, 420);
+      var styles = document.getElementById('cookie-banner-styles');
+      if (styles && styles.parentNode) {
+        styles.parentNode.removeChild(styles);
+      }
+    }, 450);
   }
 
   function injectStyles() {
-    if (document.getElementById('gnm-cookie-styles')) return;
+    if (document.getElementById('cookie-banner-styles')) return;
     var style = document.createElement('style');
-    style.id = 'gnm-cookie-styles';
-    style.textContent = [
-      '#gnm-cookie-banner{',
-        'position:fixed;bottom:24px;left:50%;',
-        'transform:translateX(-50%) translateY(110px);',
-        'width:calc(100% - 32px);max-width:680px;',
-        'background:rgba(13,26,15,0.96);color:#f7f8f6;',
-        'backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);',
-        'border:1px solid rgba(74,222,128,0.3);border-radius:12px;',
-        'padding:20px 24px;',
-        'box-shadow:0 20px 48px rgba(0,0,0,0.35);',
-        'z-index:2147483647;', // max safe z-index
-        'display:flex;align-items:center;justify-content:space-between;gap:20px;',
-        'opacity:0;pointer-events:none;',
-        'transition:transform 0.4s cubic-bezier(0.16,1,0.3,1),opacity 0.35s ease;',
-        'font-family:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,sans-serif;',
-        'font-size:0.875rem;line-height:1.5;',
-      '}',
-      '#gnm-cookie-banner.gnm-cookie-show{',
-        'transform:translateX(-50%) translateY(0);opacity:1;pointer-events:all;',
-      '}',
-      '.gnm-cookie-text{flex:1;color:#d1d5db;}',
-      '.gnm-cookie-text strong{color:#fff;font-weight:700;}',
-      '.gnm-cookie-text a{color:#4ade80;text-decoration:underline;font-weight:600;}',
-      '.gnm-cookie-text a:hover{color:#86efac;}',
-      '.gnm-cookie-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}',
-      '.gnm-cookie-btn{',
-        'padding:9px 18px;border-radius:8px;border:none;',
-        'font-family:inherit;font-size:0.8125rem;font-weight:700;',
-        'cursor:pointer;transition:all 0.2s ease;',
-        'display:inline-flex;align-items:center;justify-content:center;',
-        'min-height:40px;min-width:80px;',
-      '}',
-      '.gnm-cookie-btn:focus-visible{outline:2px solid #4ade80;outline-offset:2px;}',
-      '.gnm-cb-accept{background:#4ade80;color:#0d4a2c;}',
-      '.gnm-cb-accept:hover{background:#22c55e;transform:translateY(-1px);}',
-      '.gnm-cb-decline{background:rgba(255,255,255,0.08);color:#f3f4f6;border:1px solid rgba(255,255,255,0.2);}',
-      '.gnm-cb-decline:hover{background:rgba(255,255,255,0.16);}',
-      '@media(max-width:640px){',
-        '#gnm-cookie-banner{flex-direction:column;align-items:flex-start;bottom:16px;padding:16px 18px;gap:14px;}',
-        '.gnm-cookie-actions{width:100%;}',
-        '.gnm-cookie-btn{flex:1;}',
-      '}'
-    ].join('');
+    style.id = 'cookie-banner-styles';
+    style.textContent =
+      '#cookie-banner{position:fixed;bottom:0;left:0;right:0;z-index:2147483647;background:#0d1a0f;color:#ffffff;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;box-shadow:0 -4px 24px rgba(0,0,0,0.35);transform:translateY(110%);transition:transform 0.4s cubic-bezier(0.22,1,0.36,1),opacity 0.3s ease;font-family:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,sans-serif;font-size:0.875rem;line-height:1.6;box-sizing:border-box;}' +
+      '#cookie-banner.visible{transform:translateY(0);}' +
+      '#cookie-banner.hidden{transform:translateY(110%) !important;opacity:0 !important;pointer-events:none !important;}' +
+      '#cookie-banner *{box-sizing:border-box;}' +
+      '.cookie-text{font-size:0.875rem;color:rgba(255,255,255,0.88);line-height:1.6;flex:1;min-width:240px;margin:0;}' +
+      '.cookie-text a{color:#4ade80;text-decoration:none;text-underline-offset:2px;font-weight:600;}' +
+      '.cookie-text a:hover{text-decoration:underline;color:#86efac;}' +
+      '.cookie-actions{display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap;align-items:center;}' +
+      '.cookie-btn-accept{background:#4ade80;color:#0d4a2c;border:none;font-family:inherit;font-weight:800;font-size:0.8125rem;letter-spacing:0.04em;text-transform:uppercase;padding:11px 22px;cursor:pointer;border-radius:3px;transition:all 0.2s ease;min-height:42px;display:inline-flex;align-items:center;justify-content:center;}' +
+      '.cookie-btn-accept:hover{background:#22c55e;transform:translateY(-1px);box-shadow:0 4px 12px rgba(74,222,128,0.35);}' +
+      '.cookie-btn-accept:focus-visible{outline:2px solid #4ade80;outline-offset:2px;}' +
+      '.cookie-btn-decline{background:transparent;color:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.3);font-family:inherit;font-weight:600;font-size:0.8125rem;letter-spacing:0.04em;text-transform:uppercase;padding:11px 22px;cursor:pointer;border-radius:3px;transition:all 0.2s ease;min-height:42px;display:inline-flex;align-items:center;justify-content:center;}' +
+      '.cookie-btn-decline:hover{color:#ffffff;border-color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.1);}' +
+      '.cookie-btn-decline:focus-visible{outline:2px solid rgba(255,255,255,0.6);outline-offset:2px;}' +
+      '@media(max-width:640px){#cookie-banner{padding:16px 20px;gap:14px;}.cookie-actions{width:100%;}.cookie-btn-accept,.cookie-btn-decline{flex:1;text-align:center;}}';
     document.head.appendChild(style);
   }
 
   function initCookieConsent() {
-    // If user already chose — never show banner
-    if (hasConsent()) return;
+    // 1. If user already consented, immediately remove any stray banner and exit
+    var existing = document.getElementById('cookie-banner');
+    if (hasConsent()) {
+      if (existing && existing.parentNode) {
+        existing.parentNode.removeChild(existing);
+      }
+      return;
+    }
 
-    // Avoid duplicate banners (e.g. script loaded twice)
-    if (document.getElementById('gnm-cookie-banner')) return;
-
-    // Ensure body is available
+    // 2. Ensure body is ready
     if (!document.body) {
       document.addEventListener('DOMContentLoaded', initCookieConsent);
       return;
@@ -110,54 +106,66 @@
 
     injectStyles();
 
-    var banner = document.createElement('aside');
-    banner.id = 'gnm-cookie-banner';
-    banner.setAttribute('role', 'dialog');
-    banner.setAttribute('aria-modal', 'false');
-    banner.setAttribute('aria-label', 'Cookie consent');
+    var banner = existing;
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'cookie-banner';
+      banner.setAttribute('role', 'dialog');
+      banner.setAttribute('aria-label', 'Cookie and storage notice');
+      banner.setAttribute('aria-describedby', 'cookie-desc');
+      banner.innerHTML =
+        '<p class="cookie-text" id="cookie-desc">' +
+          'We use browser storage (localStorage) to save your session and bookings on this device. We don\'t use advertising cookies or tracking pixels. ' +
+          '<a href="cookies.html">Learn more in our Cookies Policy</a>.' +
+        '</p>' +
+        '<div class="cookie-actions">' +
+          '<button type="button" class="cookie-btn-decline" id="cookie-decline" aria-label="Decline non-essential storage">Decline</button>' +
+          '<button type="button" class="cookie-btn-accept" id="cookie-accept" aria-label="Accept and continue to site">Accept &amp; Continue</button>' +
+        '</div>';
+      document.body.appendChild(banner);
+    }
 
-    // Build inner HTML — note: NO inline onclick (CSP-friendly handled below)
-    banner.innerHTML =
-      '<div class="gnm-cookie-text">' +
-        '<strong>Privacy &amp; Fair Play:</strong> We use local device storage to save your bookings and filters. ' +
-        'No invasive tracking. ' +
-        'See our <a href="cookies.html">Cookies Policy</a> and <a href="privacy-policy.html">Privacy Policy</a>.' +
-      '</div>' +
-      '<div class="gnm-cookie-actions">' +
-        '<button type="button" class="gnm-cookie-btn gnm-cb-decline" id="gnm-cookie-decline" aria-label="Accept essential cookies only">Essential Only</button>' +
-        '<button type="button" class="gnm-cookie-btn gnm-cb-accept" id="gnm-cookie-accept" aria-label="Accept all cookies">Accept All</button>' +
-      '</div>';
+    var btnAccept = document.getElementById('cookie-accept');
+    var btnDecline = document.getElementById('cookie-decline');
 
-    document.body.appendChild(banner);
-
-    // Grab buttons from the live DOM (after append) — avoids any timing issue
-    var btnAccept  = document.getElementById('gnm-cookie-accept');
-    var btnDecline = document.getElementById('gnm-cookie-decline');
-
-    function handleAccept() {
+    function onAccept(e) {
+      if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
       saveConsent('accepted');
-      removeBanner(banner);
+      hideAndRemove(banner);
     }
 
-    function handleDecline() {
-      saveConsent('essential_only');
-      removeBanner(banner);
+    function onDecline(e) {
+      if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
+      saveConsent('declined');
+      hideAndRemove(banner);
     }
 
-    if (btnAccept)  btnAccept.addEventListener('click', handleAccept);
-    if (btnDecline) btnDecline.addEventListener('click', handleDecline);
+    if (btnAccept) {
+      btnAccept.onclick = onAccept;
+      btnAccept.addEventListener('click', onAccept);
+    }
 
-    // Slide in after next paint (guarantees transition plays)
+    if (btnDecline) {
+      btnDecline.onclick = onDecline;
+      btnDecline.addEventListener('click', onDecline);
+    }
+
+    // Trigger slide-up animation
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         if (banner && banner.parentNode) {
-          banner.classList.add('gnm-cookie-show');
+          banner.classList.add('visible');
         }
       });
     });
   }
 
-  // Run as early as possible but safely
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initCookieConsent);
   } else {

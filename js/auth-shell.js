@@ -393,12 +393,6 @@ const AuthShell = {
                       <span>My Profile</span>
                     </button>
                   </li>
-                  <li class="account-menu-item">
-                    <a href="owner/index.html">
-                      <i class="ph-thin ph-buildings"></i>
-                      <span>Owner Portal</span>
-                    </a>
-                  </li>
                   <li class="account-menu-divider"></li>
                   <li class="account-menu-item danger">
                     <button type="button" onclick="AuthShell.handleLogout()">

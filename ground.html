@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cricket Ground Booking Karachi — GroundsNearMe</title>
-  <meta name="description" id="pageMetaDesc" content="View cricket ground photos, facilities, hourly rates, and book real-time available slots in Karachi." />
-  <meta name="keywords" content="cricket ground karachi, book cricket turf, indoor cricket slots, cricket ground hourly rate" />
+  <title>Book Cricket Ground & Indoor Turf Karachi | GroundsNearMe</title>
+  <meta name="description" id="pageMetaDesc" content="Book cricket grounds, indoor cricket pitches, and box cricket turf near you in Karachi. Check live available slots, hourly rates, amenities, and book instantly." />
+  <meta name="keywords" content="indoor cricket karachi, cricket grounds near me, indoor cricket near me, cricket ground booking karachi, box cricket karachi, turf booking karachi, cricket ground hourly rate" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" id="pageCanonical" href="https://groundsnearme.pk/ground.html" />
 
@@ -77,7 +77,8 @@
     .btn-nav-contact{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--emerald);background:var(--emerald);color:var(--white);border-radius:999px;padding:8px 20px;font-size:0.8125rem;font-weight:700;letter-spacing:0.01em;text-decoration:none;transition:all 0.25s cubic-bezier(0.22,1,0.36,1)}
     .btn-nav-contact:hover{background:var(--emerald-mid);color:var(--white);transform:translateX(2px)}
     
-    .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;z-index:1100}
+    .hamburger{display:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:10px;min-width:44px;min-height:44px;z-index:1100}
+    .hamburger:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;border-radius:4px;}
     .hamburger span{display:block;width:22px;height:2px;background:var(--emerald);transition:transform 0.35s cubic-bezier(0.22,1,0.36,1),opacity 0.25s cubic-bezier(0.22,1,0.36,1);transform-origin:center}
     .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
     .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
@@ -569,6 +570,18 @@
       let galleryHtml = '';
       let thumbsHtml = '';
       const areaName = ground.area ? (ground.area.name || ground.area) : 'Karachi';
+      
+      // Update page title & meta tags dynamically for SEO
+      document.title = `${ground.name} — Book Cricket Ground & Indoor Slots in ${areaName} | GroundsNearMe`;
+      const metaDescEl = document.getElementById('pageMetaDesc');
+      if (metaDescEl) metaDescEl.setAttribute('content', `Book slots at ${ground.name} in ${areaName}, Karachi. Hourly rate ${formatCurrency(ground.price_per_hour)}. View photos, facilities, and live available slots.`);
+      const canonicalEl = document.getElementById('pageCanonical');
+      if (canonicalEl) canonicalEl.setAttribute('href', groundUrl);
+      const ogTitleEl = document.getElementById('ogTitle');
+      if (ogTitleEl) ogTitleEl.setAttribute('content', `${ground.name} — Cricket Ground in ${areaName} | GroundsNearMe`);
+      const ogDescEl = document.getElementById('ogDesc');
+      if (ogDescEl) ogDescEl.setAttribute('content', `Book cricket slots at ${ground.name} in ${areaName}. Check live availability and book online.`);
+      
       if (galleryImages.length > 0) {
         const heroImg = galleryImages[0];
         galleryHtml = `

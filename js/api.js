@@ -50,7 +50,7 @@ const GNM = {
 
   async loadAreas() {
     try {
-      this.areas = await this.fetch('areas?select=*&is_active=eq.true&order=sort_order.asc');
+      this.areas = await this.fetch('areas?select=id,name,slug,sort_order&is_active=eq.true&order=sort_order.asc');
     } catch (e) {
       console.error('Error loading areas:', e);
     }
@@ -58,15 +58,20 @@ const GNM = {
 
   async loadGrounds() {
     try {
-      this.grounds = await this.fetch('grounds?select=*,area:areas(name,slug)&status=eq.active&order=is_featured.desc,featured_rank.asc,created_at.desc');
+      this.grounds = await this.fetch('grounds?select=id,slug,name,owner_id,area_id,city,address,description,ground_type,surface,pitch_count,price_per_hour,weekend_price_per_hour,whatsapp_number,contact_name,amenities,cover_image_url,status,listing_tier,is_featured,featured_rank,rating,review_count,area:areas(name,slug)&status=eq.active&order=is_featured.desc,featured_rank.asc,created_at.desc');
     } catch (e) {
       console.error('Error loading grounds:', e);
+    }
+    if (!this.grounds || this.grounds.length === 0) {
+      if (typeof MOCK_GROUNDS !== 'undefined') {
+        this.grounds = MOCK_GROUNDS.filter(g => g.status === 'active');
+      }
     }
   },
 
   async loadMatchmaking() {
     try {
-      this.games = await this.fetch('open_games?select=*,area:areas(name,slug),ground:grounds(name)&status=eq.open&order=match_date.asc,start_time.asc&limit=6');
+      this.games = await this.fetch('open_games?select=id,title,host_handle,skill_level,format,match_date,start_time,status,area:areas(name,slug),ground:grounds(name)&status=eq.open&order=match_date.asc,start_time.asc&limit=6');
     } catch (e) {
       console.error('Error loading matchmaking:', e);
     }
@@ -146,20 +151,28 @@ const GNM = {
     grid.innerHTML = filtered.map((g, index) => {
       const delay = (0.05 * (index + 1)).toFixed(2);
       const amenities = Array.isArray(g.amenities) ? g.amenities : [];
-      const waNumber = (g.whatsapp_number || '920000000000').replace(/\D/g, '');
+      let waNumber = (g.whatsapp_number || '923362308445').replace(/\D/g, '');
+      if (waNumber.startsWith('03') && waNumber.length === 11) waNumber = '92' + waNumber.slice(1);
+      else if (waNumber.startsWith('0092')) waNumber = waNumber.slice(2);
       const waText = encodeURIComponent(`Hi, I found ${g.name} on GroundsNearMe and want to check slot availability.`);
       const waUrl = `https://wa.me/${waNumber}?text=${waText}`;
       const detailUrl = `ground.html?id=${g.slug || g.id}`;
 
+      let coverImg = g.cover_image_url;
+      if (!coverImg && typeof MOCK_GROUNDS !== 'undefined') {
+        const mockMatch = MOCK_GROUNDS.find(m => m.slug === g.slug || m.id === g.id || m.supabase_id === g.id);
+        if (mockMatch) coverImg = mockMatch.cover_image_url;
+      }
+      if (!coverImg) {
+        coverImg = 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&q=80';
+      }
+
+      const areaText = g.area?.name || g.city || 'Karachi';
       return `
         <div class="card-outer venue-card reveal visible" style="transition-delay:${delay}s">
           <div class="card-inner">
-            <a href="${detailUrl}" class="venue-img-area" style="display:block; text-decoration:none; color:inherit; cursor:pointer;">
-              ${g.cover_image_url ? `
-                <img src="${g.cover_image_url.startsWith('http') ? g.cover_image_url : GNM_CONFIG.r2BaseUrl + '/' + g.cover_image_url}" alt="${g.name}" style="width:100%; height:100%; object-fit:cover;" />
-              ` : `
-                <span class="venue-img-label">${g.surface || 'Cricket Ground'}</span>
-              `}
+            <a href="${detailUrl}" class="venue-img-area" style="display:block; text-decoration:none; color:inherit; cursor:pointer;" aria-label="View details and slots for ${g.name}">
+              <img src="${coverImg.startsWith('http') ? coverImg : GNM_CONFIG.r2BaseUrl + '/' + coverImg}" alt="${g.name} cricket pitch in ${areaText}" loading="lazy" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&q=80';" />
               <span class="venue-badge badge-open">Slots Open</span>
             </a>
             <div class="venue-body">
@@ -167,7 +180,7 @@ const GNM = {
                 <h3 class="venue-name"><a href="${detailUrl}" style="color:inherit; text-decoration:none;">${g.name}</a></h3>
                 ${g.listing_tier === 'pro' ? `<span class="badge badge-pro" style="font-size:10px; padding:2px 6px; background:var(--emerald); color:var(--lime); font-weight:800; border-radius:4px;">PRO</span>` : ''}
               </div>
-              <div class="venue-area"><i class="ph-thin ph-map-pin"></i> ${g.area?.name || g.city || 'Karachi'}</div>
+              <div class="venue-area"><i class="ph-thin ph-map-pin"></i> ${areaText}</div>
               <div class="venue-price">PKR ${Number(g.price_per_hour).toLocaleString()} / hour</div>
               <div class="venue-amenities">
                 ${amenities.slice(0, 4).map(a => `<span class="amenity-tag">${a}</span>`).join('')}
@@ -176,7 +189,7 @@ const GNM = {
                 <a href="${detailUrl}" class="venue-slots-link">
                   View Slots <i class="ph-thin ph-arrow-right"></i>
                 </a>
-                <a href="${waUrl}" target="_blank" rel="noopener" class="venue-wa-btn" aria-label="Chat on WhatsApp">
+                <a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="venue-wa-btn" aria-label="Chat with ${g.name} management on WhatsApp">
                   <i class="ph-thin ph-whatsapp-logo"></i>
                 </a>
               </div>
@@ -219,7 +232,7 @@ const GNM = {
             <div class="match-interest">
               <i class="ph-thin ph-calendar"></i> ${game.match_date} at ${(game.start_time || '').slice(0, 5)}
             </div>
-            <a href="https://wa.me/923000000000?text=${encodeURIComponent('Hi, I want to join match: ' + game.title)}" target="_blank" class="btn-join">
+            <a href="https://wa.me/923362308445?text=${encodeURIComponent('Hi, I want to join match: ' + game.title)}" target="_blank" rel="noopener noreferrer" class="btn-join" aria-label="Join match ${game.title} via WhatsApp">
               Join Game <i class="ph-thin ph-arrow-right" style="font-size:11px"></i>
             </a>
           </div>

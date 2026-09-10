@@ -57,7 +57,7 @@ const SupabaseGrounds = {
   async getAll() {
     if (this._cache) return this._cache;
     try {
-      const rows = await gnmFetch('grounds?select=*&status=eq.active&order=name.asc');
+      const rows = await gnmFetch('grounds?select=id,slug,name,owner_id,area_id,city,address,description,ground_type,surface,pitch_count,price_per_hour,weekend_price_per_hour,whatsapp_number,contact_name,amenities,cover_image_url,status,listing_tier,is_featured,featured_rank,rating,review_count&status=eq.active&order=name.asc');
       if (rows && rows.length > 0) {
         this._cache = rows.map(g => this._enrich(g));
         return this._cache;
@@ -134,10 +134,14 @@ const SupabaseBookings = {
    * immediately reflected in both the player and owner portals.
    */
   async createBooking(payload) {
-    const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let randSuffix = '';
+    for (let i = 0; i < 6; i++) {
+      randSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     const full = {
       booking_ref:      `GNM-2026-${randSuffix}`,
-      source:           'owner', // 'owner' is permitted by DB enum
+      source:           'web',
       status:           'confirmed',
       payment_status:   'unpaid',
       currency:         'PKR',
@@ -237,19 +241,42 @@ const SupabaseBookings = {
   },
 
   /**
-   * Cancel a booking.
+   * Cancel a booking and immediately release the slot so it becomes available.
    */
-  async cancelBooking(bookingId) {
-    try {
-      await gnmFetch(`bookings?id=eq.${bookingId}`, {
-        method:  'PATCH',
-        body:    JSON.stringify({ status: 'cancelled' }),
-        headers: { 'Prefer': 'return=minimal' }
-      });
-    } catch (_) {}
+  async cancelBooking(bookingId, bookingRef = null, reason = 'Cancelled by customer') {
+    let success = false;
 
+    // 1. Primary: release_booking RPC (security definer, unblocks slot in DB)
+    try {
+      const res = await gnmFetch('rpc/release_booking', {
+        method: 'POST',
+        body: JSON.stringify({
+          p_booking_id: (bookingId && bookingId.length === 36 && bookingId.includes('-')) ? bookingId : null,
+          p_booking_ref: bookingRef || (bookingId && bookingId.startsWith('GNM-') ? bookingId : null),
+          p_reason: reason
+        })
+      });
+      if (res && res.ok) success = true;
+    } catch (err) {
+      console.warn('[GNM] release_booking RPC error:', err.message);
+    }
+
+    // 2. Fallback: Direct PATCH if user has authenticated token
+    if (!success) {
+      try {
+        await gnmFetch(`bookings?id=eq.${bookingId}`, {
+          method:  'PATCH',
+          body:    JSON.stringify({ status: 'cancelled', cancellation_reason: reason, cancelled_at: new Date().toISOString() }),
+          headers: { 'Prefer': 'return=minimal' }
+        });
+        success = true;
+      } catch (_) {}
+    }
+
+    // 3. Always update local store so UI reopens slot immediately
     if (typeof MockBookingStore !== 'undefined') {
       MockBookingStore.cancelBooking(bookingId);
+      if (bookingRef) MockBookingStore.cancelBookingByRef(bookingRef);
     }
     return true;
   }
@@ -257,13 +284,13 @@ const SupabaseBookings = {
 
 
 /* ─────────────────────────────────────────
-   LIVE SLOT STORE
+   LIVE SLOT STORE & OWNER SLOT API
    ───────────────────────────────────────── */
 const LiveSlotStore = {
   async getSlotsForDate(groundId, dateStr) {
     const liveBookings = await SupabaseBookings.getBookingsForGroundDate(groundId, dateStr);
     const bookedTimes = liveBookings
-      .filter(b => b.status !== 'cancelled')
+      .filter(b => b.status !== 'cancelled' && b.status !== 'expired' && b.status !== 'rejected')
       .map(b => b.start_time ? b.start_time.slice(0, 5) : null)
       .filter(Boolean);
 
@@ -275,10 +302,7 @@ const LiveSlotStore = {
       const endTime = `${String(nextH).padStart(2, '0')}:00`;
       const label   = LiveSlotStore._fmt(actualH) + ' – ' + LiveSlotStore._fmt(nextH);
 
-      const seed        = LiveSlotStore._hash(String(groundId) + dateStr + h);
-      const isPreBooked = (seed % 6 === 0); // ~16% deterministic pre-booked
-
-      const isBooked = bookedTimes.includes(time) || isPreBooked;
+      const isBooked = bookedTimes.includes(time);
       slots.push({
         time:    time + ':00',
         endTime: endTime + ':00',
@@ -305,3 +329,132 @@ const LiveSlotStore = {
     return Math.abs(hash);
   }
 };
+
+const SupabaseSlots = {
+  /**
+   * Block a single slot (mark as Not Available).
+   */
+  async blockSlot(groundId, dateStr, startTime, endTime, reason = 'Blocked by turf manager') {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let randSuffix = '';
+    for (let i = 0; i < 6; i++) {
+      randSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const payload = {
+      booking_ref: `GNM-2026-${randSuffix}`,
+      ground_id: groundId,
+      booking_date: dateStr,
+      start_time: startTime.length === 5 ? startTime + ':00' : startTime,
+      end_time: endTime ? (endTime.length === 5 ? endTime + ':00' : endTime) : undefined,
+      duration_minutes: 60,
+      contact_name: 'Unavailable (Owner Block)',
+      contact_phone: '923000000000',
+      notes: reason,
+      source: 'owner',
+      payment_status: 'unpaid',
+      status: 'confirmed',
+      price_per_hour: 1,
+      total_amount: 0,
+      currency: 'PKR',
+      confirmed_at: new Date().toISOString()
+    };
+
+    let created = null;
+    try {
+      created = await gnmFetch('bookings', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Prefer': 'return=representation' }
+      });
+      if (Array.isArray(created)) created = created[0];
+    } catch (err) {
+      console.warn('[GNM] Supabase slot block error:', err.message);
+    }
+
+    // Persist to local storage
+    try {
+      const stored = JSON.parse(localStorage.getItem('gnm_bookings') || '[]');
+      const blockRecord = {
+        id: created ? created.id : 'bk-blk-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+        ...payload
+      };
+      stored.push(blockRecord);
+      localStorage.setItem('gnm_bookings', JSON.stringify(stored));
+      return blockRecord;
+    } catch (_) {
+      return created || payload;
+    }
+  },
+
+  /**
+   * Unblock a slot (mark as Available).
+   */
+  async unblockSlot(groundId, dateStr, startTime) {
+    const timePrefix = startTime.slice(0, 5);
+
+    // 1. Try deleting or cancelling from Supabase
+    try {
+      await gnmFetch(`bookings?ground_id=eq.${encodeURIComponent(groundId)}&booking_date=eq.${dateStr}&start_time=like.${timePrefix}%`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'cancelled' }),
+        headers: { 'Prefer': 'return=minimal' }
+      });
+    } catch (err) {
+      console.warn('[GNM] Supabase slot unblock error:', err.message);
+    }
+
+    // 2. Remove / cancel in localStorage
+    try {
+      const stored = JSON.parse(localStorage.getItem('gnm_bookings') || '[]');
+      const updated = stored.filter(b => {
+        const isMatch = (b.ground_id === groundId || b.ground_id === 'g-001' || b.ground_id === 'g-002') &&
+                        b.booking_date === dateStr &&
+                        b.start_time.slice(0, 5) === timePrefix;
+        return !isMatch;
+      });
+      localStorage.setItem('gnm_bookings', JSON.stringify(updated));
+    } catch (_) {}
+
+    return true;
+  },
+
+  /**
+   * Block entire day (all slots).
+   */
+  async blockDay(groundId, dateStr, reason = 'Day closed for maintenance') {
+    const promises = [];
+    for (let h = 9; h < 26; h++) {
+      const actualH = h % 24;
+      const nextH = (h + 1) % 24;
+      const sTime = `${String(actualH).padStart(2, '0')}:00:00`;
+      const eTime = `${String(nextH).padStart(2, '0')}:00:00`;
+      promises.push(this.blockSlot(groundId, dateStr, sTime, eTime, reason));
+    }
+    return Promise.all(promises);
+  },
+
+  /**
+   * Unblock entire day (remove all owner blocks).
+   */
+  async unblockDay(groundId, dateStr) {
+    try {
+      await gnmFetch(`bookings?ground_id=eq.${encodeURIComponent(groundId)}&booking_date=eq.${dateStr}&source=eq.owner`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'cancelled' }),
+        headers: { 'Prefer': 'return=minimal' }
+      });
+    } catch (_) {}
+
+    try {
+      const stored = JSON.parse(localStorage.getItem('gnm_bookings') || '[]');
+      const updated = stored.filter(b => {
+        const isMatch = (b.ground_id === groundId) && b.booking_date === dateStr && b.source === 'owner';
+        return !isMatch;
+      });
+      localStorage.setItem('gnm_bookings', JSON.stringify(updated));
+    } catch (_) {}
+
+    return true;
+  }
+};
+

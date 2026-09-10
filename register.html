@@ -114,6 +114,13 @@
       .card-inner{padding:28px 20px}
       .auth-page{padding-top:100px}
     }
+
+    /* Consent Checkbox */
+    .consent-group{margin-top:4px}
+    .consent-label{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:0.8125rem;color:var(--muted);line-height:1.6}
+    .consent-label input[type="checkbox"]{width:18px;height:18px;accent-color:var(--emerald);flex-shrink:0;margin-top:2px;cursor:pointer}
+    .consent-label a{color:var(--emerald);font-weight:600;text-decoration:underline}
+    .consent-label a:hover{color:var(--emerald-mid)}
   </style>
 </head>
 <body>
@@ -244,6 +251,22 @@
               </div>
             </div>
 
+            <div class="form-group consent-group">
+              <label class="consent-label" for="regConsent">
+                <input
+                  type="checkbox"
+                  id="regConsent"
+                  name="consent"
+                  required
+                />
+                <span>I have read and agree to the
+                  <a href="terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+                  and <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.
+                  I consent to my name and phone number being shared with ground owners to fulfil my bookings.
+                </span>
+              </label>
+            </div>
+
             <button type="submit" class="btn-primary" id="btnSubmit">
               <span>Create Account</span>
               <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>
@@ -284,8 +307,17 @@
         <div>
           <p class="footer-col-title">Support</p>
           <ul class="footer-links">
-            <li><a href="https://wa.me/92XXXXXXXXXX">WhatsApp Support</a></li>
+            <li><a href="https://wa.me/923362308445" rel="noopener">WhatsApp Support</a></li>
             <li><a href="mailto:hello@groundsnearme.pk">hello@groundsnearme.pk</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-col-title">Legal</p>
+          <ul class="footer-links">
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="refund-policy.html">Refund Policy</a></li>
+            <li><a href="cookies.html">Cookies Policy</a></li>
           </ul>
         </div>
       </div>
@@ -411,5 +443,6 @@
     );
     revealEls.forEach(el => revealObserver.observe(el));
   </script>
+  <script src="js/cookie-consent.js"></script>
 </body>
 </html>

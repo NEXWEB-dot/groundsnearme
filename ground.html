@@ -3,8 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ground Detail — GroundsNearMe</title>
-  <meta name="description" content="View ground details, photos, and book available slots instantly." />
+  <title>Cricket Ground Booking Karachi — GroundsNearMe</title>
+  <meta name="description" id="pageMetaDesc" content="View cricket ground photos, facilities, hourly rates, and book real-time available slots in Karachi." />
+  <meta name="keywords" content="cricket ground karachi, book cricket turf, indoor cricket slots, cricket ground hourly rate" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" id="pageCanonical" href="https://groundsnearme.pk/ground.html" />
+
+  <!-- Geotags -->
+  <meta name="geo.region" content="PK-SD" />
+  <meta name="geo.placename" content="Karachi" />
+  <meta name="geo.position" content="24.8607;67.0011" />
+  <meta name="ICBM" content="24.8607, 67.0011" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="place" />
+  <meta property="og:site_name" content="GroundsNearMe" />
+  <meta property="og:title" id="ogTitle" content="Cricket Ground Detail — GroundsNearMe" />
+  <meta property="og:description" id="ogDesc" content="View floodlight cricket ground photos, amenities, and book available slots online." />
+  <meta property="og:image" id="ogImage" content="https://groundsnearme.pk/assets/hero-cricket.jpg" />
+  <meta property="og:locale" content="en_PK" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" id="twTitle" content="Cricket Ground Detail — GroundsNearMe" />
+  <meta name="twitter:description" id="twDesc" content="Check hourly rates and book available cricket slots online." />
+  <meta name="twitter:image" id="twImage" content="https://groundsnearme.pk/assets/hero-cricket.jpg" />
+
   <link rel="icon" type="image/jpeg" href="assets/favicon.jpg" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,7 +47,7 @@
     body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--white);color:var(--ink);font-size:1rem;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
     img{display:block;max-width:100%} a{color:inherit;text-decoration:none} button{font-family:inherit}
     .container{max-width:1240px;margin:0 auto;padding:0 40px}
-    .eyebrow{font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime-dark);display:block;margin-bottom:16px}
+    .eyebrow{font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:var(--emerald-mid);display:block;margin-bottom:16px}
     .section-heading{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;letter-spacing:-0.025em;line-height:1.1;color:var(--ink)}
     
     .card-outer{background:var(--card-bg);border:1px solid var(--border);padding:6px;border-radius:0;}
@@ -110,8 +134,9 @@
     .hero-img-wrap{background:var(--card-bg);border:1px solid var(--border);aspect-ratio:16/10;overflow:hidden;}
     .hero-img-wrap img{width:100%;height:100%;object-fit:cover;transition:opacity 0.3s ease;}
     .thumbnails-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
-    .thumb-wrap{flex:0 0 auto;width:120px;aspect-ratio:16/10;border:1px solid var(--border);background:var(--card-bg);cursor:pointer;opacity:0.6;transition:opacity 0.2s ease;}
+    .thumb-wrap{flex:0 0 auto;width:120px;aspect-ratio:16/10;border:1px solid var(--border);background:var(--card-bg);cursor:pointer;opacity:0.6;transition:opacity 0.2s ease;padding:0;outline:none;}
     .thumb-wrap:hover, .thumb-wrap.active{opacity:1;}
+    .thumb-wrap:focus-visible{opacity:1;outline:2px solid var(--emerald);outline-offset:2px;}
     .thumb-wrap img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
 
     /* Right: Info */
@@ -154,6 +179,10 @@
     .slot-btn.available:hover{background:var(--card-bg);}
     .slot-btn.booked{background:var(--off);border-color:var(--border);color:var(--muted);cursor:not-allowed;}
     .slot-btn.selected{background:var(--lime);border-color:var(--emerald);color:var(--emerald);font-weight:800;}
+    .slot-btn:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;}
+    .day-pill:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;}
+    .btn-wa:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;}
+    #btn-book-slot:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;}
     
     .booking-cta-wrap{margin-top:24px;}
     #btn-book-slot{width:100%;font-size:1rem;padding:18px;}
@@ -318,36 +347,39 @@
       <div class="footer-top">
         <div class="footer-col-brand">
           <div class="footer-brand-logo"><span class="grounds">Grounds</span><span class="nearme">NearMe</span></div>
-          <p class="footer-tagline">Pakistan's first true booking platform for cricket grounds. Stop calling, start playing.</p>
+          <p class="footer-tagline">Karachi's dedicated cricket ground directory and slot booking platform. Stop calling, start playing.</p>
         </div>
         <div class="footer-col">
-          <div class="footer-col-title">Players</div>
+          <p class="footer-col-title">Players</p>
           <ul class="footer-links">
             <li><a href="index.html#featured-grounds">Find a Ground</a></li>
-            <li><a href="index.html#how-it-works">How it Works</a></li>
+            <li><a href="index.html#how-it-works">How It Works</a></li>
             <li><a href="index.html#matchmaking">Matchmaking</a></li>
+            <li><a href="my-bookings.html">My Bookings</a></li>
           </ul>
         </div>
         <div class="footer-col">
-          <div class="footer-col-title">Owners</div>
+          <p class="footer-col-title">For Owners</p>
           <ul class="footer-links">
             <li><a href="index.html#for-owners">List Your Ground</a></li>
-            <li><a href="#">Owner Login</a></li>
-            <li><a href="#">Success Stories</a></li>
+            <li><a href="owner/index.html">Owner Dashboard</a></li>
+            <li><a href="https://wa.me/923362308445" rel="noopener">WhatsApp Us</a></li>
+            <li><a href="mailto:hello@groundsnearme.pk">Email Us</a></li>
           </ul>
         </div>
         <div class="footer-col">
-          <div class="footer-col-title">Company</div>
+          <p class="footer-col-title">Legal</p>
           <ul class="footer-links">
-            <li><a href="#">About Us</a></li>
-            <li><a href="#">Contact</a></li>
-            <li><a href="#">Terms & Privacy</a></li>
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="refund-policy.html">Refund Policy</a></li>
+            <li><a href="cookies.html">Cookies Policy</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
-        <div class="footer-copy">&copy; 2026 GroundsNearMe. All rights reserved.</div>
-        <div class="footer-made">Made for Karachi's cricketers.</div>
+        <p class="footer-copy">&copy; 2026 GroundsNearMe &middot; groundsnearme.pk</p>
+        <p class="footer-made">Made for Karachi's cricketers &#x1F3CF;</p>
       </div>
     </div>
   </footer>
@@ -417,31 +449,114 @@
         return;
       }
 
-      document.title = `${ground.name} — GroundsNearMe`;
+      // Dynamic SEO Meta & Schema Generation
+      const pageTitle = `${ground.name} Karachi — Book Cricket Slots Online | GroundsNearMe`;
+      const pageDesc = `Book slots at ${ground.name} in ${ground.area?.name || 'Karachi'}. Hourly rate: PKR ${Number(ground.price_per_hour).toLocaleString()} / hour. Surface: ${ground.surface || 'Turf'}. Check live available slots and book instantly.`;
+      const groundImg = ground.cover_image_url || (ground.gallery_images && ground.gallery_images[0]) || 'https://groundsnearme.pk/assets/hero-cricket.jpg';
+      const groundUrl = `https://groundsnearme.pk/ground.html?id=${ground.slug || ground.id}`;
+
+      document.title = pageTitle;
+      const metaDescEl = document.getElementById('pageMetaDesc');
+      if (metaDescEl) metaDescEl.content = pageDesc;
+      const canonEl = document.getElementById('pageCanonical');
+      if (canonEl) canonEl.href = groundUrl;
+
+      // Update Open Graph & Twitter
+      const ogTitleEl = document.getElementById('ogTitle'); if (ogTitleEl) ogTitleEl.content = pageTitle;
+      const ogDescEl = document.getElementById('ogDesc'); if (ogDescEl) ogDescEl.content = pageDesc;
+      const ogImgEl = document.getElementById('ogImage'); if (ogImgEl) ogImgEl.content = groundImg;
+      const twTitleEl = document.getElementById('twTitle'); if (twTitleEl) twTitleEl.content = pageTitle;
+      const twDescEl = document.getElementById('twDesc'); if (twDescEl) twDescEl.content = pageDesc;
+      const twImgEl = document.getElementById('twImage'); if (twImgEl) twImgEl.content = groundImg;
+
+      // Inject Schema.org SportsActivityLocation + Breadcrumb JSON-LD
+      const schemaScript = document.createElement('script');
+      schemaScript.type = 'application/ld+json';
+      schemaScript.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SportsActivityLocation",
+            "@id": `${groundUrl}#venue`,
+            "name": ground.name,
+            "url": groundUrl,
+            "description": ground.description || pageDesc,
+            "image": groundImg,
+            "priceRange": `PKR ${Number(ground.price_per_hour).toLocaleString()} / hour`,
+            "telephone": ground.whatsapp_number ? `+${ground.whatsapp_number}` : "+923362308445",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": ground.address || ground.name,
+              "addressLocality": ground.area?.name || "Karachi",
+              "addressRegion": "Sindh",
+              "addressCountry": "PK"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": ground.latitude || 24.8607,
+              "longitude": ground.longitude || 67.0011
+            },
+            "openingHoursSpecification": [
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+                "opens": "09:00",
+                "closes": "02:00"
+              }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://groundsnearme.pk/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Cricket Grounds",
+                "item": "https://groundsnearme.pk/#featured-grounds"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": ground.name,
+                "item": groundUrl
+              }
+            ]
+          }
+        ]
+      });
+      document.head.appendChild(schemaScript);
+
 
       // Render Ground Detail
       const formatCurrency = (val) => `PKR ${Number(val).toLocaleString()}`;
       
       let galleryHtml = '';
       let thumbsHtml = '';
+      const areaName = ground.area ? ground.area.name : 'Karachi';
       if (ground.gallery_images && ground.gallery_images.length > 0) {
         const heroImg = ground.gallery_images[0];
         galleryHtml = `
           <div class="hero-img-wrap">
-            <img src="${heroImg}" alt="${ground.name}" id="mainGalleryImg" />
+            <img src="${heroImg}" alt="${ground.name} cricket pitch in ${areaName}" id="mainGalleryImg" />
           </div>
         `;
         if (ground.gallery_images.length > 1) {
-          thumbsHtml = `<div class="thumbnails-row">`;
+          thumbsHtml = `<div class="thumbnails-row" role="region" aria-label="Photo gallery thumbnails">`;
           ground.gallery_images.forEach((img, idx) => {
-            thumbsHtml += `<div class="thumb-wrap ${idx === 0 ? 'active' : ''}" onclick="changeGalleryImage('${img}', this)">
-              <img src="${img}" alt="Thumbnail ${idx+1}" />
-            </div>`;
+            thumbsHtml += `<button type="button" class="thumb-wrap ${idx === 0 ? 'active' : ''}" aria-label="View photo ${idx+1} of ${ground.name}" onclick="changeGalleryImage('${img}', this)">
+              <img src="${img}" alt="${ground.name} photo ${idx+1}" loading="lazy" />
+            </button>`;
           });
           thumbsHtml += `</div>`;
         }
       } else {
-        galleryHtml = `<div class="hero-img-wrap"><img src="${ground.cover_image_url}" alt="${ground.name}" id="mainGalleryImg" /></div>`;
+        galleryHtml = `<div class="hero-img-wrap"><img src="${ground.cover_image_url}" alt="${ground.name} cricket pitch in ${areaName}" id="mainGalleryImg" /></div>`;
       }
 
       let amenitiesHtml = '';
@@ -493,7 +608,7 @@
                 </div>
 
                 <div class="contact-action">
-                  <a href="https://wa.me/${ground.whatsapp_number}" target="_blank" class="btn-wa">
+                  <a href="https://wa.me/${ground.whatsapp_number}" target="_blank" rel="noopener noreferrer" class="btn-wa" aria-label="Contact ${ground.name} owner via WhatsApp">
                     <i class="ph-bold ph-whatsapp-logo" style="font-size:20px;"></i> Contact Owner
                   </a>
                 </div>
@@ -518,7 +633,7 @@
                 </div>
               </div>
 
-              <div class="slots-grid" id="slotsGridContainer">
+              <div class="slots-grid" id="slotsGridContainer" aria-live="polite" aria-label="Available slots for booking">
                 <!-- Generated by JS -->
               </div>
 
@@ -766,5 +881,6 @@
       revealElems.forEach(el => revealObserver.observe(el));
     });
   </script>
+  <script src="js/cookie-consent.js"></script>
 </body>
 </html>

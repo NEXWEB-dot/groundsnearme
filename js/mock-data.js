@@ -433,9 +433,31 @@ const MockBookingStore = {
    */
   cancelBooking(bookingId) {
     const all = this._getAll();
-    const idx = all.findIndex(b => b.id === bookingId);
+    const idx = all.findIndex(b => b.id === bookingId || b.booking_ref === bookingId);
     if (idx === -1) return false;
     all[idx].status = 'cancelled';
+    this._saveAll(all);
+    return true;
+  },
+
+  /**
+   * Cancel a booking by reference.
+   */
+  cancelBookingByRef(bookingRef) {
+    const all = this._getAll();
+    const idx = all.findIndex(b => b.booking_ref === bookingRef);
+    if (idx === -1) return false;
+    all[idx].status = 'cancelled';
+    this._saveAll(all);
+    return true;
+  },
+
+  /**
+   * Hard delete a booking from local storage.
+   */
+  deleteBooking(bookingId) {
+    let all = this._getAll();
+    all = all.filter(b => b.id !== bookingId && b.booking_ref !== bookingId);
     this._saveAll(all);
     return true;
   },
@@ -458,8 +480,12 @@ const MockSlotStore = {
    * @returns {{ time: string, endTime: string, label: string, status: 'available'|'booked' }[]}
    */
   getSlotsForDate(groundId, dateStr) {
-    const bookedSlots = MockBookingStore.getBookingsForGroundDate(groundId, dateStr)
-      .filter(b => b.status !== 'cancelled')
+    const dayBookings = MockBookingStore.getBookingsForGroundDate(groundId, dateStr);
+    const bookedSlots = dayBookings
+      .filter(b => b.status !== 'cancelled' && b.status !== 'expired')
+      .map(b => b.start_time.slice(0, 5));
+    const cancelledSlots = dayBookings
+      .filter(b => b.status === 'cancelled')
       .map(b => b.start_time.slice(0, 5));
 
     const slots = [];
@@ -470,11 +496,11 @@ const MockSlotStore = {
       const endTime = `${String(nextH).padStart(2, '0')}:00`;
       const label = MockSlotStore.formatTimeLabel(actualH) + ' – ' + MockSlotStore.formatTimeLabel(nextH);
 
-      // Randomly pre-book some slots for demo realism (seed by ground+date+hour)
-      const seed = MockSlotStore._hash(groundId + dateStr + h);
-      const isPreBooked = (seed % 5 === 0); // ~20% slots pre-booked
+      // If explicitly cancelled, the slot is always available
+      const isExplicitlyCancelled = cancelledSlots.includes(time);
+      const isExplicitlyBooked = bookedSlots.includes(time);
 
-      const isBooked = bookedSlots.includes(time) || isPreBooked;
+      const isBooked = isExplicitlyBooked && !isExplicitlyCancelled;
       slots.push({ time: time + ':00', endTime: endTime + ':00', label, status: isBooked ? 'booked' : 'available' });
     }
     return slots;

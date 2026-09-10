@@ -224,11 +224,6 @@
               <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>
             </button>
 
-            <button type="button" class="demo-pill-btn" onclick="fillDemoCredentials()">
-              <i class="ph-bold ph-lightning" style="color:var(--lime-dark)"></i>
-              <span>Quick Demo Fill (Tariq Al-Mansoor)</span>
-            </button>
-
             <div class="auth-footer-link">
               Don't have an account? <a href="register.html">Create Account</a>
             </div>
@@ -264,8 +259,17 @@
         <div>
           <p class="footer-col-title">Support</p>
           <ul class="footer-links">
-            <li><a href="https://wa.me/92XXXXXXXXXX">WhatsApp Support</a></li>
+            <li><a href="https://wa.me/923362308445" rel="noopener">WhatsApp Support</a></li>
             <li><a href="mailto:hello@groundsnearme.pk">hello@groundsnearme.pk</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-col-title">Legal</p>
+          <ul class="footer-links">
+            <li><a href="terms.html">Terms &amp; Conditions</a></li>
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="refund-policy.html">Refund Policy</a></li>
+            <li><a href="cookies.html">Cookies Policy</a></li>
           </ul>
         </div>
       </div>
@@ -311,13 +315,6 @@
       passwordEyeIcon.className = isPassword ? 'ph-thin ph-eye-slash' : 'ph-thin ph-eye';
     });
 
-    // Demo credentials helper
-    function fillDemoCredentials() {
-      document.getElementById('loginIdentifier').value = '0312-5551234';
-      document.getElementById('loginPassword').value = 'cricket2026';
-      hideError();
-    }
-
     function showError(msg) {
       const alert = document.getElementById('errorAlert');
       const msgEl = document.getElementById('errorMessage');
@@ -329,8 +326,8 @@
       document.getElementById('errorAlert').classList.remove('show');
     }
 
-    // Login Submission
-    function handleLogin(e) {
+    // Login Submission (Supabase Auth + Phone Fallback)
+    async function handleLogin(e) {
       e.preventDefault();
       hideError();
 
@@ -353,21 +350,51 @@
       btn.disabled = true;
       btn.innerHTML = `<span>Logging in...</span>`;
 
-      setTimeout(() => {
+      let loggedIn = false;
+
+      // 1. If identifier contains '@', try Supabase Auth
+      if (identifier.includes('@')) {
         try {
-          const user = MockAuth.login(identifier, password);
-          
-          // Check for redirect param
-          const urlParams = new URLSearchParams(window.location.search);
-          const redirect = urlParams.get('redirect') || 'my-bookings.html';
-          
-          window.location.href = redirect;
+          const res = await fetch('https://mfybkflgkjpuqhlthagt.supabase.co/auth/v1/token?grant_type=password', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1meWJrZmxna2pwdXFobHRoYWd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNzEzNzgsImV4cCI6MjEwMzc0NzM3OH0.z5r3FXEsGS7OPLR1Rugn7XDlYHxKMhdvDWsUcfnL20I'
+            },
+            body: JSON.stringify({ email: identifier, password })
+          });
+          const data = await res.json();
+          if (res.ok && data.access_token) {
+            sessionStorage.setItem('gnm_supabase_session', JSON.stringify(data));
+            const userObj = {
+              id: data.user.id,
+              name: data.user.user_metadata?.full_name || identifier.split('@')[0],
+              email: data.user.email,
+              phone: data.user.user_metadata?.phone || '',
+              role: data.user.user_metadata?.account_type || 'player'
+            };
+            localStorage.setItem('gnm_user', JSON.stringify(userObj));
+            loggedIn = true;
+          }
+        } catch (_) {}
+      }
+
+      // 2. Phone number or offline fallback
+      if (!loggedIn) {
+        try {
+          MockAuth.login(identifier, password);
+          loggedIn = true;
         } catch (err) {
           showError(err.message || 'Login failed. Please verify your credentials.');
           btn.disabled = false;
           btn.innerHTML = `<span>Log In</span> <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>`;
+          return;
         }
-      }, 350);
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get('redirect') || 'my-bookings.html';
+      window.location.href = redirect;
     }
 
     // Scroll reveal observer
@@ -383,5 +410,6 @@
     );
     revealEls.forEach(el => revealObserver.observe(el));
   </script>
+  <script src="js/cookie-consent.js"></script>
 </body>
 </html>

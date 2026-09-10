@@ -1,0 +1,18 @@
+# robots.txt — GroundsNearMe (groundsnearme.pk)
+# Generated: 10 September 2026
+
+User-agent: *
+Allow: /
+
+# Private / authenticated pages — do not index
+Disallow: /owner/
+Disallow: /my-bookings.html
+
+# Legal pages — allow
+Allow: /privacy-policy.html
+Allow: /terms.html
+Allow: /refund-policy.html
+Allow: /cookies.html
+
+# Sitemap
+Sitemap: https://groundsnearme.pk/sitemap.xml

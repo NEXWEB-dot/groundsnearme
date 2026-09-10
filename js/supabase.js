@@ -23,9 +23,18 @@ const GNM_SUPABASE = {
  */
 async function gnmFetch(endpoint, opts = {}) {
   const url = `${GNM_SUPABASE.url}/rest/v1/${endpoint}`;
+  let bearerToken = GNM_SUPABASE.key;
+  try {
+    const supaSession = sessionStorage.getItem('gnm_supabase_session') || localStorage.getItem('gnm_supabase_session');
+    if (supaSession) {
+      const parsed = JSON.parse(supaSession);
+      if (parsed?.access_token) bearerToken = parsed.access_token;
+    }
+  } catch (_) {}
+
   const headers = {
     'apikey':        GNM_SUPABASE.key,
-    'Authorization': `Bearer ${GNM_SUPABASE.key}`,
+    'Authorization': `Bearer ${bearerToken}`,
     'Content-Type':  'application/json',
     ...opts.headers
   };
@@ -139,8 +148,25 @@ const SupabaseBookings = {
     for (let i = 0; i < 6; i++) {
       randSuffix += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+
+    let currentPlayerId = payload.player_id || null;
+    if (!currentPlayerId) {
+      try {
+        const supaSession = sessionStorage.getItem('gnm_supabase_session') || localStorage.getItem('gnm_supabase_session');
+        if (supaSession) {
+          const parsed = JSON.parse(supaSession);
+          if (parsed?.user?.id) currentPlayerId = parsed.user.id;
+        }
+        if (!currentPlayerId && typeof MockAuth !== 'undefined') {
+          const u = MockAuth.getUser();
+          if (u?.id && u.id.length === 36 && u.id.includes('-')) currentPlayerId = u.id;
+        }
+      } catch (_) {}
+    }
+
     const full = {
       booking_ref:      `GNM-2026-${randSuffix}`,
+      player_id:        currentPlayerId,
       source:           'web',
       status:           'confirmed',
       payment_status:   'unpaid',
@@ -210,11 +236,15 @@ const SupabaseBookings = {
 
     // 1. Fetch from Supabase
     try {
-      const rows = await gnmFetch('bookings?order=booking_date.desc,start_time.asc&select=*');
+      let query = 'bookings?order=booking_date.desc,start_time.asc&select=*';
+      if (user?.id && user.id.length === 36 && user.id.includes('-')) {
+        query = `bookings?player_id=eq.${user.id}&order=booking_date.desc,start_time.asc&select=*`;
+      }
+      const rows = await gnmFetch(query);
       if (Array.isArray(rows) && rows.length > 0) {
         if (user && user.phone) {
           const userPhoneDigits = user.phone.replace(/\D/g, '');
-          list = rows.filter(b => b.contact_phone && b.contact_phone.replace(/\D/g, '') === userPhoneDigits);
+          list = rows.filter(b => (b.player_id === user.id) || (b.contact_phone && b.contact_phone.replace(/\D/g, '') === userPhoneDigits));
         } else {
           list = rows;
         }
@@ -294,6 +324,10 @@ const LiveSlotStore = {
       .map(b => b.start_time ? b.start_time.slice(0, 5) : null)
       .filter(Boolean);
 
+    const todayStr = typeof getTodayStr === 'function' ? getTodayStr() : new Date().toISOString().split('T')[0];
+    const isToday = dateStr === todayStr;
+    const currentHour = new Date().getHours();
+
     const slots = [];
     for (let h = 9; h < 26; h++) {
       const actualH = h % 24;
@@ -303,11 +337,17 @@ const LiveSlotStore = {
       const label   = LiveSlotStore._fmt(actualH) + ' – ' + LiveSlotStore._fmt(nextH);
 
       const isBooked = bookedTimes.includes(time);
+      let status = isBooked ? 'booked' : 'available';
+
+      if (isToday && h < 24 && actualH <= currentHour) {
+        status = 'past';
+      }
+
       slots.push({
         time:    time + ':00',
         endTime: endTime + ':00',
         label,
-        status:  isBooked ? 'booked' : 'available'
+        status
       });
     }
     return slots;

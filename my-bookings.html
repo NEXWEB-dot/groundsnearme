@@ -361,7 +361,26 @@
 
     // Load Data from Supabase / Mock hybrid
     async function loadBookings() {
-      const user = MockAuth.ensureUser();
+      const user = MockAuth.getUser();
+      if (!user) {
+        document.getElementById('userName').textContent = 'Guest Player';
+        const container = document.getElementById('bookingsContainer');
+        container.innerHTML = `
+          <div class="card-outer reveal">
+            <div class="card-inner empty-state" style="padding:48px 24px;">
+              <i class="ph-thin ph-user-circle empty-icon" style="font-size:56px; color:var(--emerald);"></i>
+              <h2 class="empty-title" style="margin-top:16px;">Log in to view your bookings</h2>
+              <p class="empty-desc" style="max-width:44ch; margin:8px auto 24px;">Sign in with your phone or email to track your confirmed pitch reservations, manage match times, or cancel slots.</p>
+              <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                <a href="login.html?redirect=my-bookings.html" class="btn-primary" style="padding:12px 28px;">Log In</a>
+                <a href="register.html?redirect=my-bookings.html" class="btn-ghost" style="padding:12px 28px; border:1px solid var(--border); font-weight:700; text-decoration:none;">Create Account</a>
+              </div>
+            </div>
+          </div>
+        `;
+        initReveal();
+        return;
+      }
       document.getElementById('userName').textContent = user.name;
 
       const container = document.getElementById('bookingsContainer');

@@ -177,6 +177,21 @@ const MockAuth = {
 
   getUser() {
     try {
+      // 1. Check live Supabase Auth session first
+      const supaSession = sessionStorage.getItem('gnm_supabase_session') || localStorage.getItem('gnm_supabase_session');
+      if (supaSession) {
+        const parsed = JSON.parse(supaSession);
+        if (parsed?.user) {
+          const u = parsed.user;
+          return {
+            id: u.id,
+            name: u.user_metadata?.full_name || u.user_metadata?.name || (u.email ? u.email.split('@')[0] : 'Player'),
+            phone: u.user_metadata?.phone || u.phone || '',
+            email: u.email || '',
+            is_supabase: true
+          };
+        }
+      }
       return JSON.parse(localStorage.getItem(this.STORAGE_KEY));
     } catch { return null; }
   },
@@ -195,24 +210,14 @@ const MockAuth = {
     const cleanId = String(identifier).trim().toLowerCase();
     const users = this._getUsers();
     
-    // Look for existing registered user or create a session user
+    // Look for existing registered user
     let user = users.find(u => 
       (u.phone && u.phone.replace(/\D/g, '') === cleanId.replace(/\D/g, '')) ||
       (u.email && u.email.toLowerCase() === cleanId)
     );
 
     if (!user) {
-      // Auto-create session profile for mock demonstration
-      const isEmail = cleanId.includes('@');
-      user = {
-        id: 'u-' + Date.now(),
-        name: isEmail ? cleanId.split('@')[0] : 'Player ' + cleanId.slice(-4),
-        phone: isEmail ? '0300-1234567' : cleanId,
-        email: isEmail ? cleanId : '',
-        created_at: new Date().toISOString()
-      };
-      users.push(user);
-      this._saveUsers(users);
+      throw new Error('Account not found. Please register or check your credentials.');
     }
 
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
@@ -280,24 +285,15 @@ const MockAuth = {
 
   logout() {
     localStorage.removeItem(this.STORAGE_KEY);
+    sessionStorage.removeItem('gnm_supabase_session');
+    localStorage.removeItem('gnm_supabase_session');
   },
 
   /**
-   * Ensure a mock user exists for demo purposes.
+   * Return logged-in user or null. Never auto-creates fake demo personas.
    */
   ensureUser() {
-    let user = this.getUser();
-    if (!user) {
-      user = {
-        id: 'u-demo-1',
-        name: 'Tariq Al-Mansoor',
-        phone: '0312-5551234',
-        email: 'tariq.cricket@gmail.com',
-        created_at: new Date().toISOString()
-      };
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
-    }
-    return user;
+    return this.getUser();
   }
 };
 
@@ -312,64 +308,7 @@ const MockBookingStore = {
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) return JSON.parse(stored);
-
-      // Default seed bookings for initial demo experience
-      const user = MockAuth.ensureUser();
-      const today = new Date();
-      const nextGame = new Date(today);
-      nextGame.setDate(today.getDate() + 2);
-      const nextGameStr = nextGame.toISOString().split('T')[0];
-      
-      const lastWeek = new Date(today);
-      lastWeek.setDate(today.getDate() - 5);
-      const lastWeekStr = lastWeek.toISOString().split('T')[0];
-
-      const initialSeeds = [
-        {
-          id: 'bk-seed-1',
-          booking_ref: 'GNM-2026-X8K2M9',
-          ground_id: 'g-001',
-          player_id: user.id,
-          booking_date: nextGameStr,
-          start_time: '20:00:00',
-          end_time: '21:00:00',
-          duration_minutes: 60,
-          contact_name: user.name,
-          contact_phone: user.phone,
-          notes: 'Tape ball',
-          source: 'website',
-          payment_status: 'unpaid',
-          status: 'confirmed',
-          price_per_hour: 2500,
-          total_amount: 2500,
-          currency: 'PKR',
-          confirmed_at: new Date().toISOString(),
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 'bk-seed-2',
-          booking_ref: 'GNM-2026-P4R7T1',
-          ground_id: 'g-002',
-          player_id: user.id,
-          booking_date: lastWeekStr,
-          start_time: '19:00:00',
-          end_time: '20:00:00',
-          duration_minutes: 60,
-          contact_name: user.name,
-          contact_phone: user.phone,
-          notes: 'Weekend game',
-          source: 'website',
-          payment_status: 'paid',
-          status: 'completed',
-          price_per_hour: 3200,
-          total_amount: 3200,
-          currency: 'PKR',
-          confirmed_at: lastWeek.toISOString(),
-          created_at: lastWeek.toISOString()
-        }
-      ];
-      this._saveAll(initialSeeds);
-      return initialSeeds;
+      return [];
     } catch { return []; }
   },
 

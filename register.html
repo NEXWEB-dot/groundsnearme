@@ -417,9 +417,19 @@
         try {
           const user = MockAuth.register({ name, phone, email, password });
           
-          // Redirect
+          // Safe Redirect
+          function getSafeRedirect(target) {
+            if (!target || typeof target !== 'string') return 'my-bookings.html';
+            const trimmed = target.trim();
+            if (/^(?:[a-z]+:|\/\/)/i.test(trimmed)) return 'my-bookings.html';
+            if (trimmed.startsWith('/') || /^[a-zA-Z0-9_\-]+\.html(?:[?#].*)?$/.test(trimmed)) {
+              return trimmed;
+            }
+            return 'my-bookings.html';
+          }
+
           const urlParams = new URLSearchParams(window.location.search);
-          const redirect = urlParams.get('redirect') || 'my-bookings.html';
+          const redirect = getSafeRedirect(urlParams.get('redirect'));
           
           window.location.href = redirect;
         } catch (err) {

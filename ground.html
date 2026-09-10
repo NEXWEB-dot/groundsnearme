@@ -536,35 +536,61 @@
       // Render Ground Detail
       const formatCurrency = (val) => `PKR ${Number(val).toLocaleString()}`;
       
+      // Safe array conversions
+      let galleryImages = [];
+      if (Array.isArray(ground.gallery_images)) {
+        galleryImages = ground.gallery_images;
+      } else if (typeof ground.gallery_images === 'string') {
+        try {
+          const p = JSON.parse(ground.gallery_images);
+          if (Array.isArray(p)) galleryImages = p;
+          else galleryImages = [ground.gallery_images];
+        } catch (_) {
+          galleryImages = [ground.gallery_images];
+        }
+      }
+      if (galleryImages.length === 0 && ground.cover_image_url) {
+        galleryImages = [ground.cover_image_url];
+      }
+
+      let amenitiesList = [];
+      if (Array.isArray(ground.amenities)) {
+        amenitiesList = ground.amenities;
+      } else if (typeof ground.amenities === 'string') {
+        try {
+          const p = JSON.parse(ground.amenities);
+          if (Array.isArray(p)) amenitiesList = p;
+          else amenitiesList = ground.amenities.split(',').map(s => s.trim()).filter(Boolean);
+        } catch (_) {
+          amenitiesList = ground.amenities.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+
       let galleryHtml = '';
       let thumbsHtml = '';
-      const areaName = ground.area ? ground.area.name : 'Karachi';
-      if (ground.gallery_images && ground.gallery_images.length > 0) {
-        const heroImg = ground.gallery_images[0];
+      const areaName = ground.area ? (ground.area.name || ground.area) : 'Karachi';
+      if (galleryImages.length > 0) {
+        const heroImg = galleryImages[0];
         galleryHtml = `
           <div class="hero-img-wrap">
             <img src="${heroImg}" alt="${ground.name} cricket pitch in ${areaName}" id="mainGalleryImg" />
           </div>
         `;
-        if (ground.gallery_images.length > 1) {
+        if (galleryImages.length > 1) {
           thumbsHtml = `<div class="thumbnails-row" role="region" aria-label="Photo gallery thumbnails">`;
-          ground.gallery_images.forEach((img, idx) => {
+          galleryImages.forEach((img, idx) => {
             thumbsHtml += `<button type="button" class="thumb-wrap ${idx === 0 ? 'active' : ''}" aria-label="View photo ${idx+1} of ${ground.name}" onclick="changeGalleryImage('${img}', this)">
               <img src="${img}" alt="${ground.name} photo ${idx+1}" loading="lazy" />
             </button>`;
           });
           thumbsHtml += `</div>`;
         }
-      } else {
-        galleryHtml = `<div class="hero-img-wrap"><img src="${ground.cover_image_url}" alt="${ground.name} cricket pitch in ${areaName}" id="mainGalleryImg" /></div>`;
       }
 
       let amenitiesHtml = '';
-      if (ground.amenities) {
-        ground.amenities.forEach(am => {
-          amenitiesHtml += `<div class="amenity-item"><i class="${getAmenityIcon(am)}"></i> ${am}</div>`;
-        });
-      }
+      amenitiesList.forEach(am => {
+        amenitiesHtml += `<div class="amenity-item"><i class="${getAmenityIcon(am)}"></i> ${am}</div>`;
+      });
 
       // Initial Date Setup
       const today = getTodayStr();
@@ -731,6 +757,8 @@
           slots.forEach((s, idx) => {
             if (s.status === 'booked') {
               slotsHtml += `<button class="slot-btn booked" disabled>${s.label}<br><span style="font-size:0.75rem; font-weight:600;">Booked</span></button>`;
+            } else if (s.status === 'past') {
+              slotsHtml += `<button class="slot-btn booked" disabled style="opacity:0.45; cursor:not-allowed;">${s.label}<br><span style="font-size:0.75rem; font-weight:600;">Passed</span></button>`;
             } else {
               slotsHtml += `<button class="slot-btn available" data-time="${s.time}" data-endtime="${s.endTime}" data-label="${s.label}">${s.label}</button>`;
             }
@@ -789,12 +817,33 @@
       function openModal() {
         if (!selectedSlot) return;
         
+        const user = MockAuth.getUser();
+        let contactFieldsHtml = '';
+        if (user) {
+          contactFieldsHtml = `<div class="summary-row"><span class="summary-label">Player</span> <span class="summary-val">${user.name} (${user.phone})</span></div>`;
+        } else {
+          contactFieldsHtml = `
+            <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);">
+              <div style="font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;">Player Contact Details</div>
+              <div style="margin-bottom:10px;">
+                <label for="bookerName" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:4px;">Full Name *</label>
+                <input type="text" id="bookerName" placeholder="e.g. Ali Khan" required style="width:100%; padding:10px 12px; border:1px solid var(--border); font-family:inherit; font-size:0.875rem;" />
+              </div>
+              <div>
+                <label for="bookerPhone" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:4px;">WhatsApp / Phone Number *</label>
+                <input type="tel" id="bookerPhone" placeholder="0300 1234567" required style="width:100%; padding:10px 12px; border:1px solid var(--border); font-family:inherit; font-size:0.875rem;" />
+              </div>
+            </div>
+          `;
+        }
+
         modalTitle.textContent = 'Booking Summary';
         modalBody.innerHTML = `
           <div class="summary-row"><span class="summary-label">Ground</span> <span class="summary-val">${ground.name}</span></div>
           <div class="summary-row"><span class="summary-label">Date</span> <span class="summary-val">${formatDisplayDate(selectedDateStr)}</span></div>
           <div class="summary-row"><span class="summary-label">Time</span> <span class="summary-val">${selectedSlot.label}</span></div>
           <div class="summary-row"><span class="summary-label">Duration</span> <span class="summary-val">1 Hour</span></div>
+          ${contactFieldsHtml}
           
           <div class="summary-row summary-total">
             <span class="summary-label" style="color:var(--ink)">Total Amount</span>
@@ -818,7 +867,34 @@
       btnCancelModal.addEventListener('click', closeModal);
 
       btnConfirmModal.addEventListener('click', async () => {
-        const user = MockAuth.ensureUser();
+        let user = MockAuth.getUser();
+        let contactName = user ? user.name : '';
+        let contactPhone = user ? user.phone : '';
+
+        if (!user) {
+          const nameInput = document.getElementById('bookerName');
+          const phoneInput = document.getElementById('bookerPhone');
+          contactName = nameInput ? nameInput.value.trim() : '';
+          contactPhone = phoneInput ? phoneInput.value.trim() : '';
+
+          if (!contactName || !contactPhone) {
+            alert('Please provide your name and phone number to confirm your booking.');
+            if (!contactName && nameInput) nameInput.focus();
+            else if (!contactPhone && phoneInput) phoneInput.focus();
+            return;
+          }
+
+          user = {
+            id: 'u-' + Date.now(),
+            name: contactName,
+            phone: contactPhone,
+            created_at: new Date().toISOString()
+          };
+          try {
+            localStorage.setItem(MockAuth.STORAGE_KEY, JSON.stringify(user));
+          } catch (_) {}
+        }
+
         btnConfirmModal.disabled = true;
         btnConfirmModal.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Confirming...`;
 
@@ -829,8 +905,8 @@
           start_time: selectedSlot.time,
           end_time: selectedSlot.endTime,
           duration_minutes: 60,
-          contact_name: user ? user.name : 'Player',
-          contact_phone: user ? user.phone : '03001234567',
+          contact_name: contactName,
+          contact_phone: contactPhone,
           notes: 'Booked via Website',
           price_per_hour: ground.price_per_hour,
           total_amount: ground.price_per_hour

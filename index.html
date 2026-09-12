@@ -1023,9 +1023,9 @@
             Post that you need 3 extra players, or that your team is looking for a match. GroundsNearMe connects Karachi's cricket community — no group chats, no forwarding chains.
           </p>
           <div class="reveal" style="transition-delay:0.15s">
-            <a href="#matchmaking" class="btn-primary">
-              Find Players <span class="btn-icon"><i class="ph-thin ph-arrow-right"></i></span>
-            </a>
+            <button type="button" onclick="openCreateMatchModal()" class="btn-primary" style="cursor:pointer; border:none;">
+              Find Players / Post Match <span class="btn-icon"><i class="ph-thin ph-plus"></i></span>
+            </button>
           </div>
         </div>
 
@@ -1436,7 +1436,168 @@
       });
     });
 
+    function openCreateMatchModal() {
+      const modal = document.getElementById('modalPostMatch');
+      if (!modal) return;
+      const areaSelect = document.getElementById('matchPostArea');
+      if (areaSelect && typeof GNM !== 'undefined' && GNM.areas) {
+        areaSelect.innerHTML = GNM.areas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+      }
+      const dateInput = document.getElementById('matchPostDate');
+      if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+        dateInput.min = today;
+      }
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCreateMatchModal() {
+      const modal = document.getElementById('modalPostMatch');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+
+    function togglePlayersNeeded(val) {
+      const grp = document.getElementById('groupPlayersNeeded');
+      if (grp) grp.style.display = (val === 'opposition') ? 'none' : 'block';
+    }
+
+    async function handlePostMatchSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const btn = document.getElementById('btnSubmitMatch');
+      btn.disabled = true;
+      btn.textContent = 'Publishing...';
+      
+      const data = {
+        title: form.title.value,
+        looking_for: form.looking_for.value,
+        players_needed: form.players_needed ? form.players_needed.value : null,
+        match_date: form.match_date.value,
+        start_time: form.start_time.value + ':00',
+        area_id: form.area_id.value || null,
+        format: form.format.value,
+        skill_level: form.skill_level.value,
+        whatsapp_number: form.whatsapp_number.value,
+        host_handle: form.host_handle.value || 'cricket_captain'
+      };
+
+      try {
+        await GNM.createMatch(data);
+        closeCreateMatchModal();
+        form.reset();
+        if (typeof AuthShell !== 'undefined' && AuthShell.showToast) {
+          AuthShell.showToast('Match posted successfully!');
+        } else {
+          alert('Match posted successfully! It is now visible on the matchmaking board.');
+        }
+      } catch (err) {
+        alert('Error posting match: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Publish Game';
+      }
+    }
   </script>
+
+  <!-- MODAL: POST MATCH / FIND PLAYERS -->
+  <div id="modalPostMatch" style="display:none; position:fixed; inset:0; background:rgba(10,18,14,0.75); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="max-width:500px; width:100%; max-height:92vh; overflow-y:auto; background:#ffffff; border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,0.3); padding:28px 24px; border:1px solid var(--border);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:var(--card-bg, #f1f5f9); color:var(--emerald); display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+            <i class="ph-thin ph-users-three"></i>
+          </div>
+          <div>
+            <h3 style="font-size:1.15rem; font-weight:800; margin:0; color:var(--ink);">Post a Match</h3>
+            <p style="font-size:0.75rem; color:var(--muted); margin:2px 0 0;">Find players or challenge an opposition team</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCreateMatchModal()" style="background:none; border:none; font-size:1.3rem; color:var(--muted); cursor:pointer; padding:4px;" aria-label="Close">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <form id="formPostMatch" onsubmit="handlePostMatchSubmit(event)">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Post Title *</label>
+          <input type="text" name="title" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; box-sizing:border-box;" placeholder="e.g. Need 3 players — Saturday 8PM tape ball" required minlength="6" maxlength="120" />
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Looking For *</label>
+            <select name="looking_for" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; background:#fff; box-sizing:border-box;" onchange="togglePlayersNeeded(this.value)">
+              <option value="players">Extra Players</option>
+              <option value="opposition">Opposition Team</option>
+            </select>
+          </div>
+          <div id="groupPlayersNeeded">
+            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Players Needed</label>
+            <input type="number" name="players_needed" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; box-sizing:border-box;" value="3" min="1" max="22" />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Match Date *</label>
+            <input type="date" name="match_date" id="matchPostDate" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; box-sizing:border-box;" required />
+          </div>
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Start Time *</label>
+            <input type="time" name="start_time" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; box-sizing:border-box;" value="20:00" required />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Area *</label>
+            <select name="area_id" id="matchPostArea" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; background:#fff; box-sizing:border-box;"></select>
+          </div>
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Format</label>
+            <select name="format" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; background:#fff; box-sizing:border-box;">
+              <option value="Tape Ball">Tape Ball</option>
+              <option value="Indoor T10">Indoor T10</option>
+              <option value="Hard Ball 20 Overs">Hard Ball 20 Overs</option>
+              <option value="Box Cricket">Box Cricket</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Skill Level</label>
+            <select name="skill_level" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; background:#fff; box-sizing:border-box;">
+              <option value="any">Any Level</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate" selected>Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Your WhatsApp *</label>
+            <input type="tel" name="whatsapp_number" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; box-sizing:border-box;" placeholder="03362308445" required />
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); display:block; margin-bottom:6px;">Your Handle / Team Name</label>
+          <input type="text" name="host_handle" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; outline:none; font-family:inherit; box-sizing:border-box;" placeholder="e.g. captain_ali or karachi_strikers" />
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:24px;">
+          <button type="button" class="btn-ghost" style="flex:1;" onclick="closeCreateMatchModal()">Cancel</button>
+          <button type="submit" id="btnSubmitMatch" class="btn-primary" style="flex:1;">Publish Game</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="js/cookie-consent.js"></script>
 </body>
 </html>

@@ -924,6 +924,20 @@
           total_amount: ground.price_per_hour
         });
 
+        // Prepare WhatsApp notification to Turf Owner
+        const ownerWa = (ground.whatsapp_number || '923362308445').replace(/[^0-9]/g, '');
+        const waSlipText = encodeURIComponent(
+          `*GroundsNearMe Booking Slip*\n\n` +
+          `*Ref:* ${booking.booking_ref}\n` +
+          `*Ground:* ${ground.name}\n` +
+          `*Date:* ${formatDisplayDate(selectedDateStr)}\n` +
+          `*Time:* ${selectedSlot.label}\n` +
+          `*Player:* ${contactName} (${contactPhone})\n` +
+          `*Amount:* ${formatCurrency(ground.price_per_hour)} (Pay at ground)\n\n` +
+          `Hi! I have just reserved this slot on GroundsNearMe. Please verify my booking.`
+        );
+        const waSlipUrl = `https://wa.me/${ownerWa}?text=${waSlipText}`;
+
         // Show success state
         modalTitle.textContent = '';
         modalFooter.style.display = 'none';
@@ -938,11 +952,15 @@
           <div class="summary-row"><span class="summary-label">Date</span> <span class="summary-val">${formatDisplayDate(selectedDateStr)}</span></div>
           <div class="summary-row"><span class="summary-label">Time</span> <span class="summary-val">${selectedSlot.label}</span></div>
           
-          <div style="text-align:center; margin-top:24px; color:var(--emerald); font-weight:700;">
+          <div style="text-align:center; margin-top:20px; color:var(--emerald); font-weight:700;">
             ${formatCurrency(ground.price_per_hour)} — Pay at the ground
           </div>
 
-          <div style="display:flex; flex-direction:column; gap:12px; margin-top:32px;">
+          <a href="${waSlipUrl}" target="_blank" rel="noopener" style="background:#25D366; color:#ffffff; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border-radius:10px; font-weight:700; text-decoration:none; margin-top:22px; font-size:0.95rem; box-shadow:0 4px 14px rgba(37,211,102,0.3);">
+            <i class="ph-bold ph-whatsapp-logo" style="font-size:1.3rem;"></i> WhatsApp Slip to Turf Owner
+          </a>
+
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
             <a href="my-bookings.html" class="btn-primary" style="width:100%">View My Bookings</a>
             <a href="index.html#featured-grounds" class="btn-ghost" style="width:100%">Browse More Grounds</a>
           </div>

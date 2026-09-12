@@ -43,8 +43,10 @@
     .nav-logo{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;letter-spacing:0.04em;text-decoration:none;display:flex;align-items:center;color:var(--emerald);text-transform:uppercase}
     .nav-divider{width:1px;height:16px;background:var(--border)}
     .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
-    .nav-links a{font-size:0.8125rem;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:0.01em;transition:color 0.2s cubic-bezier(0.22,1,0.36,1)}
+    .nav-links a{font-size:0.8125rem;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:0.01em;position:relative;padding:4px 0;transition:color 0.2s ease}
+    .nav-links a::after{content:'';position:absolute;bottom:0;left:50%;width:0;height:2px;background:var(--emerald);border-radius:2px;transition:width 0.25s cubic-bezier(0.16, 1, 0.3, 1), left 0.25s cubic-bezier(0.16, 1, 0.3, 1)}
     .nav-links a:hover{color:var(--emerald)}
+    .nav-links a:hover::after{width:100%;left:0}
 
     .btn-nav-contact{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--emerald);background:var(--emerald);color:var(--white);border-radius:999px;padding:8px 20px;font-size:0.8125rem;font-weight:700;letter-spacing:0.01em;text-decoration:none;transition:all 0.25s cubic-bezier(0.22,1,0.36,1)}
     .btn-nav-contact:hover{background:var(--emerald-mid)}
@@ -121,6 +123,9 @@
       .card-inner{padding:28px 20px}
       .auth-page{padding-top:100px}
     }
+      input, select, textarea{transition:border-color 0.25s ease, box-shadow 0.25s ease}
+    input:focus, select:focus, textarea:focus{border-color:var(--emerald) !important;box-shadow:0 0 0 3px rgba(74, 222, 128, 0.3) !important}
+    @media(prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important}}
   </style>
 </head>
 <body>

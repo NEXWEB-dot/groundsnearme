@@ -598,13 +598,10 @@
       
       // Update page title & meta tags dynamically for SEO
       document.title = `${ground.name} — Book Cricket Ground & Indoor Slots in ${areaName} | GroundsNearMe`;
-      const metaDescEl = document.getElementById('pageMetaDesc');
       if (metaDescEl) metaDescEl.setAttribute('content', `Book slots at ${ground.name} in ${areaName}, Karachi. Hourly rate ${formatCurrency(ground.price_per_hour)}. View photos, facilities, and live available slots.`);
       const canonicalEl = document.getElementById('pageCanonical');
       if (canonicalEl) canonicalEl.setAttribute('href', groundUrl);
-      const ogTitleEl = document.getElementById('ogTitle');
       if (ogTitleEl) ogTitleEl.setAttribute('content', `${ground.name} — Cricket Ground in ${areaName} | GroundsNearMe`);
-      const ogDescEl = document.getElementById('ogDesc');
       if (ogDescEl) ogDescEl.setAttribute('content', `Book cricket slots at ${ground.name} in ${areaName}. Check live availability and book online.`);
       
       if (galleryImages.length > 0) {
@@ -655,7 +652,7 @@
                 <div class="ground-meta-row">
                   <span class="meta-badge">${ground.ground_type === 'both' ? 'Indoor & Outdoor' : ground.ground_type}</span>
                   <h1 class="ground-name">${ground.name}</h1>
-                  <div class="meta-location"><i class="ph-thin ph-map-pin"></i> ${ground.area.name}</div>
+                  <div class="meta-location"><i class="ph-thin ph-map-pin"></i> ${areaName}</div>
                 </div>
 
                 <div class="price-box">

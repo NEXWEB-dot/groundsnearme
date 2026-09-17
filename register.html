@@ -124,9 +124,24 @@
     .consent-label input[type="checkbox"]{width:18px;height:18px;accent-color:var(--emerald);flex-shrink:0;margin-top:2px;cursor:pointer}
     .consent-label a{color:var(--emerald);font-weight:600;text-decoration:underline}
     .consent-label a:hover{color:var(--emerald-mid)}
-      input, select, textarea{transition:border-color 0.25s ease, box-shadow 0.25s ease}
-    input:focus, select:focus, textarea:focus{border-color:var(--emerald) !important;box-shadow:0 0 0 3px rgba(74, 222, 128, 0.3) !important}
-    @media(prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important}}
+    /* Password Strength Meter */
+    .pwd-meter-wrap{margin-top:8px;}
+    .pwd-meter{display:flex;gap:4px;height:4px;margin-bottom:6px;}
+    .pwd-bar{flex:1;background:var(--border);border-radius:2px;transition:background 0.25s ease;}
+    .pwd-meter-label{display:flex;justify-content:space-between;font-size:0.72rem;font-weight:700;color:var(--muted);}
+    .pwd-checklist{list-style:none;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.72rem;color:var(--muted);}
+    .pwd-check-item{display:flex;align-items:center;gap:5px;transition:color 0.2s ease;}
+    .pwd-check-item.valid{color:var(--emerald);font-weight:700;}
+    .pwd-check-item.valid i{color:var(--lime-dark);}
+
+    /* OTP Modal */
+    .otp-overlay{display:none;position:fixed;inset:0;background:rgba(10,24,16,0.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:16px;}
+    .otp-overlay.show{display:flex;}
+    .otp-dialog{background:var(--white);border:1px solid var(--border);border-radius:0;box-shadow:0 24px 60px rgba(0,0,0,0.3);width:100%;max-width:440px;padding:32px 24px;}
+    .otp-inputs{display:flex;gap:8px;justify-content:center;margin:24px 0;}
+    .otp-box{width:46px;height:52px;font-size:1.4rem;font-weight:800;text-align:center;border:1.5px solid var(--border);border-radius:0;outline:none;font-family:monospace;transition:border-color 0.2s, box-shadow 0.2s;}
+    .otp-box:focus{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(74,222,128,0.3);}
+    .otp-helper-badge{background:var(--card-bg);border:1px solid var(--border);padding:10px 14px;font-size:0.78rem;color:var(--emerald);font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:18px;}
   </style>
 </head>
 <body>
@@ -239,7 +254,7 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="regPassword">Password * <span style="font-weight:500; color:var(--muted); text-transform:none;">(min 6 characters)</span></label>
+              <label class="form-label" for="regPassword">Password * <span style="font-weight:500; color:var(--muted); text-transform:none;">(min 8 chars, strong)</span></label>
               <div class="input-wrapper">
                 <i class="ph-thin ph-lock-key input-icon"></i>
                 <input 
@@ -254,6 +269,26 @@
                 <button type="button" class="password-toggle" id="togglePassword" aria-label="Toggle password visibility">
                   <i class="ph-thin ph-eye" id="passwordEyeIcon"></i>
                 </button>
+              </div>
+
+              <!-- Real-time Password Strength Meter -->
+              <div class="pwd-meter-wrap">
+                <div class="pwd-meter">
+                  <div class="pwd-bar" id="pwdBar1"></div>
+                  <div class="pwd-bar" id="pwdBar2"></div>
+                  <div class="pwd-bar" id="pwdBar3"></div>
+                  <div class="pwd-bar" id="pwdBar4"></div>
+                </div>
+                <div class="pwd-meter-label">
+                  <span id="pwdStrengthLabel">Strength: Empty</span>
+                  <span id="pwdScorePercent">0%</span>
+                </div>
+                <ul class="pwd-checklist">
+                  <li class="pwd-check-item" id="ruleLen"><i class="ph ph-circle"></i> 8+ Characters</li>
+                  <li class="pwd-check-item" id="ruleCase"><i class="ph ph-circle"></i> Upper &amp; Lower case</li>
+                  <li class="pwd-check-item" id="ruleNum"><i class="ph ph-circle"></i> Number (0-9)</li>
+                  <li class="pwd-check-item" id="ruleSym"><i class="ph ph-circle"></i> Symbol (!@#$%)</li>
+                </ul>
               </div>
             </div>
 
@@ -286,6 +321,65 @@
       </div>
     </div>
   </main>
+
+  <!-- MODAL: OTP / 2FA PHONE VERIFICATION -->
+  <div class="otp-overlay" id="modalOtpVerify" role="dialog" aria-modal="true" aria-labelledby="otpTitle">
+    <div class="otp-dialog">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:40px; height:40px; border-radius:50%; background:var(--card-bg); color:var(--emerald); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+            <i class="ph-bold ph-shield-check"></i>
+          </div>
+          <div>
+            <h2 style="font-size:1.2rem; font-weight:800; color:var(--ink); margin:0;" id="otpTitle">Verify Your Mobile</h2>
+            <p style="font-size:0.75rem; color:var(--muted); margin-top:2px;">Protecting your account with 2-Step Verification</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeOtpModal()" style="background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer;" aria-label="Cancel verification">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <p style="font-size:0.85rem; color:var(--ink); margin-bottom:12px;">
+        We've sent a 6-digit verification code to <strong id="displayOtpPhone" class="mono" style="color:var(--emerald);">0300 ••••567</strong>.
+      </p>
+
+      <div class="otp-helper-badge" id="otpDemoBanner">
+        <i class="ph-bold ph-bell-ringing" style="font-size:1.1rem; color:var(--emerald);"></i>
+        <span>GroundsNearMe Verification Code: <strong id="demoOtpCode" class="mono" style="font-size:0.95rem; letter-spacing:0.1em; color:var(--emerald); background:#fff; padding:2px 6px; border:1px solid var(--border);">123456</strong></span>
+      </div>
+
+      <div class="alert-box" id="otpErrorAlert" role="alert" style="margin-bottom:14px;">
+        <i class="ph-bold ph-warning-circle" style="font-size:18px; flex-shrink:0;"></i>
+        <span id="otpErrorMessage">Invalid code</span>
+      </div>
+
+      <div class="otp-inputs">
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" id="otp-0" autocomplete="one-time-code" autofocus />
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" id="otp-1" />
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" id="otp-2" />
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" id="otp-3" />
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" id="otp-4" />
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" id="otp-5" />
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; font-size:0.8rem;">
+        <span id="otpTimerText" style="color:var(--muted);">Resend in <strong id="otpCountdown">60</strong>s</span>
+        <button type="button" id="btnResendOtp" onclick="resendOtpCode()" disabled style="background:none; border:none; color:var(--muted); font-weight:700; cursor:not-allowed; text-decoration:underline;">
+          Resend Code
+        </button>
+      </div>
+
+      <button type="button" class="btn-primary" id="btnVerifyOtp" onclick="submitOtpVerification()" style="width:100%;">
+        <span>Verify &amp; Create Account</span>
+        <i class="ph-bold ph-check" style="font-size:14px;"></i>
+      </button>
+
+      <button type="button" onclick="closeOtpModal()" class="btn-ghost" style="width:100%; margin-top:8px; border:none; color:var(--muted);">
+        Change Mobile Number
+      </button>
+    </div>
+  </div>
 
   <!-- FOOTER -->
   <footer>
@@ -379,7 +473,277 @@
       document.getElementById('errorAlert').classList.remove('show');
     }
 
-    // Register Submission
+    // ============================================================================
+    // 1. REAL-TIME PASSWORD STRENGTH EVALUATOR
+    // ============================================================================
+    function evaluatePasswordStrength(pwd) {
+      const hasLen = pwd.length >= 8;
+      const hasCase = /[a-z]/.test(pwd) && /[A-Z]/.test(pwd);
+      const hasNum = /[0-9]/.test(pwd);
+      const hasSym = /[^a-zA-Z0-9]/.test(pwd);
+
+      const updateRule = (elId, valid) => {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.classList.toggle('valid', valid);
+        const icon = el.querySelector('i');
+        if (icon) icon.className = valid ? 'ph-bold ph-check-circle' : 'ph ph-circle';
+      };
+
+      updateRule('ruleLen', hasLen);
+      updateRule('ruleCase', hasCase);
+      updateRule('ruleNum', hasNum);
+      updateRule('ruleSym', hasSym);
+
+      const score = [hasLen, hasCase, hasNum, hasSym].filter(Boolean).length;
+      const bars = [document.getElementById('pwdBar1'), document.getElementById('pwdBar2'), document.getElementById('pwdBar3'), document.getElementById('pwdBar4')];
+      const lbl = document.getElementById('pwdStrengthLabel');
+      const pct = document.getElementById('pwdScorePercent');
+
+      const colors = ['#ef4444', '#f59e0b', '#84cc16', '#10b981'];
+      const titles = ['Weak', 'Fair', 'Good', 'Strong'];
+
+      bars.forEach((bar, idx) => {
+        if (!bar) return;
+        if (pwd.length === 0) {
+          bar.style.background = 'var(--border)';
+        } else if (idx < score) {
+          bar.style.background = colors[score - 1];
+        } else {
+          bar.style.background = 'var(--border)';
+        }
+      });
+
+      if (pct) pct.textContent = `${score * 25}%`;
+      if (lbl) {
+        if (pwd.length === 0) lbl.textContent = 'Strength: Empty';
+        else lbl.textContent = `Strength: ${titles[score - 1] || 'Weak'}`;
+      }
+
+      return { score, isValid: score === 4 };
+    }
+
+    const regPwdInput = document.getElementById('regPassword');
+    if (regPwdInput) {
+      regPwdInput.addEventListener('input', (e) => {
+        evaluatePasswordStrength(e.target.value);
+      });
+    }
+
+    // ============================================================================
+    // 2. OTP / 2-FACTOR VERIFICATION FLOW
+    // ============================================================================
+    let pendingReg = null;
+    let otpCountdownInterval = null;
+
+    function openOtpModal(phone, code) {
+      const modal = document.getElementById('modalOtpVerify');
+      const displayPhone = document.getElementById('displayOtpPhone');
+      const demoCodeEl = document.getElementById('demoOtpCode');
+      const errorAlert = document.getElementById('otpErrorAlert');
+
+      if (errorAlert) errorAlert.classList.remove('show');
+
+      // Mask phone: 03001234567 -> 0300 ••••567
+      const clean = phone.replace(/\D/g, '');
+      const masked = clean.length >= 7 
+        ? clean.slice(0, 4) + ' ••••' + clean.slice(-3)
+        : phone;
+
+      if (displayPhone) displayPhone.textContent = masked;
+      if (demoCodeEl) demoCodeEl.textContent = code;
+
+      // Clear digit boxes
+      for (let i = 0; i < 6; i++) {
+        const box = document.getElementById(`otp-${i}`);
+        if (box) box.value = '';
+      }
+
+      if (modal) modal.classList.add('show');
+      const first = document.getElementById('otp-0');
+      if (first) setTimeout(() => first.focus(), 100);
+
+      startOtpTimer();
+    }
+
+    function closeOtpModal() {
+      const modal = document.getElementById('modalOtpVerify');
+      if (modal) modal.classList.remove('show');
+      if (otpCountdownInterval) clearInterval(otpCountdownInterval);
+      const btn = document.getElementById('btnSubmit');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Create Account</span> <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>`;
+      }
+    }
+
+    function startOtpTimer() {
+      if (otpCountdownInterval) clearInterval(otpCountdownInterval);
+      let secondsLeft = 60;
+      const countEl = document.getElementById('otpCountdown');
+      const resendBtn = document.getElementById('btnResendOtp');
+      const timerText = document.getElementById('otpTimerText');
+
+      if (resendBtn) {
+        resendBtn.disabled = true;
+        resendBtn.style.cursor = 'not-allowed';
+        resendBtn.style.color = 'var(--muted)';
+      }
+      if (countEl) countEl.textContent = secondsLeft;
+      if (timerText) timerText.style.display = 'inline';
+
+      otpCountdownInterval = setInterval(() => {
+        secondsLeft--;
+        if (countEl) countEl.textContent = secondsLeft;
+        if (secondsLeft <= 0) {
+          clearInterval(otpCountdownInterval);
+          if (resendBtn) {
+            resendBtn.disabled = false;
+            resendBtn.style.cursor = 'pointer';
+            resendBtn.style.color = 'var(--emerald)';
+          }
+          if (timerText) timerText.style.display = 'none';
+        }
+      }, 1000);
+    }
+
+    function resendOtpCode() {
+      if (!pendingReg) return;
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      pendingReg.otp = newCode;
+      pendingReg.attemptsLeft = 3;
+
+      const demoCodeEl = document.getElementById('demoOtpCode');
+      if (demoCodeEl) demoCodeEl.textContent = newCode;
+
+      const errorAlert = document.getElementById('otpErrorAlert');
+      if (errorAlert) errorAlert.classList.remove('show');
+
+      startOtpTimer();
+    }
+
+    // Auto-advance between 6 OTP inputs
+    document.querySelectorAll('.otp-box').forEach((box, idx) => {
+      box.addEventListener('input', (e) => {
+        const val = e.target.value.replace(/\D/g, '');
+        e.target.value = val.slice(0, 1);
+        if (val && idx < 5) {
+          const next = document.getElementById(`otp-${idx + 1}`);
+          if (next) next.focus();
+        }
+      });
+
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+          const prev = document.getElementById(`otp-${idx - 1}`);
+          if (prev) {
+            prev.focus();
+            prev.value = '';
+          }
+        }
+      });
+
+      box.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+        if (pasteData.length >= 6) {
+          for (let i = 0; i < 6; i++) {
+            const digitBox = document.getElementById(`otp-${i}`);
+            if (digitBox) digitBox.value = pasteData.charAt(i);
+          }
+          submitOtpVerification();
+        }
+      });
+    });
+
+    function showOtpError(msg) {
+      const alert = document.getElementById('otpErrorAlert');
+      const msgEl = document.getElementById('otpErrorMessage');
+      if (msgEl) msgEl.textContent = msg;
+      if (alert) alert.classList.add('show');
+    }
+
+    function submitOtpVerification() {
+      if (!pendingReg) {
+        showOtpError('Session expired. Please start over.');
+        return;
+      }
+
+      let enteredCode = '';
+      for (let i = 0; i < 6; i++) {
+        const box = document.getElementById(`otp-${i}`);
+        enteredCode += (box?.value || '');
+      }
+
+      if (enteredCode.length < 6) {
+        showOtpError('Please enter all 6 digits of the verification code.');
+        return;
+      }
+
+      const verifyBtn = document.getElementById('btnVerifyOtp');
+      if (verifyBtn) {
+        verifyBtn.disabled = true;
+        verifyBtn.innerHTML = `<span>Verifying...</span>`;
+      }
+
+      setTimeout(() => {
+        if (enteredCode !== pendingReg.otp) {
+          pendingReg.attemptsLeft--;
+          if (pendingReg.attemptsLeft <= 0) {
+            showOtpError('Verification failed: Maximum attempts exceeded. Please restart.');
+            setTimeout(() => closeOtpModal(), 2000);
+            return;
+          }
+          showOtpError(`Incorrect verification code. (${pendingReg.attemptsLeft} attempts remaining)`);
+          if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.innerHTML = `<span>Verify &amp; Create Account</span> <i class="ph-bold ph-check"></i>`;
+          }
+          return;
+        }
+
+        // OTP Verified Successfully! Commit account creation
+        try {
+          const user = MockAuth.register({
+            name: pendingReg.name,
+            phone: pendingReg.phone,
+            email: pendingReg.email,
+            password: pendingReg.password
+          });
+
+          // Store in sessionStorage exclusively (CWE-312 mitigation)
+          sessionStorage.setItem('gnm_user', JSON.stringify(user));
+          sessionStorage.setItem('gnm_user_verified', 'true');
+          localStorage.removeItem('gnm_user'); // purge persistent token
+
+          closeOtpModal();
+
+          function getSafeRedirect(target) {
+            if (!target || typeof target !== 'string') return 'my-bookings.html';
+            const trimmed = target.trim();
+            if (/^(?:[a-z]+:|\/\/)/i.test(trimmed)) return 'my-bookings.html';
+            if (trimmed.startsWith('/') || /^[a-zA-Z0-9_\-]+\.html(?:[?#].*)?$/.test(trimmed)) {
+              return trimmed;
+            }
+            return 'my-bookings.html';
+          }
+
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirect = getSafeRedirect(urlParams.get('redirect'));
+          window.location.href = redirect;
+        } catch (err) {
+          showOtpError(err.message || 'Registration failed.');
+          if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.innerHTML = `<span>Verify &amp; Create Account</span> <i class="ph-bold ph-check"></i>`;
+          }
+        }
+      }, 400);
+    }
+
+    // ============================================================================
+    // 3. FORM SUBMISSION HANDLER
+    // ============================================================================
     function handleRegister(e) {
       e.preventDefault();
       hideError();
@@ -409,39 +773,31 @@
         return;
       }
 
-      if (!password || password.length < 6) {
-        showError('Please enter a password with at least 6 characters.');
+      // Strong password enforcement
+      const strength = evaluatePasswordStrength(password);
+      if (!strength.isValid) {
+        showError('Please choose a strong password matching all 4 requirements below (8+ chars, upper & lower case, number, symbol).');
         document.getElementById('regPassword').focus();
         return;
       }
 
       btn.disabled = true;
-      btn.innerHTML = `<span>Creating account...</span>`;
+      btn.innerHTML = `<span>Preparing verification...</span>`;
+
+      // Generate 6-digit OTP code
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      pendingReg = {
+        name,
+        phone,
+        email,
+        password,
+        otp: generatedOtp,
+        attemptsLeft: 3
+      };
 
       setTimeout(() => {
-        try {
-          const user = MockAuth.register({ name, phone, email, password });
-          
-          // Safe Redirect
-          function getSafeRedirect(target) {
-            if (!target || typeof target !== 'string') return 'my-bookings.html';
-            const trimmed = target.trim();
-            if (/^(?:[a-z]+:|\/\/)/i.test(trimmed)) return 'my-bookings.html';
-            if (trimmed.startsWith('/') || /^[a-zA-Z0-9_\-]+\.html(?:[?#].*)?$/.test(trimmed)) {
-              return trimmed;
-            }
-            return 'my-bookings.html';
-          }
-
-          const urlParams = new URLSearchParams(window.location.search);
-          const redirect = getSafeRedirect(urlParams.get('redirect'));
-          
-          window.location.href = redirect;
-        } catch (err) {
-          showError(err.message || 'Registration failed. Please try again.');
-          btn.disabled = false;
-          btn.innerHTML = `<span>Create Account</span> <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>`;
-        }
+        openOtpModal(phone, generatedOtp);
       }, 350);
     }
 

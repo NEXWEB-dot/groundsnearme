@@ -331,10 +331,64 @@
       document.getElementById('errorAlert').classList.remove('show');
     }
 
-    // Login Submission (Supabase Auth + Phone Fallback)
+    // Rate Limiting Protection for Player Login
+    const LoginRateLimiter = {
+      MAX_ATTEMPTS: 5,
+      LOCKOUT_MS: 300000, // 5 minutes
+      STORAGE_KEY: 'gnm_login_rate_limit',
+
+      getState() {
+        try {
+          return JSON.parse(sessionStorage.getItem(this.STORAGE_KEY) || '{}');
+        } catch (_) { return {}; }
+      },
+
+      isLocked() {
+        const data = this.getState();
+        if (data.lockedUntil && Date.now() < data.lockedUntil) {
+          return Math.ceil((data.lockedUntil - Date.now()) / 1000);
+        }
+        return 0;
+      },
+
+      recordFailure() {
+        const data = this.getState();
+        data.failures = (data.failures || 0) + 1;
+        data.lastFailure = Date.now();
+        if (data.failures >= this.MAX_ATTEMPTS) {
+          data.lockedUntil = Date.now() + this.LOCKOUT_MS;
+        }
+        sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+        return data.failures;
+      },
+
+      recordSuccess() {
+        sessionStorage.removeItem(this.STORAGE_KEY);
+      }
+    };
+
+    // Clean up legacy localStorage tokens on load
+    try {
+      if (localStorage.getItem('gnm_supabase_session')) {
+        if (!sessionStorage.getItem('gnm_supabase_session')) {
+          sessionStorage.setItem('gnm_supabase_session', localStorage.getItem('gnm_supabase_session'));
+        }
+        localStorage.removeItem('gnm_supabase_session');
+      }
+    } catch (_) {}
+
+    // Login Submission
     async function handleLogin(e) {
       e.preventDefault();
       hideError();
+
+      const remainingSec = LoginRateLimiter.isLocked();
+      if (remainingSec > 0) {
+        const mins = Math.floor(remainingSec / 60);
+        const secs = remainingSec % 60;
+        showError(`Account temporarily locked due to repeated failed logins. Please wait ${mins > 0 ? mins + 'm ' : ''}${secs}s before retrying.`);
+        return;
+      }
 
       const identifier = document.getElementById('loginIdentifier').value.trim();
       const password = document.getElementById('loginPassword').value;
@@ -371,6 +425,7 @@
           const data = await res.json();
           if (res.ok && data.access_token) {
             sessionStorage.setItem('gnm_supabase_session', JSON.stringify(data));
+            localStorage.removeItem('gnm_supabase_session');
             const userObj = {
               id: data.user.id,
               name: data.user.user_metadata?.full_name || identifier.split('@')[0],
@@ -378,7 +433,9 @@
               phone: data.user.user_metadata?.phone || '',
               role: data.user.user_metadata?.account_type || 'player'
             };
+            sessionStorage.setItem('gnm_user', JSON.stringify(userObj));
             localStorage.setItem('gnm_user', JSON.stringify(userObj));
+            LoginRateLimiter.recordSuccess();
             loggedIn = true;
           }
         } catch (_) {}
@@ -388,9 +445,16 @@
       if (!loggedIn) {
         try {
           MockAuth.login(identifier, password);
+          LoginRateLimiter.recordSuccess();
           loggedIn = true;
         } catch (err) {
-          showError(err.message || 'Login failed. Please verify your credentials.');
+          const failures = LoginRateLimiter.recordFailure();
+          const left = Math.max(0, LoginRateLimiter.MAX_ATTEMPTS - failures);
+          if (left === 0) {
+            showError('Too many failed attempts. Account locked for 5 minutes.');
+          } else {
+            showError((err.message || 'Login failed. Please verify your credentials.') + ` (${left} attempts remaining)`);
+          }
           btn.disabled = false;
           btn.innerHTML = `<span>Log In</span> <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>`;
           return;

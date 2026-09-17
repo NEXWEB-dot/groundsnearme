@@ -292,6 +292,9 @@ const GNM = {
       skill_level: data.skill_level || 'any',
       format: data.format || 'Tape Ball',
       area_id: data.area_id || null,
+      ground_id: data.ground_id || null,
+      booking_ref: data.booking_ref || null,
+      booking_id: data.booking_id || null,
       match_date: data.match_date,
       start_time: data.start_time || '20:00:00',
       players_needed: data.looking_for === 'players' ? (parseInt(data.players_needed, 10) || 2) : null,
@@ -299,25 +302,67 @@ const GNM = {
       status: 'open'
     };
 
-    const res = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/open_games`, {
-      method: 'POST',
-      headers: {
-        'apikey': GNM_CONFIG.supabaseAnon,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify(payload)
-    });
+    let createdGame = null;
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Failed to post match');
+    // 1. Try create_open_game RPC if available
+    try {
+      const rpcRes = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/rpc/create_open_game`, {
+        method: 'POST',
+        headers: {
+          'apikey': GNM_CONFIG.supabaseAnon,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          p_title: payload.title,
+          p_match_date: payload.match_date,
+          p_looking_for: payload.looking_for,
+          p_skill_level: payload.skill_level,
+          p_players_needed: payload.players_needed,
+          p_start_time: payload.start_time,
+          p_format: payload.format,
+          p_ground_id: payload.ground_id,
+          p_area_id: payload.area_id,
+          p_booking_ref: payload.booking_ref,
+          p_booking_id: payload.booking_id
+        })
+      });
+      if (rpcRes.ok) {
+        const json = await rpcRes.json();
+        if (json?.ok && json.game) createdGame = json.game;
+      }
+    } catch (_) {}
+
+    // 2. Direct POST fallback
+    if (!createdGame) {
+      const res = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/open_games`, {
+        method: 'POST',
+        headers: {
+          'apikey': GNM_CONFIG.supabaseAnon,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to post match');
+      }
+
+      const rows = await res.json();
+      createdGame = Array.isArray(rows) ? rows[0] : rows;
+    }
+
+    // Dual-write to local games array so UI reflects it immediately
+    if (createdGame) {
+      this.games = [createdGame, ...(this.games || [])];
     }
 
     await this.loadMatchmaking();
     this.renderMatchmaking();
-    return await res.json();
+    return createdGame;
   },
 
   updateStatsBar() {

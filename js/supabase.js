@@ -25,7 +25,13 @@ async function gnmFetch(endpoint, opts = {}) {
   const url = `${GNM_SUPABASE.url}/rest/v1/${endpoint}`;
   let bearerToken = GNM_SUPABASE.key;
   try {
-    const supaSession = sessionStorage.getItem('gnm_supabase_session') || localStorage.getItem('gnm_supabase_session');
+    if (localStorage.getItem('gnm_supabase_session')) {
+      if (!sessionStorage.getItem('gnm_supabase_session')) {
+        sessionStorage.setItem('gnm_supabase_session', localStorage.getItem('gnm_supabase_session'));
+      }
+      localStorage.removeItem('gnm_supabase_session');
+    }
+    const supaSession = sessionStorage.getItem('gnm_supabase_session');
     if (supaSession) {
       const parsed = JSON.parse(supaSession);
       if (parsed?.access_token) bearerToken = parsed.access_token;
@@ -152,7 +158,7 @@ const SupabaseBookings = {
     let currentPlayerId = payload.player_id || null;
     if (!currentPlayerId) {
       try {
-        const supaSession = sessionStorage.getItem('gnm_supabase_session') || localStorage.getItem('gnm_supabase_session');
+        const supaSession = sessionStorage.getItem('gnm_supabase_session');
         if (supaSession) {
           const parsed = JSON.parse(supaSession);
           if (parsed?.user?.id) currentPlayerId = parsed.user.id;
@@ -177,16 +183,37 @@ const SupabaseBookings = {
 
     let createdBooking = null;
 
-    // 1. Attempt live Supabase insert
+    // 1. Attempt live Supabase insert via create_web_booking RPC (works for guest & auth users)
     try {
-      const rows = await gnmFetch('bookings', {
+      const rpcRes = await gnmFetch('rpc/create_web_booking', {
         method:  'POST',
-        body:    JSON.stringify(full),
-        headers: { 'Prefer': 'return=representation' }
+        body:    JSON.stringify({
+          p_ground_id:     full.ground_id,
+          p_booking_date:  full.booking_date,
+          p_start_time:    full.start_time,
+          p_end_time:      full.end_time,
+          p_contact_name:  full.contact_name,
+          p_contact_phone: full.contact_phone,
+          p_notes:         full.notes || 'Booked via Website'
+        })
       });
-      createdBooking = Array.isArray(rows) ? rows[0] : rows;
-    } catch (err) {
-      console.warn('[GNM] Supabase booking POST error (will persist in local session):', err.message);
+      if (rpcRes && rpcRes.ok !== false) {
+        createdBooking = rpcRes.booking || rpcRes;
+      }
+    } catch (_) {}
+
+    // 2. Direct POST fallback
+    if (!createdBooking) {
+      try {
+        const rows = await gnmFetch('bookings', {
+          method:  'POST',
+          body:    JSON.stringify(full),
+          headers: { 'Prefer': 'return=representation' }
+        });
+        createdBooking = Array.isArray(rows) ? rows[0] : rows;
+      } catch (err) {
+        console.warn('[GNM] Supabase booking POST error (will persist in local session):', err.message);
+      }
     }
 
     // 2. Also dual-write into MockBookingStore so owner dashboard & player see it synchronously

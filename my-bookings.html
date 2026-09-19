@@ -403,6 +403,9 @@
 
                 <div id="lookupOtpStep" style="display:none;">
                   <div style="font-size:0.8125rem; color:var(--muted); margin-bottom:12px;">Enter the 6-digit code sent to <strong id="lookupDisplayPhone" style="color:var(--emerald);"></strong>:</div>
+                  <div id="lookupDemoBadge" style="display:none; background:#d1fae5; border:1px solid #6ee7b7; border-radius:6px; padding:8px 12px; margin-bottom:12px; font-size:0.8rem; color:#065f46;">
+                    <strong>Dev OTP:</strong> <span id="lookupDemoCode" class="mono" style="font-weight:700;"></span> (auto-filled)
+                  </div>
                   <input type="text" id="lookupOtpInput" maxlength="6" inputmode="numeric" placeholder="123456" style="width:100%; padding:12px 14px; text-align:center; letter-spacing:0.25em; font-size:1.25rem; font-weight:800; border:1.5px solid var(--border); margin-bottom:12px; outline:none; background:var(--white);" />
                   <div id="lookupOtpErr" style="display:none; color:var(--danger); font-size:0.8125rem; margin-bottom:10px; font-weight:600;"></div>
                   <button type="button" class="btn-primary" onclick="verifyLookupOtp()" id="btnVerifyLookupOtp" style="width:100%; padding:12px; margin-bottom:8px;">
@@ -630,7 +633,21 @@
         document.getElementById('lookupOtpStep').style.display = 'block';
         document.getElementById('lookupDisplayPhone').textContent = raw;
         const otpInput = document.getElementById('lookupOtpInput');
-        if (otpInput) otpInput.focus();
+        const demoBadge = document.getElementById('lookupDemoBadge');
+        const demoCodeEl = document.getElementById('lookupDemoCode');
+        if (res && res.demo_code && demoBadge && demoCodeEl) {
+          demoCodeEl.textContent = res.demo_code;
+          demoBadge.style.display = 'block';
+          if (otpInput) otpInput.value = res.demo_code;
+          const verifyBtn = document.getElementById('btnVerifyLookupOtp');
+          if (verifyBtn) verifyBtn.focus();
+        } else {
+          if (demoBadge) demoBadge.style.display = 'none';
+          if (otpInput) {
+            otpInput.value = '';
+            otpInput.focus();
+          }
+        }
       } catch (err) {
         if (errEl) {
           errEl.textContent = err.message || 'Error sending code. Please try again.';

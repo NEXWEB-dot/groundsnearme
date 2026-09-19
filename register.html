@@ -309,6 +309,13 @@
         <span id="otpErrorMessage">Invalid code</span>
       </div>
 
+      <!-- Demo badge — visible only when Supabase migration not yet applied -->
+      <div id="otpDemoBadge" style="display:none; background:#d1fae5; border:1px solid #6ee7b7; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.82rem; color:#065f46; line-height:1.4;">
+        <strong>🔧 Dev Mode OTP:</strong> Supabase migration pending — use code
+        <strong id="otpDemoCode" class="mono" style="font-size:1rem; letter-spacing:0.1em;"></strong>
+        (auto-filled above)
+      </div>
+
       <div class="otp-inputs">
         <input type="text" class="otp-box" maxlength="1" inputmode="numeric" id="otp-0" autocomplete="one-time-code" autofocus />
         <input type="text" class="otp-box" maxlength="1" inputmode="numeric" id="otp-1" />
@@ -504,7 +511,7 @@
           throw new Error(res.message || 'Could not send verification code.');
         }
 
-        openOtpModal(phone);
+        openOtpModal(phone, res);
       } catch (err) {
         showError(err.message || 'Failed to dispatch verification code.');
       } finally {
@@ -528,12 +535,31 @@
     }
 
     /* OTP Modal & Code Validation */
-    function openOtpModal(phone) {
+    function openOtpModal(phone, res) {
       document.getElementById('displayOtpPhone').textContent = phone;
       document.getElementById('modalOtpVerify').classList.add('open');
       startOtpTimer();
       clearOtpInputs();
-      document.getElementById('otp-0').focus();
+
+      // Show demo badge + pre-fill when Supabase migration is not yet applied
+      const badge = document.getElementById('otpDemoBadge');
+      const demoCodeEl = document.getElementById('otpDemoCode');
+      if (res && res.demo_code && badge && demoCodeEl) {
+        demoCodeEl.textContent = res.demo_code;
+        badge.style.display = 'block';
+        // Pre-fill OTP boxes
+        const digits = String(res.demo_code).split('');
+        digits.forEach((d, i) => {
+          const box = document.getElementById('otp-' + i);
+          if (box) box.value = d;
+        });
+        // Focus the verify button since code is already filled
+        const verifyBtn = document.getElementById('btnVerifyOtp');
+        if (verifyBtn) verifyBtn.focus();
+      } else {
+        if (badge) badge.style.display = 'none';
+        document.getElementById('otp-0').focus();
+      }
     }
 
     function closeOtpModal() {

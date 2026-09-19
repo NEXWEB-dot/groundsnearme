@@ -277,6 +277,10 @@ const MockBookingStore = {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(bookings));
   },
 
+  getAll() {
+    return this._getAll();
+  },
+
   getBookingsForGroundDate(groundId, dateStr) {
     return this._getAll().filter(b => b.ground_id === groundId && b.booking_date === dateStr);
   },

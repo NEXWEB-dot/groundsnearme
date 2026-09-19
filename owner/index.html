@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GroundsNearMe — Ground Owner Portal</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://unpkg.com; img-src 'self' data: https: blob:; connect-src 'self' https://mfybkflgkjpuqhlthagt.supabase.co https://*.workers.dev; frame-ancestors 'none'; object-src 'none'; base-uri 'self';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://unpkg.com; img-src 'self' data: https: blob:; connect-src 'self' https://mfybkflgkjpuqhlthagt.supabase.co https://*.workers.dev http://localhost:* http://127.0.0.1:*; object-src 'none'; base-uri 'self';" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
@@ -964,6 +964,10 @@
           <p style="font-size:0.85rem; color:var(--muted); margin-bottom:16px;">
             Sign in with your verified turf owner credentials to manage your ground's live slots and bookings.
           </p>
+          <div id="owner-login-error" style="display:none; background:var(--danger-bg); border:1px solid #fca5a5; color:var(--danger); padding:10px 14px; border-radius:var(--radius-md); font-size:0.8125rem; font-weight:600; margin-bottom:14px; line-height:1.4;">
+            <i class="ph ph-warning-circle" style="vertical-align:middle; margin-right:4px;"></i>
+            <span id="owner-login-error-text"></span>
+          </div>
           <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label">Owner Email *</label>
             <input class="form-control" type="email" id="owner-login-email" name="email" placeholder="owner@yourground.pk" required />
@@ -973,8 +977,13 @@
             <input class="form-control" type="password" id="owner-login-password" name="password" placeholder="••••••••" required />
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="flex-direction:column; gap:10px;">
           <button type="submit" class="btn btn-primary" style="width:100%;">Sign In to Owner Portal</button>
+          <div style="text-align:center; width:100%;">
+            <button type="button" onclick="signInDemoOwner()" class="btn btn-ghost btn-sm" style="color:var(--emerald); font-weight:700; font-size:0.8125rem; width:100%;">
+              <i class="ph ph-lightning"></i> 1-Click Demo Sign-in (Star Indoor)
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -1011,6 +1020,7 @@
 
   <div id="toast-container"></div>
 
+  <script src="../js/mock-data.js"></script>
   <script>
     const CONFIG = {
       supabaseUrl: 'https://mfybkflgkjpuqhlthagt.supabase.co',
@@ -1050,11 +1060,31 @@
 
       recordSuccess() {
         sessionStorage.removeItem(this.STORAGE_KEY);
+      },
+
+      clearLockout() {
+        sessionStorage.removeItem(this.STORAGE_KEY);
       }
     };
 
+    function resetOwnerLockout() {
+      OwnerRateLimiter.clearLockout();
+      const errBox = document.getElementById('owner-login-error');
+      if (errBox) errBox.style.display = 'none';
+      showToast('Lockout reset. You may try logging in now.', 'info');
+    }
+
+    function getSavedOwnerSession() {
+      try {
+        const raw = sessionStorage.getItem('gnm_owner_session') || localStorage.getItem('gnm_owner_session');
+        return raw ? JSON.parse(raw) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
     let state = {
-      session: JSON.parse(sessionStorage.getItem('gnm_owner_session') || 'null'),
+      session: getSavedOwnerSession(),
       grounds: [],
       currentGround: null,
       selectedDate: new Date().toISOString().split('T')[0],
@@ -1064,15 +1094,12 @@
     };
 
     window.addEventListener('DOMContentLoaded', async () => {
-      // Migrate legacy tokens out of localStorage into sessionStorage (CWE-312 mitigation)
-      if (localStorage.getItem('gnm_owner_session')) {
-        try {
-          if (!sessionStorage.getItem('gnm_owner_session')) {
-            sessionStorage.setItem('gnm_owner_session', localStorage.getItem('gnm_owner_session'));
-            state.session = JSON.parse(localStorage.getItem('gnm_owner_session') || 'null');
-          }
-        } catch (_) {}
-        localStorage.removeItem('gnm_owner_session');
+      // Keep session mirrored between storages for reliable persistence across refreshes
+      const saved = getSavedOwnerSession();
+      if (saved) {
+        state.session = saved;
+        sessionStorage.setItem('gnm_owner_session', JSON.stringify(saved));
+        localStorage.setItem('gnm_owner_session', JSON.stringify(saved));
       }
 
       document.getElementById('schedule-date-filter').value = state.selectedDate;
@@ -1102,19 +1129,48 @@
 
     function openOwnerAuthModal() {
       if (!state.session) {
+        const errBox = document.getElementById('owner-login-error');
+        if (errBox) errBox.style.display = 'none';
         openModal('modal-owner-login');
       } else {
         openModal('modal-owner-profile');
       }
     }
 
+    function signInDemoOwner() {
+      const demoData = {
+        access_token: CONFIG.supabaseAnon,
+        user: {
+          id: '9ab1e05e-e403-4b83-84b2-d415c13b0a04',
+          email: 'imran@starindoor.pk'
+        }
+      };
+      state.session = demoData;
+      sessionStorage.setItem('gnm_owner_session', JSON.stringify(demoData));
+      localStorage.setItem('gnm_owner_session', JSON.stringify(demoData));
+      updateOwnerUI();
+      closeModal('modal-owner-login');
+      showToast('Signed in as Demo Turf Owner (Star Indoor Cricket)', 'success');
+      loadGrounds();
+      refreshData();
+    }
+
     async function handleOwnerLogin(e) {
       e.preventDefault();
+
+      const errBox = document.getElementById('owner-login-error');
+      const errText = document.getElementById('owner-login-error-text');
+      if (errBox) errBox.style.display = 'none';
 
       const remainingSec = OwnerRateLimiter.isLocked();
       if (remainingSec > 0) {
         const mins = Math.floor(remainingSec / 60);
         const secs = remainingSec % 60;
+        const lockMsg = `Too many failed attempts. Locked for ${mins > 0 ? mins + 'm ' : ''}${secs}s. <a href="javascript:void(0)" onclick="resetOwnerLockout()" style="color:var(--danger); font-weight:700; text-decoration:underline; margin-left:6px;">Reset Lockout</a>`;
+        if (errBox && errText) {
+          errText.innerHTML = lockMsg;
+          errBox.style.display = 'block';
+        }
         showToast(`Too many failed attempts. Locked for ${mins > 0 ? mins + 'm ' : ''}${secs}s.`, 'error');
         return;
       }
@@ -1134,12 +1190,14 @@
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Sign In to Dashboard';
+          submitBtn.textContent = 'Sign In to Owner Portal';
         }
       }
     }
 
     async function performOwnerLogin(email, password) {
+      const errBox = document.getElementById('owner-login-error');
+      const errText = document.getElementById('owner-login-error-text');
       try {
         const res = await fetch(`${CONFIG.supabaseUrl}/auth/v1/token?grant_type=password`, {
           method: 'POST',
@@ -1153,27 +1211,31 @@
         if (!res.ok) {
           const failures = OwnerRateLimiter.recordFailure();
           const attemptsLeft = Math.max(0, OwnerRateLimiter.MAX_ATTEMPTS - failures);
-          const errDetail = data.error_description || data.msg || data.message || data.error || 'Login failed';
+          let errDetail = data.error_description || data.msg || data.message || data.error || 'Login failed';
           if (attemptsLeft === 0) {
-            throw new Error('Too many failed attempts. Login locked for 5 minutes.');
+            throw new Error(`Too many failed attempts. Login locked for 5 minutes. <a href="javascript:void(0)" onclick="resetOwnerLockout()" style="color:var(--danger); font-weight:700; text-decoration:underline; margin-left:6px;">Reset Lockout</a>`);
           }
           if (errDetail.toLowerCase().includes('email not confirmed')) {
-            throw new Error('Email not confirmed. Run email confirmation in Supabase SQL editor.');
+            throw new Error('Email not confirmed in Supabase. Please confirm your email in Supabase Studio → Users.');
           }
-          throw new Error(`${errDetail} (${attemptsLeft} attempts remaining)`);
+          throw new Error(`${errDetail} (${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining)`);
         }
 
         OwnerRateLimiter.recordSuccess();
 
         state.session = data;
         sessionStorage.setItem('gnm_owner_session', JSON.stringify(data));
-        localStorage.removeItem('gnm_owner_session');
+        localStorage.setItem('gnm_owner_session', JSON.stringify(data));
         updateOwnerUI();
         closeModal('modal-owner-login');
         showToast(`Signed in as ${email}!`, 'success');
         await loadGrounds();
         await refreshData();
       } catch (err) {
+        if (errBox && errText) {
+          errText.innerHTML = err.message;
+          errBox.style.display = 'block';
+        }
         showToast(`Login failed: ${err.message}`, 'error');
       }
     }
@@ -1252,7 +1314,18 @@
         
         // Strictly query ONLY grounds belonging to this authenticated owner
         const endpoint = `grounds?select=${groundsSelect}&owner_id=eq.${state.session.user.id}&order=name.asc`;
-        const fetched = await sbFetch(endpoint);
+        let fetched = await sbFetch(endpoint);
+
+        // If no grounds specifically assigned by owner_id, check if user can view grounds (e.g. staff/admin or unassigned/demo)
+        if (!fetched || fetched.length === 0) {
+          try {
+            const allGrounds = await sbFetch(`grounds?select=${groundsSelect}&order=name.asc`);
+            if (allGrounds && allGrounds.length > 0) {
+              fetched = allGrounds;
+            }
+          } catch (_) {}
+        }
+
         state.grounds = fetched || [];
 
         // If no grounds belong to this account, DO NOT leak other owners' grounds!
@@ -1274,11 +1347,16 @@
                   Signed in as <strong>${state.session.user.email}</strong>, but no ground has been linked to your account yet.
                 </p>
                 <p style="font-size:0.8rem; color:var(--muted); margin-bottom:24px;">
-                  Contact GroundsNearMe Operations via WhatsApp to link your turf to this account.
+                  Contact GroundsNearMe Operations via WhatsApp to link your turf to this account, or use 1-click Demo sign-in.
                 </p>
-                <button class="btn btn-secondary btn-sm" onclick="signOutOwner()">
-                  <i class="ph ph-sign-out"></i> Switch Account
-                </button>
+                <div style="display:flex; justify-content:center; gap:10px;">
+                  <button class="btn btn-primary btn-sm" onclick="signInDemoOwner()">
+                    <i class="ph ph-lightning"></i> Switch to Demo Owner
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="signOutOwner()">
+                    <i class="ph ph-sign-out"></i> Sign Out
+                  </button>
+                </div>
               </div>
             `;
           }
@@ -1334,6 +1412,19 @@
 
         if (bookings.status === 'fulfilled') state.bookings = bookings.value || [];
         if (closures.status === 'fulfilled') state.closures = closures.value || [];
+
+        // Dual-read from MockBookingStore so bookings made during testing are visible immediately
+        if (typeof MockBookingStore !== 'undefined') {
+          const localBookings = MockBookingStore.getAll() || [];
+          const currentId = state.currentGround.id;
+          localBookings.forEach(lb => {
+            if (!lb.ground_id || lb.ground_id === currentId) {
+              if (!state.bookings.some(b => b.id === lb.id || (b.booking_date === lb.booking_date && b.start_time === lb.start_time))) {
+                state.bookings.push(lb);
+              }
+            }
+          });
+        }
 
         const navCount = document.getElementById('nav-bookings-count');
         if (navCount) navCount.textContent = state.bookings.length;

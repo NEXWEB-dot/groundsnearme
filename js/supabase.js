@@ -183,18 +183,22 @@ const SupabaseBookings = {
 
     let createdBooking = null;
 
-    // 1. Attempt live Supabase insert via create_web_booking RPC (works for guest & auth users)
+    // 1. Attempt live Supabase insert via create_guest_booking RPC (works for guest & verified users)
     try {
-      const rpcRes = await gnmFetch('rpc/create_web_booking', {
+      const rpcRes = await gnmFetch('rpc/create_guest_booking', {
         method:  'POST',
         body:    JSON.stringify({
-          p_ground_id:     full.ground_id,
-          p_booking_date:  full.booking_date,
-          p_start_time:    full.start_time,
-          p_end_time:      full.end_time,
-          p_contact_name:  full.contact_name,
-          p_contact_phone: full.contact_phone,
-          p_notes:         full.notes || 'Booked via Website'
+          p_ground_id:          full.ground_id,
+          p_booking_date:       full.booking_date,
+          p_start_time:         full.start_time,
+          p_end_time:           full.end_time,
+          p_contact_name:       full.contact_name,
+          p_contact_phone:      full.contact_phone,
+          p_email:              full.email || null,
+          p_notes:              full.notes || 'Booked via Website',
+          p_players_expected:   full.players_expected || null,
+          p_verification_token: full.verification_token || null,
+          p_save_info:          Boolean(full.save_info)
         })
       });
       if (rpcRes && rpcRes.ok !== false) {
@@ -524,4 +528,60 @@ const SupabaseSlots = {
     return true;
   }
 };
+
+/* ─────────────────────────────────────────
+   AUTH & SECURITY API
+   ───────────────────────────────────────── */
+const SupabaseAuthSecurity = {
+  async requestSignupOtp(phone, email) {
+    return gnmFetch('rpc/request_signup_otp', {
+      method: 'POST',
+      body: JSON.stringify({ p_phone: phone, p_email: email || null, p_ip: 'client' })
+    });
+  },
+
+  async verifySignupOtp(phone, code) {
+    return gnmFetch('rpc/verify_signup_otp', {
+      method: 'POST',
+      body: JSON.stringify({ p_phone: phone, p_code: code, p_ip: 'client' })
+    });
+  },
+
+  async checkLoginLockout(identifier) {
+    return gnmFetch('rpc/check_login_lockout', {
+      method: 'POST',
+      body: JSON.stringify({ p_identifier: identifier, p_ip: 'client' })
+    });
+  },
+
+  async recordLoginAttempt(identifier, success) {
+    return gnmFetch('rpc/record_login_attempt', {
+      method: 'POST',
+      body: JSON.stringify({ p_identifier: identifier, p_ip: 'client', p_success: Boolean(success) })
+    });
+  },
+
+  async requestBookingOtp(phone, email) {
+    return gnmFetch('rpc/request_booking_otp', {
+      method: 'POST',
+      body: JSON.stringify({ p_phone: phone, p_email: email || null, p_ip: 'client' })
+    });
+  },
+
+  async verifyBookingOtp(phone, code) {
+    return gnmFetch('rpc/verify_booking_otp', {
+      method: 'POST',
+      body: JSON.stringify({ p_phone: phone, p_code: code, p_ip: 'client' })
+    });
+  },
+
+  async getGuestBookings(phone, token) {
+    return gnmFetch('rpc/get_guest_bookings', {
+      method: 'POST',
+      body: JSON.stringify({ p_phone: phone, p_verification_token: token || null })
+    });
+  }
+};
+
+
 

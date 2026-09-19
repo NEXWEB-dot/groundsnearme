@@ -381,18 +381,37 @@
     // Load Data from Supabase / Mock hybrid
     async function loadBookings() {
       const user = MockAuth.getUser();
-      if (!user) {
+      if (!user || !user.phone) {
         document.getElementById('userName').textContent = 'Guest Player';
         const container = document.getElementById('bookingsContainer');
         container.innerHTML = `
           <div class="card-outer reveal">
             <div class="card-inner empty-state" style="padding:48px 24px;">
-              <i class="ph-thin ph-user-circle empty-icon" style="font-size:56px; color:var(--emerald);"></i>
-              <h2 class="empty-title" style="margin-top:16px;">Log in to view your bookings</h2>
-              <p class="empty-desc" style="max-width:44ch; margin:8px auto 24px;">Sign in with your phone or email to track your confirmed pitch reservations, manage match times, or cancel slots.</p>
-              <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-                <a href="login.html?redirect=my-bookings.html" class="btn-primary" style="padding:12px 28px;">Log In</a>
-                <a href="register.html?redirect=my-bookings.html" class="btn-ghost" style="padding:12px 28px; border:1px solid var(--border); font-weight:700; text-decoration:none;">Create Account</a>
+              <i class="ph-thin ph-shield-check empty-icon" style="font-size:56px; color:var(--emerald);"></i>
+              <h2 class="empty-title" style="margin-top:16px;">Track Your Pitch Bookings</h2>
+              <p class="empty-desc" style="max-width:44ch; margin:8px auto 24px;">Enter your mobile number to view confirmed reservations, match details, and venue directions. No password required.</p>
+              
+              <div style="max-width:380px; margin:0 auto; width:100%; text-align:left;">
+                <div id="lookupPhoneStep">
+                  <label for="lookupPhoneInput" style="display:block; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; color:var(--ink);">Mobile Number</label>
+                  <input type="tel" id="lookupPhoneInput" class="form-input" placeholder="0300 1234567" style="width:100%; padding:12px 14px; border:1.5px solid var(--border); margin-bottom:12px; font-size:1rem; font-weight:600; outline:none; background:var(--white);" />
+                  <div id="lookupPhoneErr" style="display:none; color:var(--danger); font-size:0.8125rem; margin-bottom:10px; font-weight:600;"></div>
+                  <button type="button" class="btn-primary" onclick="requestLookupOtp()" id="btnSendLookupOtp" style="width:100%; padding:12px;">
+                    Send Verification Code
+                  </button>
+                </div>
+
+                <div id="lookupOtpStep" style="display:none;">
+                  <div style="font-size:0.8125rem; color:var(--muted); margin-bottom:12px;">Enter the 6-digit code sent to <strong id="lookupDisplayPhone" style="color:var(--emerald);"></strong>:</div>
+                  <input type="text" id="lookupOtpInput" maxlength="6" inputmode="numeric" placeholder="123456" style="width:100%; padding:12px 14px; text-align:center; letter-spacing:0.25em; font-size:1.25rem; font-weight:800; border:1.5px solid var(--border); margin-bottom:12px; outline:none; background:var(--white);" />
+                  <div id="lookupOtpErr" style="display:none; color:var(--danger); font-size:0.8125rem; margin-bottom:10px; font-weight:600;"></div>
+                  <button type="button" class="btn-primary" onclick="verifyLookupOtp()" id="btnVerifyLookupOtp" style="width:100%; padding:12px; margin-bottom:8px;">
+                    Verify & View Bookings
+                  </button>
+                  <button type="button" class="btn-ghost" onclick="cancelLookup()" style="width:100%; padding:8px; border:none; color:var(--muted); font-size:0.8125rem;">
+                    Use different number
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -400,7 +419,7 @@
         initReveal();
         return;
       }
-      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userName').textContent = user.name || 'Player';
 
       const container = document.getElementById('bookingsContainer');
       container.innerHTML = `
@@ -410,6 +429,7 @@
         </div>
         <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
       `;
+
       
       const allBookings = await SupabaseBookings.getPlayerBookings();
       const upcoming = [];
@@ -579,10 +599,101 @@
       }
     }
 
+    let activeLookupPhone = '';
+
+    window.requestLookupOtp = async function() {
+      const input = document.getElementById('lookupPhoneInput');
+      const errEl = document.getElementById('lookupPhoneErr');
+      const btn = document.getElementById('btnSendLookupOtp');
+      const raw = input ? input.value.trim() : '';
+      const clean = raw.replace(/\D/g, '');
+
+      if (clean.length < 10) {
+        if (errEl) {
+          errEl.textContent = 'Please enter a valid 10-11 digit mobile number.';
+          errEl.style.display = 'block';
+        }
+        return;
+      }
+      if (errEl) errEl.style.display = 'none';
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Sending code…`;
+
+      try {
+        const res = await SupabaseAuthSecurity.requestBookingOtp(clean);
+        if (res && res.ok === false) {
+          throw new Error(res.message || 'Could not send verification code.');
+        }
+        activeLookupPhone = clean;
+        document.getElementById('lookupPhoneStep').style.display = 'none';
+        document.getElementById('lookupOtpStep').style.display = 'block';
+        document.getElementById('lookupDisplayPhone').textContent = raw;
+        const otpInput = document.getElementById('lookupOtpInput');
+        if (otpInput) otpInput.focus();
+      } catch (err) {
+        if (errEl) {
+          errEl.textContent = err.message || 'Error sending code. Please try again.';
+          errEl.style.display = 'block';
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Verification Code';
+      }
+    };
+
+    window.verifyLookupOtp = async function() {
+      const input = document.getElementById('lookupOtpInput');
+      const errEl = document.getElementById('lookupOtpErr');
+      const btn = document.getElementById('btnVerifyLookupOtp');
+      const code = input ? input.value.trim() : '';
+
+      if (code.length !== 6) {
+        if (errEl) {
+          errEl.textContent = 'Please enter all 6 digits of the code.';
+          errEl.style.display = 'block';
+        }
+        return;
+      }
+      if (errEl) errEl.style.display = 'none';
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Verifying…`;
+
+      try {
+        const res = await SupabaseAuthSecurity.verifyBookingOtp(activeLookupPhone, code);
+        if (res && res.ok === false) {
+          throw new Error(res.message || 'Invalid verification code.');
+        }
+        // Save verified guest profile
+        MockAuth.saveGuestProfile({
+          name: 'Player',
+          phone: activeLookupPhone
+        });
+        loadBookings();
+      } catch (err) {
+        if (errEl) {
+          errEl.textContent = err.message || 'Invalid verification code.';
+          errEl.style.display = 'block';
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify & View Bookings';
+      }
+    };
+
+    window.cancelLookup = function() {
+      document.getElementById('lookupOtpStep').style.display = 'none';
+      document.getElementById('lookupPhoneStep').style.display = 'block';
+      const input = document.getElementById('lookupPhoneInput');
+      if (input) input.focus();
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
       initReveal();
       loadBookings();
     });
+
   </script>
   <script src="js/cookie-consent.js"></script>
 </body>

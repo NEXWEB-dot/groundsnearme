@@ -1126,36 +1126,75 @@
       const btnCancelModal = document.getElementById('btnCancelBooking');
       const btnConfirmModal = document.getElementById('btnConfirmBooking');
 
+      let bookingState = {
+        step: 'details',
+        name: '',
+        phone: '',
+        email: '',
+        players: null,
+        notes: '',
+        saveInfo: true,
+        verificationToken: null
+      };
+
       function openModal() {
         if (!selectedSlot) return;
+        bookingState.step = 'details';
         
-        const user = MockAuth.getUser();
-        let contactFieldsHtml = '';
-        if (user) {
-          contactFieldsHtml = `<div class="summary-row"><span class="summary-label">Player</span> <span class="summary-val">${user.name} (${user.phone})</span></div>`;
-        } else {
-          contactFieldsHtml = `
-            <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);">
-              <div style="font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;">Player Contact Details</div>
-              <div style="margin-bottom:12px;">
-                <label for="bookerName" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:6px;">Full Name *</label>
-                <input type="text" id="bookerName" class="modal-input" placeholder="e.g. Ali Khan" required autocomplete="name" />
+        const guest = MockAuth.getGuestProfile() || MockAuth.getUser();
+        const initialName = guest?.name || '';
+        const initialPhone = guest?.phone || '';
+        const initialEmail = guest?.email || '';
+
+        modalTitle.textContent = 'Reserve Pitch Slot';
+        modalFooter.style.display = 'flex';
+        btnConfirmModal.disabled = false;
+        btnConfirmModal.textContent = 'Continue to Verification';
+
+        modalBody.innerHTML = `
+          <div class="summary-row"><span class="summary-label">Ground</span> <span class="summary-val">${escapeHtml(ground.name)}</span></div>
+          <div class="summary-row"><span class="summary-label">Date</span> <span class="summary-val">${formatDisplayDate(selectedDateStr)}</span></div>
+          <div class="summary-row"><span class="summary-label">Time</span> <span class="summary-val">${escapeHtml(selectedSlot.label)}</span></div>
+          <div class="summary-row"><span class="summary-label">Duration</span> <span class="summary-val">1 Hour</span></div>
+
+          <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);">
+            <div style="font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:10px;">Player Contact Details</div>
+            
+            <div style="margin-bottom:12px;">
+              <label for="bookerName" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:6px;">Full Name *</label>
+              <input type="text" id="bookerName" class="modal-input" placeholder="e.g. Ali Khan" value="${escapeHtml(initialName)}" required autocomplete="name" />
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <label for="bookerPhone" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:6px;">WhatsApp / Mobile Number *</label>
+              <input type="tel" id="bookerPhone" class="modal-input" placeholder="0300 1234567" value="${escapeHtml(initialPhone)}" required autocomplete="tel" />
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <label for="bookerEmail" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:6px;">Email Address <span style="font-weight:400; color:var(--muted);">(Optional)</span></label>
+              <input type="email" id="bookerEmail" class="modal-input" placeholder="captain@cricket.pk" value="${escapeHtml(initialEmail)}" autocomplete="email" />
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+              <div>
+                <label for="bookerPlayers" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:6px;">Players <span style="font-weight:400; color:var(--muted);">(Opt)</span></label>
+                <input type="number" id="bookerPlayers" class="modal-input" placeholder="12" min="2" max="30" />
               </div>
               <div>
-                <label for="bookerPhone" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:6px;">WhatsApp / Phone Number *</label>
-                <input type="tel" id="bookerPhone" class="modal-input" placeholder="0300 1234567" required autocomplete="tel" />
+                <label for="bookerNotes" style="display:block; font-size:0.8125rem; font-weight:700; color:var(--ink); margin-bottom:6px;">Notes <span style="font-weight:400; color:var(--muted);">(Opt)</span></label>
+                <input type="text" id="bookerNotes" class="modal-input" placeholder="Tape-ball match" maxlength="200" />
               </div>
             </div>
-          `;
-        }
 
-        modalTitle.textContent = 'Booking Summary';
-        modalBody.innerHTML = `
-          <div class="summary-row"><span class="summary-label">Ground</span> <span class="summary-val">${ground.name}</span></div>
-          <div class="summary-row"><span class="summary-label">Date</span> <span class="summary-val">${formatDisplayDate(selectedDateStr)}</span></div>
-          <div class="summary-row"><span class="summary-label">Time</span> <span class="summary-val">${selectedSlot.label}</span></div>
-          <div class="summary-row"><span class="summary-label">Duration</span> <span class="summary-val">1 Hour</span></div>
-          ${contactFieldsHtml}
+            <div style="margin-top:10px; margin-bottom:14px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.8125rem; color:var(--muted); cursor:pointer;">
+                <input type="checkbox" id="saveInfoCheck" checked style="accent-color:var(--emerald);" />
+                <span>Remember my details for faster booking next time</span>
+              </label>
+            </div>
+
+            <div id="bookingModalErr" style="display:none; color:var(--danger); font-size:0.8125rem; margin-bottom:10px; font-weight:600;"></div>
+          </div>
           
           <div class="summary-row summary-total">
             <span class="summary-label" style="color:var(--ink)">Total Amount</span>
@@ -1174,104 +1213,207 @@
         modal.classList.remove('open');
       }
 
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+
       btnBook.addEventListener('click', openModal);
       btnCloseModal.addEventListener('click', closeModal);
       btnCancelModal.addEventListener('click', closeModal);
 
       btnConfirmModal.addEventListener('click', async () => {
-        let user = MockAuth.getUser();
-        let contactName = user ? user.name : '';
-        let contactPhone = user ? user.phone : '';
+        const errEl = document.getElementById('bookingModalErr');
 
-        if (!user) {
+        // STEP 1: Details entered -> request OTP
+        if (bookingState.step === 'details') {
           const nameInput = document.getElementById('bookerName');
           const phoneInput = document.getElementById('bookerPhone');
-          contactName = nameInput ? nameInput.value.trim() : '';
-          contactPhone = phoneInput ? phoneInput.value.trim() : '';
+          const emailInput = document.getElementById('bookerEmail');
+          const playersInput = document.getElementById('bookerPlayers');
+          const notesInput = document.getElementById('bookerNotes');
+          const saveCheck = document.getElementById('saveInfoCheck');
 
-          if (!contactName || !contactPhone) {
-            alert('Please provide your name and phone number to confirm your booking.');
-            if (!contactName && nameInput) nameInput.focus();
-            else if (!contactPhone && phoneInput) phoneInput.focus();
+          bookingState.name = nameInput ? nameInput.value.trim() : '';
+          bookingState.phone = phoneInput ? phoneInput.value.trim().replace(/\D/g, '') : '';
+          bookingState.email = emailInput ? emailInput.value.trim() : '';
+          bookingState.players = playersInput && playersInput.value ? parseInt(playersInput.value, 10) : null;
+          bookingState.notes = notesInput ? notesInput.value.trim() : '';
+          bookingState.saveInfo = saveCheck ? saveCheck.checked : true;
+
+          if (!bookingState.name || bookingState.name.length < 2) {
+            if (errEl) {
+              errEl.textContent = 'Please provide your full name.';
+              errEl.style.display = 'block';
+            }
+            if (nameInput) nameInput.focus();
             return;
           }
 
-          user = {
-            id: 'u-' + Date.now(),
-            name: contactName,
-            phone: contactPhone,
-            created_at: new Date().toISOString()
-          };
+          if (!bookingState.phone || bookingState.phone.length < 10) {
+            if (errEl) {
+              errEl.textContent = 'Please provide a valid Pakistan mobile number (e.g. 0300 1234567).';
+              errEl.style.display = 'block';
+            }
+            if (phoneInput) phoneInput.focus();
+            return;
+          }
+
+          if (errEl) errEl.style.display = 'none';
+          btnConfirmModal.disabled = true;
+          btnConfirmModal.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Sending Code…`;
+
           try {
-            localStorage.setItem(MockAuth.STORAGE_KEY, JSON.stringify(user));
-          } catch (_) {}
+            const otpRes = await SupabaseAuthSecurity.requestBookingOtp(bookingState.phone, bookingState.email);
+            if (otpRes && otpRes.ok === false) {
+              throw new Error(otpRes.message || 'Could not send verification code.');
+            }
+
+            bookingState.step = 'otp';
+            modalTitle.textContent = 'Verify Mobile Number';
+            modalBody.innerHTML = `
+              <div style="text-align:center; padding:10px 0 20px;">
+                <div style="width:48px; height:48px; border-radius:50%; background:var(--card-bg); color:var(--emerald); display:inline-flex; align-items:center; justify-content:center; font-size:1.6rem; margin-bottom:12px;">
+                  <i class="ph-bold ph-shield-check"></i>
+                </div>
+                <h4 style="font-size:1.05rem; font-weight:800; color:var(--ink); margin-bottom:6px;">Enter 6-Digit Verification Code</h4>
+                <p style="font-size:0.8125rem; color:var(--muted); max-width:32ch; margin:0 auto 18px;">
+                  We sent an SMS code to <strong style="color:var(--emerald);">${escapeHtml(phoneInput.value.trim())}</strong>
+                </p>
+
+                <div style="display:flex; justify-content:center; margin-bottom:14px;">
+                  <input type="text" id="bookingOtpInput" maxlength="6" inputmode="numeric" placeholder="••••••" style="width:200px; text-align:center; letter-spacing:0.3em; font-size:1.4rem; font-weight:800; padding:10px 14px; border:2px solid var(--emerald); outline:none; background:var(--white);" autofocus />
+                </div>
+
+                <div id="bookingOtpErr" style="display:none; color:var(--danger); font-size:0.8125rem; margin-bottom:10px; font-weight:600;"></div>
+
+                <div style="font-size:0.75rem; color:var(--muted);">
+                  Didn't receive code? <a href="#" onclick="openModal(); return false;" style="color:var(--emerald); font-weight:700; text-decoration:underline;">Edit number</a>
+                </div>
+              </div>
+            `;
+            btnConfirmModal.disabled = false;
+            btnConfirmModal.textContent = 'Confirm Booking';
+            const otpBox = document.getElementById('bookingOtpInput');
+            if (otpBox) otpBox.focus();
+          } catch (err) {
+            btnConfirmModal.disabled = false;
+            btnConfirmModal.textContent = 'Continue to Verification';
+            if (errEl) {
+              errEl.textContent = err.message || 'Error sending verification code.';
+              errEl.style.display = 'block';
+            }
+          }
+          return;
         }
 
-        btnConfirmModal.disabled = true;
-        btnConfirmModal.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Confirming...`;
+        // STEP 2: OTP entered -> verify & create booking
+        if (bookingState.step === 'otp') {
+          const otpInput = document.getElementById('bookingOtpInput');
+          const otpErr = document.getElementById('bookingOtpErr');
+          const otpCode = otpInput ? otpInput.value.trim() : '';
 
-        const targetGroundId = ground.supabase_id || ground.id;
-        const booking = await SupabaseBookings.createBooking({
-          ground_id: targetGroundId,
-          booking_date: selectedDateStr,
-          start_time: selectedSlot.time,
-          end_time: selectedSlot.endTime,
-          duration_minutes: 60,
-          contact_name: contactName,
-          contact_phone: contactPhone,
-          notes: 'Booked via Website',
-          price_per_hour: ground.price_per_hour,
-          total_amount: ground.price_per_hour
-        });
+          if (otpCode.length !== 6) {
+            if (otpErr) {
+              otpErr.textContent = 'Please enter all 6 digits.';
+              otpErr.style.display = 'block';
+            }
+            return;
+          }
 
-        // Prepare WhatsApp notification to Turf Owner
-        const ownerWa = (ground.whatsapp_number || '923362308445').replace(/[^0-9]/g, '');
-        const waSlipText = encodeURIComponent(
-          `*GroundsNearMe Booking Slip*\n\n` +
-          `*Ref:* ${booking.booking_ref}\n` +
-          `*Ground:* ${ground.name}\n` +
-          `*Date:* ${formatDisplayDate(selectedDateStr)}\n` +
-          `*Time:* ${selectedSlot.label}\n` +
-          `*Player:* ${contactName} (${contactPhone})\n` +
-          `*Amount:* ${formatCurrency(ground.price_per_hour)} (Pay at ground)\n\n` +
-          `Hi! I have just reserved this slot on GroundsNearMe. Please verify my booking.`
-        );
-        const waSlipUrl = `https://wa.me/${ownerWa}?text=${waSlipText}`;
+          if (otpErr) otpErr.style.display = 'none';
+          btnConfirmModal.disabled = true;
+          btnConfirmModal.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Verifying & Confirming…`;
 
-        // Show success state
-        modalTitle.textContent = '';
-        modalFooter.style.display = 'none';
-        modalBody.innerHTML = `
-          <div class="success-icon-wrap">
-            <i class="ph-bold ph-check-circle"></i>
-          </div>
-          <h3 class="success-title">Booking Confirmed!</h3>
-          <div class="ref-box">REF: ${booking.booking_ref}</div>
-          
-          <div class="summary-row"><span class="summary-label">Ground</span> <span class="summary-val">${ground.name}</span></div>
-          <div class="summary-row"><span class="summary-label">Date</span> <span class="summary-val">${formatDisplayDate(selectedDateStr)}</span></div>
-          <div class="summary-row"><span class="summary-label">Time</span> <span class="summary-val">${selectedSlot.label}</span></div>
-          
-          <div style="text-align:center; margin-top:20px; color:var(--emerald); font-weight:700;">
-            ${formatCurrency(ground.price_per_hour)} — Pay at the ground
-          </div>
+          try {
+            const verifyRes = await SupabaseAuthSecurity.verifyBookingOtp(bookingState.phone, otpCode);
+            if (verifyRes && verifyRes.ok === false) {
+              throw new Error(verifyRes.message || 'Invalid verification code.');
+            }
 
-          <a href="${waSlipUrl}" target="_blank" rel="noopener" class="wa-slip-btn" style="background:#25D366; color:#ffffff; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border-radius:10px; font-weight:700; text-decoration:none; margin-top:22px; font-size:0.95rem; box-shadow:0 4px 14px rgba(37,211,102,0.3);">
-            <i class="ph-bold ph-whatsapp-logo" style="font-size:1.3rem;"></i> WhatsApp Slip to Turf Owner
-          </a>
+            bookingState.verificationToken = verifyRes?.verification_token || null;
 
-          <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
-            <a href="my-bookings.html" class="btn-primary" style="width:100%">View My Bookings</a>
-            <a href="index.html#featured-grounds" class="btn-ghost" style="width:100%">Browse More Grounds</a>
-          </div>
-        `;
-        
-        // Auto update nav if just logged in
-        if (document.getElementById('desktopNavLinks') && document.getElementById('desktopNavLinks').innerHTML.indexOf('My Bookings') === -1) {
-          document.getElementById('desktopNavLinks').innerHTML += `<li><a href="my-bookings.html">My Bookings</a></li>`;
-          document.getElementById('mobileNavMenu').innerHTML += `<li><a href="my-bookings.html" class="mobile-nav-link">My Bookings</a></li>`;
+            // Commit booking
+            const targetGroundId = ground.supabase_id || ground.id;
+            const booking = await SupabaseBookings.createBooking({
+              ground_id: targetGroundId,
+              booking_date: selectedDateStr,
+              start_time: selectedSlot.time,
+              end_time: selectedSlot.endTime,
+              duration_minutes: 60,
+              contact_name: bookingState.name,
+              contact_phone: bookingState.phone,
+              email: bookingState.email || null,
+              players_expected: bookingState.players,
+              notes: bookingState.notes || 'Booked via Website',
+              price_per_hour: ground.price_per_hour,
+              total_amount: ground.price_per_hour,
+              verification_token: bookingState.verificationToken,
+              save_info: bookingState.saveInfo
+            });
+
+            // Save to guest profile if requested
+            if (bookingState.saveInfo) {
+              MockAuth.saveGuestProfile({
+                name: bookingState.name,
+                phone: bookingState.phone,
+                email: bookingState.email
+              });
+            }
+
+            // WhatsApp Notification to Turf Owner
+            const ownerWa = (ground.whatsapp_number || '923362308445').replace(/[^0-9]/g, '');
+            const waSlipText = encodeURIComponent(
+              `*GroundsNearMe Booking Slip*\n\n` +
+              `*Ref:* ${booking.booking_ref}\n` +
+              `*Ground:* ${ground.name}\n` +
+              `*Date:* ${formatDisplayDate(selectedDateStr)}\n` +
+              `*Time:* ${selectedSlot.label}\n` +
+              `*Player:* ${bookingState.name} (${bookingState.phone})\n` +
+              `*Amount:* ${formatCurrency(ground.price_per_hour)} (Pay at ground)\n\n` +
+              `Hi! I have just reserved this slot on GroundsNearMe. Please verify my booking.`
+            );
+            const waSlipUrl = `https://wa.me/${ownerWa}?text=${waSlipText}`;
+
+            // Show confirmed state
+            modalTitle.textContent = '';
+            modalFooter.style.display = 'none';
+            modalBody.innerHTML = `
+              <div class="success-icon-wrap">
+                <i class="ph-bold ph-check-circle"></i>
+              </div>
+              <h3 class="success-title">Booking Confirmed!</h3>
+              <div class="ref-box">REF: ${escapeHtml(booking.booking_ref)}</div>
+              
+              <div class="summary-row"><span class="summary-label">Ground</span> <span class="summary-val">${escapeHtml(ground.name)}</span></div>
+              <div class="summary-row"><span class="summary-label">Date</span> <span class="summary-val">${formatDisplayDate(selectedDateStr)}</span></div>
+              <div class="summary-row"><span class="summary-label">Time</span> <span class="summary-val">${escapeHtml(selectedSlot.label)}</span></div>
+              <div class="summary-row"><span class="summary-label">Player</span> <span class="summary-val">${escapeHtml(bookingState.name)} (${escapeHtml(bookingState.phone)})</span></div>
+              
+              <div style="text-align:center; margin-top:20px; color:var(--emerald); font-weight:700;">
+                ${formatCurrency(ground.price_per_hour)} — Pay at the ground
+              </div>
+
+              <a href="${waSlipUrl}" target="_blank" rel="noopener" class="wa-slip-btn" style="background:#25D366; color:#ffffff; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border-radius:10px; font-weight:700; text-decoration:none; margin-top:22px; font-size:0.95rem; box-shadow:0 4px 14px rgba(37,211,102,0.3);">
+                <i class="ph-bold ph-whatsapp-logo" style="font-size:1.3rem;"></i> WhatsApp Slip to Turf Owner
+              </a>
+
+              <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+                <a href="my-bookings.html" class="btn-primary" style="width:100%">View My Bookings</a>
+                <a href="index.html#featured-grounds" class="btn-ghost" style="width:100%">Browse More Grounds</a>
+              </div>
+            `;
+          } catch (err) {
+            btnConfirmModal.disabled = false;
+            btnConfirmModal.textContent = 'Confirm Booking';
+            if (otpErr) {
+              otpErr.textContent = err.message || 'Invalid verification code.';
+              otpErr.style.display = 'block';
+            }
+          }
         }
       });
+
 
       // 5. Reveal Animations
       const revealElems = document.querySelectorAll('.reveal');

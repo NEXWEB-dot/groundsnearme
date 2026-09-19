@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Create Account — GroundsNearMe</title>
-  <meta name="description" content="Register your GroundsNearMe player account to book pitches, manage slots, and join matches in Karachi." />
+  <title>Reserve a Pitch — GroundsNearMe</title>
+  <meta name="description" content="Quick guest booking for cricket grounds and pitches in Karachi. Select your slot and verify via SMS — no account or password required." />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://mfybkflgkjpuqhlthagt.supabase.co https://*.workers.dev; frame-ancestors 'none'; object-src 'none'; base-uri 'self';" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
   <link rel="icon" type="image/jpeg" href="assets/favicon.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,7 +24,7 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
     body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--off);color:var(--ink);font-size:1rem;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column}
-    img{display:block;max-width:100%} a{color:inherit;text-decoration:none} button,input{font-family:inherit}
+    img{display:block;max-width:100%} a{color:inherit;text-decoration:none} button,input,select{font-family:inherit}
     .container{max-width:1240px;margin:0 auto;padding:0 40px}
     
     .card-outer{background:var(--card-bg);border:1px solid var(--border);padding:6px;border-radius:0;transition:transform 600ms cubic-bezier(0.22,1,0.36,1)}
@@ -44,12 +48,9 @@
     .nav-divider{width:1px;height:16px;background:var(--border)}
     .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
     .nav-links a{font-size:0.8125rem;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:0.01em;position:relative;padding:4px 0;transition:color 0.2s ease}
-    .nav-links a::after{content:'';position:absolute;bottom:0;left:50%;width:0;height:2px;background:var(--emerald);border-radius:2px;transition:width 0.25s cubic-bezier(0.16, 1, 0.3, 1), left 0.25s cubic-bezier(0.16, 1, 0.3, 1)}
     .nav-links a:hover{color:var(--emerald)}
-    .nav-links a:hover::after{width:100%;left:0}
 
     .hamburger{display:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:10px;min-width:44px;min-height:44px;z-index:1100}
-    .hamburger:focus-visible{outline:2px solid var(--emerald);outline-offset:2px;border-radius:4px;}
     .hamburger span{display:block;width:22px;height:2px;background:var(--emerald);transition:transform 0.35s cubic-bezier(0.22,1,0.36,1),opacity 0.25s cubic-bezier(0.22,1,0.36,1);transform-origin:center}
     .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
     .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
@@ -66,9 +67,9 @@
     .mobile-nav-menu a{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:clamp(1.6rem, 6.5vw, 2.15rem);font-weight:800;color:rgba(255, 255, 255, 0.95);text-decoration:none}
     .mobile-nav-menu a:hover{color:var(--lime)}
 
-    /* AUTH SHELL & FORM */
+    /* FORM STYLES */
     .auth-page{flex:1;display:flex;align-items:center;justify-content:center;padding:120px 20px 80px}
-    .auth-container{width:100%;max-width:480px}
+    .auth-container{width:100%;max-width:540px}
     
     .auth-header{text-align:center;margin-bottom:28px}
     .auth-icon-wrap{width:48px;height:48px;background:var(--card-bg);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px}
@@ -76,78 +77,53 @@
     .auth-title{font-family:'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;font-size:1.75rem;font-weight:800;letter-spacing:-0.02em;color:var(--ink);margin-bottom:6px}
     .auth-subtitle{font-size:0.875rem;color:var(--muted);line-height:1.5}
 
-    .form-group{margin-bottom:18px}
+    .form-group{margin-bottom:16px}
     .form-label{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);margin-bottom:8px}
     .input-wrapper{position:relative;display:flex;align-items:center}
     .input-icon{position:absolute;left:14px;color:var(--muted);font-size:18px;pointer-events:none}
     .form-input{width:100%;padding:13px 14px 13px 44px;background:var(--white);border:1.5px solid var(--border);color:var(--ink);font-size:0.9375rem;border-radius:0;outline:none;transition:border-color 0.2s cubic-bezier(0.22,1,0.36,1),background 0.2s ease}
     .form-input:focus{border-color:var(--emerald);background:var(--white)}
     .form-input::placeholder{color:#9cb0a3}
-    
-    .password-toggle{position:absolute;right:14px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px;display:flex;align-items:center;justify-content:center}
-    .password-toggle:hover{color:var(--emerald)}
 
     .alert-box{display:none;background:var(--danger-bg);border:1px solid rgba(239, 68, 68, 0.3);border-left:4px solid var(--danger);padding:12px 14px;font-size:0.8125rem;font-weight:600;color:#991b1b;margin-bottom:20px;line-height:1.4}
     .alert-box.show{display:flex;align-items:center;gap:8px}
 
-    .auth-footer-link{text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);font-size:0.875rem;color:var(--muted)}
-    .auth-footer-link a{color:var(--emerald);font-weight:800;text-decoration:none}
-    .auth-footer-link a:hover{text-decoration:underline}
+    /* OTP MODAL */
+    .otp-overlay{position:fixed;inset:0;background:rgba(13, 26, 15, 0.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;visibility:hidden;transition:all 0.25s cubic-bezier(0.22,1,0.36,1);padding:20px}
+    .otp-overlay.open{opacity:1;visibility:visible}
+    .otp-dialog{background:var(--white);border:1.5px solid var(--border);box-shadow:0 20px 40px rgba(0,0,0,0.15);width:100%;max-width:440px;padding:32px;position:relative}
+
+    .otp-inputs{display:flex;gap:8px;justify-content:center;margin:20px 0}
+    .otp-box{width:46px;height:54px;font-family:'Bricolage Grotesque',sans-serif;font-size:1.5rem;font-weight:800;text-align:center;border:1.5px solid var(--border);background:var(--off);color:var(--ink);outline:none;transition:all 0.2s ease}
+    .otp-box:focus{border-color:var(--emerald);background:var(--white);box-shadow:0 0 0 3px rgba(13, 74, 44, 0.1)}
+
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
     /* FOOTER */
-    footer{background:var(--emerald);padding:60px 0 0;margin-top:auto}
-    .footer-top{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:40px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,0.1)}
-    .footer-brand-logo{font-size:1.125rem;font-weight:800;margin-bottom:10px}
-    .footer-brand-logo .grounds{color:var(--white)}
+    footer{background:var(--white);border-top:1px solid var(--border);padding:60px 0 40px;margin-top:auto}
+    .footer-top{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;margin-bottom:40px}
+    .footer-brand-logo{font-family:'Bricolage Grotesque',sans-serif;font-size:1.25rem;font-weight:800;text-transform:uppercase}
+    .footer-brand-logo .grounds{color:var(--emerald)}
     .footer-brand-logo .nearme{color:var(--lime-dark)}
-    .footer-tagline{font-size:0.8125rem;color:rgba(255,255,255,0.55);line-height:1.6;max-width:26ch}
-    .footer-col-title{font-size:0.6875rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:16px}
-    .footer-links{list-style:none;display:flex;flex-direction:column;gap:8px}
-    .footer-links a{font-size:0.8125rem;color:rgba(255,255,255,0.7);text-decoration:none}
-    .footer-links a:hover{color:var(--white)}
-    .footer-bottom{padding:20px 0;display:flex;align-items:center;justify-content:space-between}
-    .footer-copy,.footer-made{font-size:0.75rem;color:rgba(255,255,255,0.4)}
+    .footer-tagline{font-size:0.875rem;color:var(--muted);margin-top:8px}
+    .footer-col-title{font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);margin-bottom:14px}
+    .footer-links{list-style:none;display:flex;flex-direction:column;gap:10px}
+    .footer-links a{font-size:0.875rem;color:var(--muted);transition:color 0.2s ease}
+    .footer-links a:hover{color:var(--emerald)}
+    .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;border-top:1px solid var(--border);font-size:0.8125rem;color:var(--muted);flex-wrap:wrap;gap:12px}
 
-    @media(max-width:768px){
+    @media (max-width:768px){
       .container{padding:0 20px}
-      .nav-links,.btn-nav-contact{display:none}
+      .nav-links{display:none}
       .hamburger{display:flex}
-      .footer-top{grid-template-columns:1fr;gap:28px}
-      .footer-bottom{flex-direction:column;gap:8px;text-align:center}
-      .card-inner{padding:28px 20px}
-      .auth-page{padding-top:100px}
     }
-
-    /* Consent Checkbox */
-    .consent-group{margin-top:4px}
-    .consent-label{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:0.8125rem;color:var(--muted);line-height:1.6}
-    .consent-label input[type="checkbox"]{width:18px;height:18px;accent-color:var(--emerald);flex-shrink:0;margin-top:2px;cursor:pointer}
-    .consent-label a{color:var(--emerald);font-weight:600;text-decoration:underline}
-    .consent-label a:hover{color:var(--emerald-mid)}
-    /* Password Strength Meter */
-    .pwd-meter-wrap{margin-top:8px;}
-    .pwd-meter{display:flex;gap:4px;height:4px;margin-bottom:6px;}
-    .pwd-bar{flex:1;background:var(--border);border-radius:2px;transition:background 0.25s ease;}
-    .pwd-meter-label{display:flex;justify-content:space-between;font-size:0.72rem;font-weight:700;color:var(--muted);}
-    .pwd-checklist{list-style:none;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.72rem;color:var(--muted);}
-    .pwd-check-item{display:flex;align-items:center;gap:5px;transition:color 0.2s ease;}
-    .pwd-check-item.valid{color:var(--emerald);font-weight:700;}
-    .pwd-check-item.valid i{color:var(--lime-dark);}
-
-    /* OTP Modal */
-    .otp-overlay{display:none;position:fixed;inset:0;background:rgba(10,24,16,0.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:16px;}
-    .otp-overlay.show{display:flex;}
-    .otp-dialog{background:var(--white);border:1px solid var(--border);border-radius:0;box-shadow:0 24px 60px rgba(0,0,0,0.3);width:100%;max-width:440px;padding:32px 24px;}
-    .otp-inputs{display:flex;gap:8px;justify-content:center;margin:24px 0;}
-    .otp-box{width:46px;height:52px;font-size:1.4rem;font-weight:800;text-align:center;border:1.5px solid var(--border);border-radius:0;outline:none;font-family:monospace;transition:border-color 0.2s, box-shadow 0.2s;}
-    .otp-box:focus{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(74,222,128,0.3);}
-    .otp-helper-badge{background:var(--card-bg);border:1px solid var(--border);padding:10px 14px;font-size:0.78rem;color:var(--emerald);font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:18px;}
   </style>
 </head>
 <body>
 
   <!-- MOBILE OVERLAY -->
-  <div class="mobile-nav-overlay" id="mobileOverlay" aria-hidden="true">
+  <div class="mobile-nav-overlay" id="mobileOverlay" role="dialog" aria-modal="true">
     <div class="mobile-overlay-header">
       <div class="mobile-overlay-pill">
         <span class="mobile-overlay-logo">GroundsNearMe</span>
@@ -157,12 +133,14 @@
       </div>
     </div>
     <ul class="mobile-nav-menu">
-      <li><a href="index.html#how-it-works" class="mobile-nav-link">How It Works</a></li>
-      <li><a href="index.html#featured-grounds" class="mobile-nav-link">Find Grounds</a></li>
-      <li><a href="index.html#matchmaking" class="mobile-nav-link">Matchmaking</a></li>
-      <li><a href="my-bookings.html" class="mobile-nav-link">My Bookings</a></li>
-      <li><a href="login.html" class="mobile-nav-link">Log In</a></li>
+      <li><a href="index.html#how-it-works">How It Works</a></li>
+      <li><a href="index.html#featured-grounds">Browse Grounds</a></li>
+      <li><a href="index.html#matchmaking">Matchmaking</a></li>
+      <li><a href="my-bookings.html">My Bookings</a></li>
     </ul>
+    <div style="text-align:center; font-size:0.8rem; color:rgba(255,255,255,0.4);">
+      Karachi Cricket Platform
+    </div>
   </div>
 
   <!-- NAV -->
@@ -179,7 +157,7 @@
         </ul>
       </div>
       <div class="nav-cta">
-        <a href="login.html" class="btn-ghost" style="padding:7px 16px; font-size:0.75rem;">Log In</a>
+        <a href="my-bookings.html" class="btn-ghost" style="padding:7px 16px; font-size:0.75rem;">My Bookings</a>
       </div>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -187,15 +165,15 @@
     </nav>
   </div>
 
-  <!-- AUTH MAIN -->
+  <!-- BOOKING MAIN -->
   <main class="auth-page">
     <div class="auth-container">
       <div class="auth-header reveal">
         <div class="auth-icon-wrap">
-          <i class="ph-thin ph-user-plus"></i>
+          <i class="ph-thin ph-calendar-plus"></i>
         </div>
-        <h1 class="auth-title">Create Player Account</h1>
-        <p class="auth-subtitle">Join Karachi's cricket community. Book grounds, track slots, and find players.</p>
+        <h1 class="auth-title">Quick Pitch Reservation</h1>
+        <p class="auth-subtitle">Reserve a cricket slot with instant SMS verification. No account or password required.</p>
       </div>
 
       <div class="card-outer reveal" style="transition-delay:0.08s">
@@ -205,116 +183,98 @@
             <span id="errorMessage">Please check your inputs and try again.</span>
           </div>
 
-          <form id="registerForm" onsubmit="handleRegister(event)" novalidate>
+          <form id="quickBookingForm" onsubmit="handleQuickBookingSubmit(event)" novalidate>
+            <!-- Ground Picker -->
             <div class="form-group">
-              <label class="form-label" for="regName">Full Name / Captain Name *</label>
+              <label class="form-label" for="bookGround">Select Ground / Venue *</label>
+              <div class="input-wrapper">
+                <i class="ph-thin ph-map-pin input-icon"></i>
+                <select id="bookGround" class="form-input" required onchange="handleGroundChange()">
+                  <option value="">Loading grounds…</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Date & Time Picker -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;" class="form-group">
+              <div>
+                <label class="form-label" for="bookDate">Booking Date *</label>
+                <div class="input-wrapper">
+                  <i class="ph-thin ph-calendar input-icon"></i>
+                  <input type="date" id="bookDate" class="form-input" required onchange="handleDateChange()" />
+                </div>
+              </div>
+              <div>
+                <label class="form-label" for="bookSlot">Slot (1 Hour) *</label>
+                <div class="input-wrapper">
+                  <i class="ph-thin ph-clock input-icon"></i>
+                  <select id="bookSlot" class="form-input" required>
+                    <option value="20:00">8:00 PM – 9:00 PM</option>
+                    <option value="21:00" selected>9:00 PM – 10:00 PM</option>
+                    <option value="22:00">10:00 PM – 11:00 PM</option>
+                    <option value="23:00">11:00 PM – 12:00 AM</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Fields -->
+            <div class="form-group">
+              <label class="form-label" for="bookName">Full Name / Captain Name *</label>
               <div class="input-wrapper">
                 <i class="ph-thin ph-user input-icon"></i>
-                <input 
-                  type="text" 
-                  id="regName" 
-                  name="name" 
-                  class="form-input" 
-                  placeholder="e.g. Ali Khan" 
-                  autocomplete="name"
-                  required 
-                />
+                <input type="text" id="bookName" class="form-input" placeholder="e.g. Ali Khan" autocomplete="name" required />
               </div>
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="regPhone">Mobile / WhatsApp Number *</label>
+              <label class="form-label" for="bookPhone">WhatsApp / Mobile Number *</label>
               <div class="input-wrapper">
                 <i class="ph-thin ph-phone input-icon"></i>
-                <input 
-                  type="tel" 
-                  id="regPhone" 
-                  name="phone" 
-                  class="form-input" 
-                  placeholder="0300 1234567" 
-                  autocomplete="tel"
-                  required 
-                />
+                <input type="tel" id="bookPhone" class="form-input" placeholder="0300 1234567" autocomplete="tel" required />
               </div>
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="regEmail">Email Address <span style="font-weight:500; color:var(--muted); text-transform:none;">(Optional)</span></label>
+              <label class="form-label" for="bookEmail">Email Address <span style="font-weight:500; color:var(--muted); text-transform:none;">(Optional)</span></label>
               <div class="input-wrapper">
                 <i class="ph-thin ph-envelope-simple input-icon"></i>
-                <input 
-                  type="email" 
-                  id="regEmail" 
-                  name="email" 
-                  class="form-input" 
-                  placeholder="captain@cricketteam.com" 
-                  autocomplete="email"
-                />
+                <input type="email" id="bookEmail" class="form-input" placeholder="captain@cricketteam.com" autocomplete="email" />
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" for="regPassword">Password * <span style="font-weight:500; color:var(--muted); text-transform:none;">(min 8 chars, strong)</span></label>
-              <div class="input-wrapper">
-                <i class="ph-thin ph-lock-key input-icon"></i>
-                <input 
-                  type="password" 
-                  id="regPassword" 
-                  name="password" 
-                  class="form-input" 
-                  placeholder="••••••••" 
-                  autocomplete="new-password"
-                  required 
-                />
-                <button type="button" class="password-toggle" id="togglePassword" aria-label="Toggle password visibility">
-                  <i class="ph-thin ph-eye" id="passwordEyeIcon"></i>
-                </button>
+            <!-- Optional Players & Notes -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;" class="form-group">
+              <div>
+                <label class="form-label" for="bookPlayers">Players <span style="font-weight:400; color:var(--muted);">(Opt)</span></label>
+                <div class="input-wrapper">
+                  <i class="ph-thin ph-users input-icon"></i>
+                  <input type="number" id="bookPlayers" class="form-input" placeholder="12" min="2" max="30" />
+                </div>
               </div>
-
-              <!-- Real-time Password Strength Meter -->
-              <div class="pwd-meter-wrap">
-                <div class="pwd-meter">
-                  <div class="pwd-bar" id="pwdBar1"></div>
-                  <div class="pwd-bar" id="pwdBar2"></div>
-                  <div class="pwd-bar" id="pwdBar3"></div>
-                  <div class="pwd-bar" id="pwdBar4"></div>
+              <div>
+                <label class="form-label" for="bookNotes">Match Notes <span style="font-weight:400; color:var(--muted);">(Opt)</span></label>
+                <div class="input-wrapper">
+                  <i class="ph-thin ph-notepad input-icon"></i>
+                  <input type="text" id="bookNotes" class="form-input" placeholder="Tape ball friendly" maxlength="200" />
                 </div>
-                <div class="pwd-meter-label">
-                  <span id="pwdStrengthLabel">Strength: Empty</span>
-                  <span id="pwdScorePercent">0%</span>
-                </div>
-                <ul class="pwd-checklist">
-                  <li class="pwd-check-item" id="ruleLen"><i class="ph ph-circle"></i> 8+ Characters</li>
-                  <li class="pwd-check-item" id="ruleCase"><i class="ph ph-circle"></i> Upper &amp; Lower case</li>
-                  <li class="pwd-check-item" id="ruleNum"><i class="ph ph-circle"></i> Number (0-9)</li>
-                  <li class="pwd-check-item" id="ruleSym"><i class="ph ph-circle"></i> Symbol (!@#$%)</li>
-                </ul>
               </div>
             </div>
 
-            <div class="form-group consent-group">
-              <label class="consent-label" for="regConsent">
-                <input
-                  type="checkbox"
-                  id="regConsent"
-                  name="consent"
-                  required
-                />
-                <span>I have read and agree to the
-                  <a href="terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>
-                  and <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.
-                  I consent to my name and phone number being shared with ground owners to fulfil my bookings.
-                </span>
+            <div class="form-group" style="margin-top:14px;">
+              <label style="display:flex; align-items:flex-start; gap:10px; font-size:0.8125rem; color:var(--muted); cursor:pointer;">
+                <input type="checkbox" id="saveProfileCheck" checked style="margin-top:4px; accent-color:var(--emerald);" />
+                <span>Remember my contact details on this device for one-tap booking next time.</span>
               </label>
             </div>
 
             <button type="submit" class="btn-primary" id="btnSubmit">
-              <span>Create Account</span>
+              <span>Continue to SMS Verification</span>
               <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>
             </button>
 
-            <div class="auth-footer-link">
-              Already have an account? <a href="login.html">Log In</a>
+            <div style="text-align:center; margin-top:20px; font-size:0.8125rem; color:var(--muted);">
+              Already have a confirmed booking? <a href="my-bookings.html" style="color:var(--emerald); font-weight:700;">Check My Bookings</a>
             </div>
           </form>
         </div>
@@ -322,7 +282,7 @@
     </div>
   </main>
 
-  <!-- MODAL: OTP / 2FA PHONE VERIFICATION -->
+  <!-- MODAL: OTP PHONE VERIFICATION -->
   <div class="otp-overlay" id="modalOtpVerify" role="dialog" aria-modal="true" aria-labelledby="otpTitle">
     <div class="otp-dialog">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
@@ -331,8 +291,8 @@
             <i class="ph-bold ph-shield-check"></i>
           </div>
           <div>
-            <h2 style="font-size:1.2rem; font-weight:800; color:var(--ink); margin:0;" id="otpTitle">Verify Your Mobile</h2>
-            <p style="font-size:0.75rem; color:var(--muted); margin-top:2px;">Protecting your account with 2-Step Verification</p>
+            <h2 style="font-size:1.2rem; font-weight:800; color:var(--ink); margin:0;" id="otpTitle">Verify Mobile Number</h2>
+            <p style="font-size:0.75rem; color:var(--muted); margin-top:2px;">Protecting pitch slots with one-time verification</p>
           </div>
         </div>
         <button type="button" onclick="closeOtpModal()" style="background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer;" aria-label="Cancel verification">
@@ -343,11 +303,6 @@
       <p style="font-size:0.85rem; color:var(--ink); margin-bottom:12px;">
         We've sent a 6-digit verification code to <strong id="displayOtpPhone" class="mono" style="color:var(--emerald);">0300 ••••567</strong>.
       </p>
-
-      <div class="otp-helper-badge" id="otpDemoBanner">
-        <i class="ph-bold ph-bell-ringing" style="font-size:1.1rem; color:var(--emerald);"></i>
-        <span>GroundsNearMe Verification Code: <strong id="demoOtpCode" class="mono" style="font-size:0.95rem; letter-spacing:0.1em; color:var(--emerald); background:#fff; padding:2px 6px; border:1px solid var(--border);">123456</strong></span>
-      </div>
 
       <div class="alert-box" id="otpErrorAlert" role="alert" style="margin-bottom:14px;">
         <i class="ph-bold ph-warning-circle" style="font-size:18px; flex-shrink:0;"></i>
@@ -371,7 +326,7 @@
       </div>
 
       <button type="button" class="btn-primary" id="btnVerifyOtp" onclick="submitOtpVerification()" style="width:100%;">
-        <span>Verify &amp; Create Account</span>
+        <span>Confirm &amp; Book Pitch</span>
         <i class="ph-bold ph-check" style="font-size:14px;"></i>
       </button>
 
@@ -394,426 +349,387 @@
           <ul class="footer-links">
             <li><a href="index.html#how-it-works">How It Works</a></li>
             <li><a href="index.html#featured-grounds">Browse Grounds</a></li>
+            <li><a href="index.html#matchmaking">Matchmaking</a></li>
             <li><a href="my-bookings.html">My Bookings</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="footer-col-title">For Owners</p>
-          <ul class="footer-links">
-            <li><a href="index.html#for-owners">List Your Ground</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="footer-col-title">Support</p>
-          <ul class="footer-links">
-            <li><a href="https://wa.me/923362308445" rel="noopener">WhatsApp Support</a></li>
-            <li><a href="mailto:hello@groundsnearme.pk">hello@groundsnearme.pk</a></li>
           </ul>
         </div>
         <div>
           <p class="footer-col-title">Legal</p>
           <ul class="footer-links">
-            <li><a href="terms.html">Terms &amp; Conditions</a></li>
             <li><a href="privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
             <li><a href="refund-policy.html">Refund Policy</a></li>
-            <li><a href="cookies.html">Cookies Policy</a></li>
+            <li><a href="cookies.html">Cookie Policy</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
-        <p class="footer-copy">&copy; 2026 GroundsNearMe &middot; groundsnearme.pk</p>
-        <p class="footer-made">Made in Karachi &#x1F3CF;</p>
+        <p>&copy; 2026 GroundsNearMe. Built for Karachi's cricketers.</p>
       </div>
     </div>
   </footer>
 
   <script src="js/mock-data.js"></script>
+  <script src="js/supabase.js"></script>
   <script>
-    'use strict';
+    let activeBooking = {
+      groundId: null,
+      date: null,
+      slot: null,
+      name: '',
+      phone: '',
+      email: '',
+      players: null,
+      notes: '',
+      saveProfile: true,
+      verificationToken: null
+    };
 
-    // Mobile nav toggle
-    const hamburger = document.getElementById('hamburger');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-    const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+    let otpTimerInterval = null;
+    let otpSecondsLeft = 60;
 
-    function toggleMobileMenu(open) {
-      const isOpen = open !== undefined ? open : !mobileOverlay.classList.contains('open');
-      mobileOverlay.classList.toggle('open', isOpen);
-      hamburger.classList.toggle('open', isOpen);
-      hamburger.setAttribute('aria-expanded', String(isOpen));
-      mobileOverlay.setAttribute('aria-hidden', String(!isOpen));
-      document.body.style.overflow = isOpen ? 'hidden' : '';
+    // Populate grounds and pre-fill details
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Set default date to tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const dateInput = document.getElementById('bookDate');
+      if (dateInput) {
+        dateInput.value = tomorrow.toISOString().split('T')[0];
+        dateInput.min = new Date().toISOString().split('T')[0];
+      }
+
+      // Load grounds into select dropdown
+      const groundSelect = document.getElementById('bookGround');
+      const grounds = typeof MOCK_GROUNDS !== 'undefined' ? MOCK_GROUNDS : [];
+      if (groundSelect && grounds.length > 0) {
+        groundSelect.innerHTML = grounds.map(g => `<option value="${g.supabase_id || g.id}">${escapeHtml(g.name)} (${escapeHtml(g.area?.name || 'Karachi')}) - PKR ${g.price_per_hour}/hr</option>`).join('');
+      }
+
+      // Pre-fill from saved guest profile
+      const saved = MockAuth.getGuestProfile() || MockAuth.getUser();
+      if (saved) {
+        if (saved.name) document.getElementById('bookName').value = saved.name;
+        if (saved.phone) document.getElementById('bookPhone').value = saved.phone;
+        if (saved.email) document.getElementById('bookEmail').value = saved.email;
+      }
+
+      // Wire OTP box keyboard navigation
+      setupOtpInputHandlers();
+
+      // Mobile Menu Hamburger
+      const hamburger = document.getElementById('hamburger');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+      const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+      if (hamburger && mobileOverlay) {
+        hamburger.addEventListener('click', () => {
+          mobileOverlay.classList.add('open');
+          hamburger.classList.add('open');
+        });
+        if (mobileCloseBtn) {
+          mobileCloseBtn.addEventListener('click', () => {
+            mobileOverlay.classList.remove('open');
+            hamburger.classList.remove('open');
+          });
+        }
+      }
+
+      // Reveal Animations
+      const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    hamburger.addEventListener('click', () => toggleMobileMenu());
-    if (mobileCloseBtn) mobileCloseBtn.addEventListener('click', () => toggleMobileMenu(false));
-    document.querySelectorAll('.mobile-nav-link').forEach(link => {
-      link.addEventListener('click', () => toggleMobileMenu(false));
-    });
+    async function handleQuickBookingSubmit(e) {
+      e.preventDefault();
+      const errBox = document.getElementById('errorAlert');
+      const errMsg = document.getElementById('errorMessage');
+      const btn = document.getElementById('btnSubmit');
 
-    // Password visibility toggle
-    const passwordInput = document.getElementById('regPassword');
-    const togglePasswordBtn = document.getElementById('togglePassword');
-    const passwordEyeIcon = document.getElementById('passwordEyeIcon');
+      const groundId = document.getElementById('bookGround').value;
+      const date = document.getElementById('bookDate').value;
+      const slot = document.getElementById('bookSlot').value;
+      const name = document.getElementById('bookName').value.trim();
+      const phone = document.getElementById('bookPhone').value.trim();
+      const email = document.getElementById('bookEmail').value.trim();
+      const players = parseInt(document.getElementById('bookPlayers').value, 10) || null;
+      const notes = document.getElementById('bookNotes').value.trim();
+      const saveProfile = document.getElementById('saveProfileCheck').checked;
 
-    togglePasswordBtn.addEventListener('click', () => {
-      const isPassword = passwordInput.type === 'password';
-      passwordInput.type = isPassword ? 'text' : 'password';
-      passwordEyeIcon.className = isPassword ? 'ph-thin ph-eye-slash' : 'ph-thin ph-eye';
-    });
+      const cleanPhone = phone.replace(/\D/g, '');
+      if (!name || name.length < 2) {
+        showError('Please enter your full name.');
+        return;
+      }
+      if (cleanPhone.length < 10) {
+        showError('Please enter a valid Pakistan mobile number (e.g. 0300 1234567).');
+        return;
+      }
+      if (!groundId || !date || !slot) {
+        showError('Please select your ground, date, and preferred slot.');
+        return;
+      }
+
+      hideError();
+      activeBooking = {
+        groundId,
+        date,
+        slot,
+        name,
+        phone: cleanPhone,
+        rawPhone: phone,
+        email,
+        players,
+        notes,
+        saveProfile
+      };
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Sending SMS Code…`;
+
+      try {
+        const res = await SupabaseAuthSecurity.requestBookingOtp(cleanPhone, email);
+        if (res && res.ok === false) {
+          throw new Error(res.message || 'Could not send verification code.');
+        }
+
+        openOtpModal(phone);
+      } catch (err) {
+        showError(err.message || 'Failed to dispatch verification code.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Continue to SMS Verification</span> <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>`;
+      }
+    }
 
     function showError(msg) {
-      const alert = document.getElementById('errorAlert');
-      const msgEl = document.getElementById('errorMessage');
-      msgEl.textContent = msg;
-      alert.classList.add('show');
+      const errBox = document.getElementById('errorAlert');
+      const errMsg = document.getElementById('errorMessage');
+      if (errBox && errMsg) {
+        errMsg.textContent = msg;
+        errBox.classList.add('show');
+      }
     }
 
     function hideError() {
-      document.getElementById('errorAlert').classList.remove('show');
+      const errBox = document.getElementById('errorAlert');
+      if (errBox) errBox.classList.remove('show');
     }
 
-    // ============================================================================
-    // 1. REAL-TIME PASSWORD STRENGTH EVALUATOR
-    // ============================================================================
-    function evaluatePasswordStrength(pwd) {
-      const hasLen = pwd.length >= 8;
-      const hasCase = /[a-z]/.test(pwd) && /[A-Z]/.test(pwd);
-      const hasNum = /[0-9]/.test(pwd);
-      const hasSym = /[^a-zA-Z0-9]/.test(pwd);
-
-      const updateRule = (elId, valid) => {
-        const el = document.getElementById(elId);
-        if (!el) return;
-        el.classList.toggle('valid', valid);
-        const icon = el.querySelector('i');
-        if (icon) icon.className = valid ? 'ph-bold ph-check-circle' : 'ph ph-circle';
-      };
-
-      updateRule('ruleLen', hasLen);
-      updateRule('ruleCase', hasCase);
-      updateRule('ruleNum', hasNum);
-      updateRule('ruleSym', hasSym);
-
-      const score = [hasLen, hasCase, hasNum, hasSym].filter(Boolean).length;
-      const bars = [document.getElementById('pwdBar1'), document.getElementById('pwdBar2'), document.getElementById('pwdBar3'), document.getElementById('pwdBar4')];
-      const lbl = document.getElementById('pwdStrengthLabel');
-      const pct = document.getElementById('pwdScorePercent');
-
-      const colors = ['#ef4444', '#f59e0b', '#84cc16', '#10b981'];
-      const titles = ['Weak', 'Fair', 'Good', 'Strong'];
-
-      bars.forEach((bar, idx) => {
-        if (!bar) return;
-        if (pwd.length === 0) {
-          bar.style.background = 'var(--border)';
-        } else if (idx < score) {
-          bar.style.background = colors[score - 1];
-        } else {
-          bar.style.background = 'var(--border)';
-        }
-      });
-
-      if (pct) pct.textContent = `${score * 25}%`;
-      if (lbl) {
-        if (pwd.length === 0) lbl.textContent = 'Strength: Empty';
-        else lbl.textContent = `Strength: ${titles[score - 1] || 'Weak'}`;
-      }
-
-      return { score, isValid: score === 4 };
-    }
-
-    const regPwdInput = document.getElementById('regPassword');
-    if (regPwdInput) {
-      regPwdInput.addEventListener('input', (e) => {
-        evaluatePasswordStrength(e.target.value);
-      });
-    }
-
-    // ============================================================================
-    // 2. OTP / 2-FACTOR VERIFICATION FLOW
-    // ============================================================================
-    let pendingReg = null;
-    let otpCountdownInterval = null;
-
-    function openOtpModal(phone, code) {
-      const modal = document.getElementById('modalOtpVerify');
-      const displayPhone = document.getElementById('displayOtpPhone');
-      const demoCodeEl = document.getElementById('demoOtpCode');
-      const errorAlert = document.getElementById('otpErrorAlert');
-
-      if (errorAlert) errorAlert.classList.remove('show');
-
-      // Mask phone: 03001234567 -> 0300 ••••567
-      const clean = phone.replace(/\D/g, '');
-      const masked = clean.length >= 7 
-        ? clean.slice(0, 4) + ' ••••' + clean.slice(-3)
-        : phone;
-
-      if (displayPhone) displayPhone.textContent = masked;
-      if (demoCodeEl) demoCodeEl.textContent = code;
-
-      // Clear digit boxes
-      for (let i = 0; i < 6; i++) {
-        const box = document.getElementById(`otp-${i}`);
-        if (box) box.value = '';
-      }
-
-      if (modal) modal.classList.add('show');
-      const first = document.getElementById('otp-0');
-      if (first) setTimeout(() => first.focus(), 100);
-
+    /* OTP Modal & Code Validation */
+    function openOtpModal(phone) {
+      document.getElementById('displayOtpPhone').textContent = phone;
+      document.getElementById('modalOtpVerify').classList.add('open');
       startOtpTimer();
+      clearOtpInputs();
+      document.getElementById('otp-0').focus();
     }
 
     function closeOtpModal() {
-      const modal = document.getElementById('modalOtpVerify');
-      if (modal) modal.classList.remove('show');
-      if (otpCountdownInterval) clearInterval(otpCountdownInterval);
-      const btn = document.getElementById('btnSubmit');
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = `<span>Create Account</span> <i class="ph-bold ph-arrow-right" style="font-size:13px"></i>`;
-      }
+      document.getElementById('modalOtpVerify').classList.remove('open');
+      if (otpTimerInterval) clearInterval(otpTimerInterval);
     }
 
     function startOtpTimer() {
-      if (otpCountdownInterval) clearInterval(otpCountdownInterval);
-      let secondsLeft = 60;
-      const countEl = document.getElementById('otpCountdown');
+      otpSecondsLeft = 60;
+      const countdownEl = document.getElementById('otpCountdown');
       const resendBtn = document.getElementById('btnResendOtp');
-      const timerText = document.getElementById('otpTimerText');
+      resendBtn.disabled = true;
+      resendBtn.style.color = 'var(--muted)';
+      resendBtn.style.cursor = 'not-allowed';
 
-      if (resendBtn) {
-        resendBtn.disabled = true;
-        resendBtn.style.cursor = 'not-allowed';
-        resendBtn.style.color = 'var(--muted)';
-      }
-      if (countEl) countEl.textContent = secondsLeft;
-      if (timerText) timerText.style.display = 'inline';
-
-      otpCountdownInterval = setInterval(() => {
-        secondsLeft--;
-        if (countEl) countEl.textContent = secondsLeft;
-        if (secondsLeft <= 0) {
-          clearInterval(otpCountdownInterval);
-          if (resendBtn) {
-            resendBtn.disabled = false;
-            resendBtn.style.cursor = 'pointer';
-            resendBtn.style.color = 'var(--emerald)';
-          }
-          if (timerText) timerText.style.display = 'none';
+      if (otpTimerInterval) clearInterval(otpTimerInterval);
+      otpTimerInterval = setInterval(() => {
+        otpSecondsLeft--;
+        if (countdownEl) countdownEl.textContent = otpSecondsLeft;
+        if (otpSecondsLeft <= 0) {
+          clearInterval(otpTimerInterval);
+          resendBtn.disabled = false;
+          resendBtn.style.color = 'var(--emerald)';
+          resendBtn.style.cursor = 'pointer';
         }
       }, 1000);
     }
 
-    function resendOtpCode() {
-      if (!pendingReg) return;
-      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-      pendingReg.otp = newCode;
-      pendingReg.attemptsLeft = 3;
-
-      const demoCodeEl = document.getElementById('demoOtpCode');
-      if (demoCodeEl) demoCodeEl.textContent = newCode;
-
-      const errorAlert = document.getElementById('otpErrorAlert');
-      if (errorAlert) errorAlert.classList.remove('show');
-
-      startOtpTimer();
-    }
-
-    // Auto-advance between 6 OTP inputs
-    document.querySelectorAll('.otp-box').forEach((box, idx) => {
-      box.addEventListener('input', (e) => {
-        const val = e.target.value.replace(/\D/g, '');
-        e.target.value = val.slice(0, 1);
-        if (val && idx < 5) {
-          const next = document.getElementById(`otp-${idx + 1}`);
-          if (next) next.focus();
-        }
-      });
-
-      box.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !e.target.value && idx > 0) {
-          const prev = document.getElementById(`otp-${idx - 1}`);
-          if (prev) {
-            prev.focus();
-            prev.value = '';
-          }
-        }
-      });
-
-      box.addEventListener('paste', (e) => {
-        e.preventDefault();
-        const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-        if (pasteData.length >= 6) {
-          for (let i = 0; i < 6; i++) {
-            const digitBox = document.getElementById(`otp-${i}`);
-            if (digitBox) digitBox.value = pasteData.charAt(i);
-          }
-          submitOtpVerification();
-        }
-      });
-    });
-
-    function showOtpError(msg) {
-      const alert = document.getElementById('otpErrorAlert');
-      const msgEl = document.getElementById('otpErrorMessage');
-      if (msgEl) msgEl.textContent = msg;
-      if (alert) alert.classList.add('show');
-    }
-
-    function submitOtpVerification() {
-      if (!pendingReg) {
-        showOtpError('Session expired. Please start over.');
-        return;
+    async function resendOtpCode() {
+      const resendBtn = document.getElementById('btnResendOtp');
+      resendBtn.disabled = true;
+      resendBtn.textContent = 'Resending…';
+      try {
+        await SupabaseAuthSecurity.requestBookingOtp(activeBooking.phone, activeBooking.email);
+        startOtpTimer();
+      } catch (err) {
+        alert(err.message || 'Error resending code');
+      } finally {
+        resendBtn.textContent = 'Resend Code';
       }
+    }
 
-      let enteredCode = '';
+    function clearOtpInputs() {
       for (let i = 0; i < 6; i++) {
-        const box = document.getElementById(`otp-${i}`);
-        enteredCode += (box?.value || '');
+        const el = document.getElementById('otp-' + i);
+        if (el) el.value = '';
       }
-
-      if (enteredCode.length < 6) {
-        showOtpError('Please enter all 6 digits of the verification code.');
-        return;
-      }
-
-      const verifyBtn = document.getElementById('btnVerifyOtp');
-      if (verifyBtn) {
-        verifyBtn.disabled = true;
-        verifyBtn.innerHTML = `<span>Verifying...</span>`;
-      }
-
-      setTimeout(() => {
-        if (enteredCode !== pendingReg.otp) {
-          pendingReg.attemptsLeft--;
-          if (pendingReg.attemptsLeft <= 0) {
-            showOtpError('Verification failed: Maximum attempts exceeded. Please restart.');
-            setTimeout(() => closeOtpModal(), 2000);
-            return;
-          }
-          showOtpError(`Incorrect verification code. (${pendingReg.attemptsLeft} attempts remaining)`);
-          if (verifyBtn) {
-            verifyBtn.disabled = false;
-            verifyBtn.innerHTML = `<span>Verify &amp; Create Account</span> <i class="ph-bold ph-check"></i>`;
-          }
-          return;
-        }
-
-        // OTP Verified Successfully! Commit account creation
-        try {
-          const user = MockAuth.register({
-            name: pendingReg.name,
-            phone: pendingReg.phone,
-            email: pendingReg.email,
-            password: pendingReg.password
-          });
-
-          // Store in sessionStorage exclusively (CWE-312 mitigation)
-          sessionStorage.setItem('gnm_user', JSON.stringify(user));
-          sessionStorage.setItem('gnm_user_verified', 'true');
-          localStorage.removeItem('gnm_user'); // purge persistent token
-
-          closeOtpModal();
-
-          function getSafeRedirect(target) {
-            if (!target || typeof target !== 'string') return 'my-bookings.html';
-            const trimmed = target.trim();
-            if (/^(?:[a-z]+:|\/\/)/i.test(trimmed)) return 'my-bookings.html';
-            if (trimmed.startsWith('/') || /^[a-zA-Z0-9_\-]+\.html(?:[?#].*)?$/.test(trimmed)) {
-              return trimmed;
-            }
-            return 'my-bookings.html';
-          }
-
-          const urlParams = new URLSearchParams(window.location.search);
-          const redirect = getSafeRedirect(urlParams.get('redirect'));
-          window.location.href = redirect;
-        } catch (err) {
-          showOtpError(err.message || 'Registration failed.');
-          if (verifyBtn) {
-            verifyBtn.disabled = false;
-            verifyBtn.innerHTML = `<span>Verify &amp; Create Account</span> <i class="ph-bold ph-check"></i>`;
-          }
-        }
-      }, 400);
+      const otpErr = document.getElementById('otpErrorAlert');
+      if (otpErr) otpErr.classList.remove('show');
     }
 
-    // ============================================================================
-    // 3. FORM SUBMISSION HANDLER
-    // ============================================================================
-    function handleRegister(e) {
-      e.preventDefault();
-      hideError();
+    function getOtpCode() {
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        const el = document.getElementById('otp-' + i);
+        if (el) code += el.value.trim();
+      }
+      return code;
+    }
 
-      const name = document.getElementById('regName').value.trim();
-      const phone = document.getElementById('regPhone').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const password = document.getElementById('regPassword').value;
-      const btn = document.getElementById('btnSubmit');
+    async function submitOtpVerification() {
+      const code = getOtpCode();
+      const otpErr = document.getElementById('otpErrorAlert');
+      const otpErrMsg = document.getElementById('otpErrorMessage');
+      const btn = document.getElementById('btnVerifyOtp');
 
-      if (!name || name.length < 2) {
-        showError('Please enter your full name (minimum 2 characters).');
-        document.getElementById('regName').focus();
+      if (code.length !== 6) {
+        otpErrMsg.textContent = 'Please enter all 6 digits of the code.';
+        otpErr.classList.add('show');
         return;
       }
-
-      const digitsOnly = phone.replace(/\D/g, '');
-      if (!phone || digitsOnly.length < 10) {
-        showError('Please enter a valid mobile number (e.g. 0300-1234567).');
-        document.getElementById('regPhone').focus();
-        return;
-      }
-
-      if (email && (!email.includes('@') || !email.includes('.'))) {
-        showError('Please enter a valid email address, or leave it blank.');
-        document.getElementById('regEmail').focus();
-        return;
-      }
-
-      // Strong password enforcement
-      const strength = evaluatePasswordStrength(password);
-      if (!strength.isValid) {
-        showError('Please choose a strong password matching all 4 requirements below (8+ chars, upper & lower case, number, symbol).');
-        document.getElementById('regPassword').focus();
-        return;
-      }
+      otpErr.classList.remove('show');
 
       btn.disabled = true;
-      btn.innerHTML = `<span>Preparing verification...</span>`;
+      btn.innerHTML = `<i class="ph-thin ph-circle-notch" style="animation:spin 1s linear infinite; display:inline-block;"></i> Confirming Pitch…`;
 
-      // Generate 6-digit OTP code
-      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      try {
+        const verifyRes = await SupabaseAuthSecurity.verifyBookingOtp(activeBooking.phone, code);
+        if (verifyRes && verifyRes.ok === false) {
+          throw new Error(verifyRes.message || 'Invalid verification code.');
+        }
 
-      pendingReg = {
-        name,
-        phone,
-        email,
-        password,
-        otp: generatedOtp,
-        attemptsLeft: 3
-      };
+        const verificationToken = verifyRes?.verification_token || null;
 
-      setTimeout(() => {
-        openOtpModal(phone, generatedOtp);
-      }, 350);
+        // Calculate end time (1 hour block)
+        const startHour = parseInt(activeBooking.slot.split(':')[0], 10);
+        const endHour = (startHour + 1) % 24;
+        const endTime = String(endHour).padStart(2, '0') + ':00';
+
+        // Create booking
+        const booking = await SupabaseBookings.createBooking({
+          ground_id: activeBooking.groundId,
+          booking_date: activeBooking.date,
+          start_time: activeBooking.slot + ':00',
+          end_time: endTime + ':00',
+          duration_minutes: 60,
+          contact_name: activeBooking.name,
+          contact_phone: activeBooking.phone,
+          email: activeBooking.email || null,
+          players_expected: activeBooking.players,
+          notes: activeBooking.notes || 'Quick Reservation',
+          verification_token: verificationToken,
+          save_info: activeBooking.saveProfile
+        });
+
+        // Save guest profile for one-tap autofill
+        if (activeBooking.saveProfile) {
+          MockAuth.saveGuestProfile({
+            name: activeBooking.name,
+            phone: activeBooking.phone,
+            email: activeBooking.email
+          });
+        }
+
+        // Close modal and show success screen
+        closeOtpModal();
+        renderSuccessScreen(booking);
+      } catch (err) {
+        otpErrMsg.textContent = err.message || 'Invalid code. Please try again.';
+        otpErr.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Confirm &amp; Book Pitch</span> <i class="ph-bold ph-check" style="font-size:14px;"></i>`;
+      }
     }
 
-    // Scroll reveal observer
-    const revealEls = document.querySelectorAll('.reveal');
-    const revealObserver = new IntersectionObserver(
-      entries => entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          revealObserver.unobserve(entry.target);
-        }
-      }),
-      { threshold: 0.12 }
-    );
-    revealEls.forEach(el => revealObserver.observe(el));
+    function renderSuccessScreen(booking) {
+      const container = document.querySelector('.card-inner');
+      if (!container) return;
+
+      const waText = encodeURIComponent(
+        `*GroundsNearMe Booking Slip*\n\n` +
+        `*Ref:* ${booking.booking_ref}\n` +
+        `*Date:* ${activeBooking.date}\n` +
+        `*Time:* ${activeBooking.slot}\n` +
+        `*Player:* ${activeBooking.name} (${activeBooking.phone})\n\n` +
+        `Hi! I have reserved a pitch via GroundsNearMe. Looking forward to the match!`
+      );
+
+      container.innerHTML = `
+        <div style="text-align:center; padding:12px 0;">
+          <div style="width:56px; height:56px; border-radius:50%; background:var(--card-bg); color:var(--emerald); display:inline-flex; align-items:center; justify-content:center; font-size:1.8rem; margin-bottom:16px;">
+            <i class="ph-bold ph-check-circle"></i>
+          </div>
+          <h2 style="font-size:1.5rem; font-weight:800; color:var(--ink); margin-bottom:6px;">Reservation Confirmed!</h2>
+          <div class="mono" style="display:inline-block; background:var(--card-bg); border:1px solid var(--border); padding:6px 14px; font-weight:800; color:var(--emerald); margin-bottom:18px; font-size:1rem;">
+            REF: ${escapeHtml(booking.booking_ref)}
+          </div>
+          <p style="font-size:0.875rem; color:var(--muted); max-width:40ch; margin:0 auto 24px; line-height:1.5;">
+            Your pitch reservation is secured. Payment of PKR ${booking.total_amount || 'venue rate'} is due directly at the ground on arrival.
+          </p>
+
+          <a href="https://wa.me/923362308445?text=${waText}" target="_blank" rel="noopener" style="background:#25D366; color:#ffffff; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border-radius:0; font-weight:700; text-decoration:none; margin-bottom:12px;">
+            <i class="ph-bold ph-whatsapp-logo" style="font-size:1.2rem;"></i> WhatsApp Confirmation Slip
+          </a>
+
+          <a href="my-bookings.html" class="btn-primary" style="margin-bottom:8px;">
+            View In My Bookings
+          </a>
+          <a href="index.html#featured-grounds" class="btn-ghost" style="width:100%; border:none;">
+            Browse More Grounds
+          </a>
+        </div>
+      `;
+    }
+
+    function setupOtpInputHandlers() {
+      for (let i = 0; i < 6; i++) {
+        const box = document.getElementById('otp-' + i);
+        if (!box) continue;
+
+        box.addEventListener('input', (e) => {
+          const val = e.target.value;
+          if (val.length === 1 && i < 5) {
+            document.getElementById('otp-' + (i + 1)).focus();
+          }
+        });
+
+        box.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && i > 0) {
+            document.getElementById('otp-' + (i - 1)).focus();
+          }
+        });
+
+        box.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const pasted = (e.clipboardData || window.clipboardData).getData('text').trim();
+          if (/^\d{6}$/.test(pasted)) {
+            for (let j = 0; j < 6; j++) {
+              document.getElementById('otp-' + j).value = pasted[j];
+            }
+            document.getElementById('btnVerifyOtp').focus();
+          }
+        });
+      }
+    }
   </script>
-  <script src="js/cookie-consent.js"></script>
 </body>
 </html>

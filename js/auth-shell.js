@@ -409,8 +409,10 @@ const AuthShell = {
     } else {
       navCta.innerHTML = `
         <div class="nav-auth-group">
-          <a href="login.html" class="btn-nav-login">Log In</a>
-          <a href="register.html" class="btn-nav-register">Create Account</a>
+          <a href="my-bookings.html" class="btn-nav-login">
+            <i class="ph-thin ph-calendar-check" style="font-size:16px;"></i> My Bookings
+          </a>
+          <a href="index.html#featured-grounds" class="btn-nav-register">Book a Pitch</a>
         </div>
       `;
     }
@@ -436,7 +438,7 @@ const AuthShell = {
         <div class="account-avatar-large">${initial}</div>
         <div class="mobile-account-info">
           <div class="mobile-account-name">${user.name || 'Player'}</div>
-          <div class="mobile-account-phone">${user.phone || user.email || 'Verified Account'}</div>
+          <div class="mobile-account-phone">${user.phone || user.email || 'Verified Guest'}</div>
         </div>
       `;
 
@@ -445,8 +447,8 @@ const AuthShell = {
         <li><a href="index.html#featured-grounds" class="mobile-nav-link">Find Grounds</a></li>
         <li><a href="index.html#matchmaking" class="mobile-nav-link">Matchmaking</a></li>
         <li><a href="my-bookings.html" class="mobile-nav-link">My Bookings</a></li>
-        <li><a href="#" class="mobile-nav-link" onclick="AuthShell.openProfileModal(); return false;">My Profile</a></li>
-        <li><a href="#" class="mobile-nav-link" style="color:#ef4444;" onclick="AuthShell.handleLogout(); return false;">Log Out</a></li>
+        <li><a href="#" class="mobile-nav-link" onclick="AuthShell.openProfileModal(); return false;">My Info</a></li>
+        <li><a href="#" class="mobile-nav-link" style="color:#ef4444;" onclick="AuthShell.handleLogout(); return false;">Clear Saved Info</a></li>
       `;
     } else {
       const mobileHeaderCard = document.getElementById('mobileUserHeader');
@@ -456,9 +458,8 @@ const AuthShell = {
         <li><a href="index.html#how-it-works" class="mobile-nav-link">How It Works</a></li>
         <li><a href="index.html#featured-grounds" class="mobile-nav-link">Find Grounds</a></li>
         <li><a href="index.html#matchmaking" class="mobile-nav-link">Matchmaking</a></li>
-        <li><a href="index.html#for-owners" class="mobile-nav-link">List Your Ground</a></li>
-        <li><a href="login.html" class="mobile-nav-link">Log In</a></li>
-        <li><a href="register.html" class="mobile-nav-link" style="color:var(--lime);">Create Account</a></li>
+        <li><a href="my-bookings.html" class="mobile-nav-link">My Bookings</a></li>
+        <li><a href="index.html#featured-grounds" class="mobile-nav-link" style="color:var(--lime);">Book a Pitch</a></li>
       `;
     }
   },
@@ -517,14 +518,10 @@ const AuthShell = {
   openProfileModal() {
     this.closeDropdown();
     const user = typeof MockAuth !== 'undefined' ? MockAuth.getUser() : null;
-    if (!user) {
-      window.location.href = 'login.html';
-      return;
-    }
 
-    document.getElementById('profName').value = user.name || '';
-    document.getElementById('profPhone').value = user.phone || '';
-    document.getElementById('profEmail').value = user.email || '';
+    document.getElementById('profName').value = user?.name || '';
+    document.getElementById('profPhone').value = user?.phone || '';
+    document.getElementById('profEmail').value = user?.email || '';
 
     const modal = document.getElementById('profileModalBackdrop');
     if (modal) modal.classList.add('open');

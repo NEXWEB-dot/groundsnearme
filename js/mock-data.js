@@ -192,7 +192,9 @@ const MockAuth = {
           };
         }
       }
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEY));
+      // 2. Local guest/user profile
+      const raw = sessionStorage.getItem(this.STORAGE_KEY) || localStorage.getItem('gnm_guest_profile') || localStorage.getItem(this.STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
     } catch { return null; }
   },
 
@@ -201,101 +203,60 @@ const MockAuth = {
   },
 
   /**
-   * Log in user with phone/email and password.
+   * Save lightweight guest profile for one-tap re-booking.
    */
-  login(identifier, password) {
-    if (!identifier) throw new Error('Please enter your phone number or email.');
-    if (!password) throw new Error('Please enter your password.');
-    
-    const cleanId = String(identifier).trim().toLowerCase();
-    const users = this._getUsers();
-    
-    // Look for existing registered user
-    let user = users.find(u => 
-      (u.phone && u.phone.replace(/\D/g, '') === cleanId.replace(/\D/g, '')) ||
-      (u.email && u.email.toLowerCase() === cleanId)
-    );
-
-    if (!user) {
-      throw new Error('Account not found. Please register or check your credentials.');
-    }
-
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
-    return user;
-  },
-
-  /**
-   * Register a new user.
-   */
-  register({ name, phone, email, password }) {
+  saveGuestProfile({ name, phone, email }) {
     if (!name || name.trim().length < 2) throw new Error('Please enter your full name.');
-    if (!phone || phone.replace(/\D/g, '').length < 10) throw new Error('Please enter a valid Pakistan mobile number (e.g. 0300-1234567).');
-    if (!password || password.length < 6) throw new Error('Password must be at least 6 characters long.');
+    const cleanPhone = String(phone || '').replace(/\D/g, '');
+    if (cleanPhone.length < 10) throw new Error('Please enter a valid Pakistan mobile number.');
 
-    const cleanPhone = phone.trim();
-    const cleanEmail = (email || '').trim().toLowerCase();
-    const users = this._getUsers();
-
-    // Check duplicate
-    const exists = users.some(u => 
-      (u.phone && u.phone.replace(/\D/g, '') === cleanPhone.replace(/\D/g, '')) ||
-      (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail)
-    );
-
-    if (exists) {
-      throw new Error('An account with this phone number or email already exists. Please log in.');
-    }
-
-    const user = {
-      id: 'u-' + Date.now(),
+    const profile = {
+      id: 'guest-' + cleanPhone,
       name: name.trim(),
       phone: cleanPhone,
-      email: cleanEmail,
-      created_at: new Date().toISOString()
+      email: (email || '').trim().toLowerCase(),
+      is_guest: true,
+      updated_at: new Date().toISOString()
     };
 
-    users.push(user);
-    this._saveUsers(users);
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
-    return user;
+    localStorage.setItem('gnm_guest_profile', JSON.stringify(profile));
+    sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(profile));
+    return profile;
+  },
+
+  getGuestProfile() {
+    try {
+      const raw = localStorage.getItem('gnm_guest_profile') || sessionStorage.getItem(this.STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  },
+
+  clearGuestProfile() {
+    localStorage.removeItem('gnm_guest_profile');
+    sessionStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.STORAGE_KEY);
+    sessionStorage.removeItem('gnm_supabase_session');
   },
 
   /**
    * Update profile information.
    */
   updateProfile({ name, phone, email }) {
-    const user = this.getUser();
-    if (!user) throw new Error('Not logged in');
-    
-    if (name) user.name = name.trim();
-    if (phone) user.phone = phone.trim();
-    if (email !== undefined) user.email = email.trim().toLowerCase();
-
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
-
-    const users = this._getUsers();
-    const idx = users.findIndex(u => u.id === user.id);
-    if (idx !== -1) {
-      users[idx] = { ...users[idx], ...user };
-      this._saveUsers(users);
-    }
-
-    return user;
+    return this.saveGuestProfile({ name, phone, email });
   },
 
   logout() {
-    localStorage.removeItem(this.STORAGE_KEY);
-    sessionStorage.removeItem('gnm_supabase_session');
-    localStorage.removeItem('gnm_supabase_session');
+    this.clearGuestProfile();
   },
 
   /**
-   * Return logged-in user or null. Never auto-creates fake demo personas.
+   * Return logged-in user or guest profile or null.
    */
   ensureUser() {
     return this.getUser();
   }
 };
+
 
 
 /* ────────────────────────────────────────────

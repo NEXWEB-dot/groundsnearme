@@ -334,7 +334,22 @@ const SupabaseBookings = {
       } catch (_) {}
     }
 
-    // 3. Always update local store so UI reopens slot immediately
+    // 3. Always update local store and localStorage so UI reopens slot immediately
+    try {
+      const raw = localStorage.getItem('gnm_bookings');
+      if (raw) {
+        const list = JSON.parse(raw);
+        let changed = false;
+        list.forEach(item => {
+          if (item.id === bookingId || (bookingRef && item.booking_ref === bookingRef)) {
+            item.status = 'cancelled';
+            changed = true;
+          }
+        });
+        if (changed) localStorage.setItem('gnm_bookings', JSON.stringify(list));
+      }
+    } catch (_) {}
+
     if (typeof MockBookingStore !== 'undefined') {
       MockBookingStore.cancelBooking(bookingId);
       if (bookingRef) MockBookingStore.cancelBookingByRef(bookingRef);

@@ -1560,13 +1560,20 @@
           localBookings.forEach(lb => {
             if (!lb.ground_id || lb.ground_id === currentId) {
               if (lb.status && lb.status !== 'cancelled' && lb.status !== 'expired' && lb.status !== 'rejected') {
-                if (!state.bookings.some(b => b.id === lb.id || (b.booking_date === lb.booking_date && b.start_time === lb.start_time))) {
+                // Skip if any Supabase booking (cancelled or not) already covers this slot to avoid ghost duplicates
+                const slotAlreadyCovered = state.bookings.some(b =>
+                  b.id === lb.id ||
+                  b.booking_ref === lb.booking_ref ||
+                  (b.booking_date === lb.booking_date && b.start_time === lb.start_time)
+                );
+                if (!slotAlreadyCovered) {
                   state.bookings.push(lb);
                 }
               }
             }
           });
         }
+
 
         const navCount = document.getElementById('nav-bookings-count');
         if (navCount) navCount.textContent = state.bookings.length;

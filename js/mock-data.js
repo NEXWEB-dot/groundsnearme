@@ -299,27 +299,28 @@ const MockBookingStore = {
 
   /**
    * Create a new booking. Returns the booking object with generated ref.
+   * Accepts optional id/booking_ref from caller (e.g. Supabase UUID) to keep IDs in sync.
    */
-  createBooking({ ground_id, ground_name, booking_date, start_time, end_time, duration_minutes, price_per_hour, total_amount }) {
+  createBooking({ id, ground_id, ground_name, booking_date, start_time, end_time, duration_minutes, price_per_hour, total_amount, booking_ref, player_id, contact_name, contact_phone, status, payment_status, notes, source, cancelled_at, cancellation_reason }) {
     const user = MockAuth.getUser();
     const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const booking = {
-      id: 'bk-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
-      booking_ref: `GNM-2026-${randSuffix}`,
+      id: id || ('bk-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6)),
+      booking_ref: booking_ref || `GNM-2026-${randSuffix}`,
       ground_id,
       ground_name: ground_name || '',
-      player_id: user ? user.id : 'guest',
+      player_id: player_id || (user ? user.id : 'guest'),
       booking_date,
       start_time,
       end_time,
       duration_minutes: duration_minutes || 60,
-      contact_name: user ? user.name : 'Guest Player',
-      contact_phone: user ? user.phone : '',
-      notes: '',
-      source: 'website',
-      payment_status: 'unpaid',
-      status: 'confirmed',
+      contact_name: contact_name || (user ? user.name : 'Guest Player'),
+      contact_phone: contact_phone || (user ? user.phone : ''),
+      notes: notes || '',
+      source: source || 'website',
+      payment_status: payment_status || 'unpaid',
+      status: status || 'confirmed',
       price_per_hour,
       total_amount,
       currency: 'PKR',
@@ -328,10 +329,21 @@ const MockBookingStore = {
     };
 
     const all = this._getAll();
-    all.push(booking);
+    // Deduplicate: if same ground+date+time already exists, update instead of adding
+    const existingIdx = all.findIndex(b =>
+      (b.id === booking.id) ||
+      (b.booking_ref === booking.booking_ref) ||
+      (b.ground_id === booking.ground_id && b.booking_date === booking.booking_date && b.start_time === booking.start_time)
+    );
+    if (existingIdx >= 0) {
+      all[existingIdx] = { ...all[existingIdx], ...booking };
+    } else {
+      all.push(booking);
+    }
     this._saveAll(all);
     return booking;
   },
+
 
   /**
    * Cancel a booking by ID or ref. Sets status to 'cancelled'.

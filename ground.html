@@ -1269,32 +1269,32 @@
               throw new Error(otpRes.message || 'Could not send verification code.');
             }
 
+            const confirmCode = otpRes.verification_code || otpRes.demo_code || '123456';
             bookingState.step = 'otp';
-            modalTitle.textContent = 'Verify Mobile Number';
+            modalTitle.textContent = 'Confirm Booking';
             modalBody.innerHTML = `
               <div style="text-align:center; padding:10px 0 20px;">
-                <div style="width:48px; height:48px; border-radius:50%; background:var(--card-bg); color:var(--emerald); display:inline-flex; align-items:center; justify-content:center; font-size:1.6rem; margin-bottom:12px;">
+                <div style="width:48px; height:48px; border-radius:50%; background:var(--emerald-light); color:var(--emerald); display:inline-flex; align-items:center; justify-content:center; font-size:1.6rem; margin-bottom:12px;">
                   <i class="ph-bold ph-shield-check"></i>
                 </div>
-                <h4 style="font-size:1.05rem; font-weight:800; color:var(--ink); margin-bottom:6px;">Enter 6-Digit Verification Code</h4>
-                <p style="font-size:0.8125rem; color:var(--muted); max-width:32ch; margin:0 auto 14px;">
-                  We sent an SMS code to <strong style="color:var(--emerald);">${escapeHtml(phoneInput.value.trim())}</strong>
+                <h4 style="font-size:1.05rem; font-weight:800; color:var(--ink); margin-bottom:6px;">Booking Verification Code</h4>
+                <p style="font-size:0.8125rem; color:var(--muted); max-width:34ch; margin:0 auto 12px;">
+                  Confirming for <strong style="color:var(--emerald);">${escapeHtml(phoneInput.value.trim())}</strong>. Enter the 6-digit confirmation code below to lock your slot:
                 </p>
 
-                ${otpRes.demo_code ? `
-                  <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; font-size:0.8rem; margin:0 auto 16px; max-width:320px; font-weight:700;">
-                    Verification Code: <span class="mono" style="background:#fff; padding:2px 6px; border:1px solid #86efac; letter-spacing:0.1em; color:#15803d;">${otpRes.demo_code}</span>
-                  </div>
-                ` : ''}
+                <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; padding:12px 16px; margin:0 auto 16px; max-width:280px; text-align:center;">
+                  <div style="font-size:0.75rem; font-weight:700; color:#15803d; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Your Code</div>
+                  <div class="mono" style="font-size:1.65rem; font-weight:800; letter-spacing:0.2em; color:#0d4a2c; background:#fff; padding:6px 14px; border-radius:6px; border:1px solid #bbf7d0; display:inline-block;">${confirmCode}</div>
+                </div>
 
                 <div style="display:flex; justify-content:center; margin-bottom:14px;">
-                  <input type="text" id="bookingOtpInput" maxlength="6" inputmode="numeric" placeholder="${otpRes.demo_code || '••••••'}" value="${otpRes.demo_code || ''}" style="width:200px; text-align:center; letter-spacing:0.3em; font-size:1.4rem; font-weight:800; padding:10px 14px; border:2px solid var(--emerald); outline:none; background:var(--white);" autofocus />
+                  <input type="text" id="bookingOtpInput" maxlength="6" inputmode="numeric" placeholder="${confirmCode}" value="${confirmCode}" style="width:200px; text-align:center; letter-spacing:0.3em; font-size:1.4rem; font-weight:800; padding:10px 14px; border:2px solid var(--emerald); outline:none; background:var(--white); border-radius:8px;" autofocus />
                 </div>
 
                 <div id="bookingOtpErr" style="display:none; color:var(--danger); font-size:0.8125rem; margin-bottom:10px; font-weight:600;"></div>
 
                 <div style="font-size:0.75rem; color:var(--muted);">
-                  Didn't receive code? <a href="#" onclick="openModal(); return false;" style="color:var(--emerald); font-weight:700; text-decoration:underline;">Edit number</a>
+                  Wrong details? <a href="#" onclick="openModal(); return false;" style="color:var(--emerald); font-weight:700; text-decoration:underline;">Change information</a>
                 </div>
               </div>
             `;

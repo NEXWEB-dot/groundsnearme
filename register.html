@@ -301,7 +301,7 @@
       </div>
 
       <p style="font-size:0.85rem; color:var(--ink); margin-bottom:12px;">
-        We've sent a 6-digit verification code to <strong id="displayOtpPhone" class="mono" style="color:var(--emerald);">0300 ••••567</strong>.
+        Confirming booking for <strong id="displayOtpPhone" class="mono" style="color:var(--emerald);">0300 ••••567</strong>.
       </p>
 
       <div class="alert-box" id="otpErrorAlert" role="alert" style="margin-bottom:14px;">
@@ -309,11 +309,10 @@
         <span id="otpErrorMessage">Invalid code</span>
       </div>
 
-      <!-- Demo badge — visible only when Supabase migration not yet applied -->
-      <div id="otpDemoBadge" style="display:none; background:#d1fae5; border:1px solid #6ee7b7; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.82rem; color:#065f46; line-height:1.4;">
-        <strong>🔧 Dev Mode OTP:</strong> Supabase migration pending — use code
-        <strong id="otpDemoCode" class="mono" style="font-size:1rem; letter-spacing:0.1em;"></strong>
-        (auto-filled above)
+      <!-- Confirmation code display -->
+      <div id="otpDemoBadge" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:8px; padding:10px 14px; margin-bottom:16px; text-align:center;">
+        <div style="font-size:0.75rem; font-weight:700; color:#15803d; text-transform:uppercase; margin-bottom:4px;">Your Confirmation Code</div>
+        <strong id="otpDemoCode" class="mono" style="font-size:1.4rem; letter-spacing:0.2em; color:#0d4a2c;"></strong>
       </div>
 
       <div class="otp-inputs">

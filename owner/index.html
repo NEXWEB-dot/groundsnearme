@@ -2196,29 +2196,51 @@
       if (!confirm(`Are you sure you want to release slot ${ref}? The slot will immediately become available.`)) return;
 
       try {
-        let success = false;
-        // 1. Try release_booking RPC
+        // Try release_booking RPC first (security-definer, always works for owners/staff)
+        let rpcResult = null;
+        let rpcErr = null;
         try {
-          const res = await sbFetch('rpc/release_booking', {
+          rpcResult = await sbFetch('rpc/release_booking', {
             method: 'POST',
             body: JSON.stringify({ p_booking_id: bookingId, p_booking_ref: ref, p_reason: 'Released by turf manager' })
           });
-          if (res && res.ok) success = true;
-        } catch (_) {}
+        } catch (e) { rpcErr = e; }
 
-        // 2. Direct PATCH fallback
-        if (!success) {
-          await sbFetch(`bookings?id=eq.${bookingId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status: 'cancelled', cancellation_reason: 'Released by turf manager', cancelled_at: new Date().toISOString() }),
-            headers: { 'Prefer': 'return=minimal' }
-          });
+        if (rpcResult && rpcResult.ok === true) {
+          // RPC succeeded
+          showToast('Slot released successfully! Now open for bookings.', 'success');
+          await refreshData();
+          return;
         }
+
+        if (rpcResult && rpcResult.ok === false) {
+          // RPC returned a business-logic error (booking not found, etc.)
+          const msg = rpcResult.error?.message || 'Could not release this slot.';
+          showToast(`Release failed: ${msg}`, 'error');
+          return;
+        }
+
+        // RPC not available (404) or network error — fall back to direct PATCH
+        console.warn('[GNM] release_booking RPC unavailable, falling back to PATCH. Apply the fix SQL in Supabase.', rpcErr?.message);
+        await sbFetch(`bookings?id=eq.${bookingId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status: 'cancelled',
+            cancellation_reason: 'Released by turf manager',
+            cancelled_at: new Date().toISOString()
+          }),
+          headers: { 'Prefer': 'return=minimal' }
+        });
 
         showToast('Slot released successfully! Now open for bookings.', 'success');
         await refreshData();
       } catch (err) {
-        showToast(`Could not release slot: ${err.message}`, 'error');
+        if (err.message && err.message.includes('row-level security')) {
+          showToast('Permission denied. Run the fix SQL in Supabase SQL Editor (see console).', 'error');
+        } else {
+          showToast(`Could not release slot: ${err.message}`, 'error');
+        }
+        console.error('[GNM] quickReleaseSlot error:', err);
       }
     }
 

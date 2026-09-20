@@ -304,9 +304,9 @@ const GNM = {
 
     let createdGame = null;
 
-    // 1. Try create_open_game RPC if available
+    // 1. Try create_verified_match or create_open_game RPC first
     try {
-      const rpcRes = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/rpc/create_open_game`, {
+      const rpcRes = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/rpc/create_verified_match`, {
         method: 'POST',
         headers: {
           'apikey': GNM_CONFIG.supabaseAnon,
@@ -314,17 +314,14 @@ const GNM = {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          p_title: payload.title,
-          p_match_date: payload.match_date,
-          p_looking_for: payload.looking_for,
-          p_skill_level: payload.skill_level,
-          p_players_needed: payload.players_needed,
-          p_start_time: payload.start_time,
-          p_format: payload.format,
-          p_ground_id: payload.ground_id,
-          p_area_id: payload.area_id,
           p_booking_ref: payload.booking_ref,
-          p_booking_id: payload.booking_id
+          p_title: payload.title,
+          p_looking_for: payload.looking_for,
+          p_players_needed: payload.players_needed,
+          p_format: payload.format,
+          p_skill_level: payload.skill_level,
+          p_whatsapp_number: payload.whatsapp_number,
+          p_host_handle: payload.host_handle
         })
       });
       if (rpcRes.ok) {
@@ -333,9 +330,27 @@ const GNM = {
       }
     } catch (_) {}
 
-    // 2. Direct POST fallback
+    // 2. Direct POST fallback to open_games
     if (!createdGame) {
-      const res = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/open_games`, {
+      // Clean payload: only send standard columns to avoid schema cache mismatch errors
+      const basePayload = {
+        title: payload.title,
+        host_handle: payload.host_handle,
+        looking_for: payload.looking_for,
+        skill_level: payload.skill_level,
+        format: payload.format,
+        area_id: payload.area_id,
+        ground_id: payload.ground_id,
+        city: 'Karachi',
+        match_date: payload.match_date,
+        start_time: payload.start_time,
+        players_needed: payload.players_needed,
+        notes: payload.booking_ref ? `[Verified Booking: ${payload.booking_ref}]` : (payload.notes || null),
+        whatsapp_number: payload.whatsapp_number,
+        status: 'open'
+      };
+
+      let res = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/open_games`, {
         method: 'POST',
         headers: {
           'apikey': GNM_CONFIG.supabaseAnon,
@@ -343,8 +358,25 @@ const GNM = {
           'Content-Type': 'application/json',
           'Prefer': 'return=representation'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ ...basePayload, booking_ref: payload.booking_ref })
       });
+
+      // If booking_ref column is not in schema cache, retry without it
+      if (!res.ok) {
+        const errJson = await res.clone().json().catch(() => ({}));
+        if (errJson?.message && (errJson.message.includes('schema cache') || errJson.message.includes('column'))) {
+          res = await fetch(`${GNM_CONFIG.supabaseUrl}/rest/v1/open_games`, {
+            method: 'POST',
+            headers: {
+              'apikey': GNM_CONFIG.supabaseAnon,
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(basePayload)
+          });
+        }
+      }
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

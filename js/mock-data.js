@@ -333,15 +333,19 @@ const MockBookingStore = {
   },
 
   /**
-   * Cancel a booking by ID. Sets status to 'cancelled'.
+   * Cancel a booking by ID or ref. Sets status to 'cancelled'.
    */
-  cancelBooking(bookingId) {
+  cancelBooking(bookingId, bookingRef) {
     const all = this._getAll();
-    const idx = all.findIndex(b => b.id === bookingId || b.booking_ref === bookingId);
-    if (idx === -1) return false;
-    all[idx].status = 'cancelled';
-    this._saveAll(all);
-    return true;
+    let changed = false;
+    all.forEach(b => {
+      if (b.id === bookingId || b.booking_ref === bookingId || (bookingRef && b.booking_ref === bookingRef)) {
+        b.status = 'cancelled';
+        changed = true;
+      }
+    });
+    if (changed) this._saveAll(all);
+    return changed;
   },
 
   /**
@@ -349,19 +353,23 @@ const MockBookingStore = {
    */
   cancelBookingByRef(bookingRef) {
     const all = this._getAll();
-    const idx = all.findIndex(b => b.booking_ref === bookingRef);
-    if (idx === -1) return false;
-    all[idx].status = 'cancelled';
-    this._saveAll(all);
-    return true;
+    let changed = false;
+    all.forEach(b => {
+      if (b.booking_ref === bookingRef || b.id === bookingRef) {
+        b.status = 'cancelled';
+        changed = true;
+      }
+    });
+    if (changed) this._saveAll(all);
+    return changed;
   },
 
   /**
    * Hard delete a booking from local storage.
    */
-  deleteBooking(bookingId) {
+  deleteBooking(bookingId, bookingRef) {
     let all = this._getAll();
-    all = all.filter(b => b.id !== bookingId && b.booking_ref !== bookingId);
+    all = all.filter(b => b.id !== bookingId && b.booking_ref !== bookingId && (!bookingRef || b.booking_ref !== bookingRef));
     this._saveAll(all);
     return true;
   },

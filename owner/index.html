@@ -1559,8 +1559,10 @@
           const currentId = state.currentGround.id;
           localBookings.forEach(lb => {
             if (!lb.ground_id || lb.ground_id === currentId) {
-              if (!state.bookings.some(b => b.id === lb.id || (b.booking_date === lb.booking_date && b.start_time === lb.start_time))) {
-                state.bookings.push(lb);
+              if (lb.status && lb.status !== 'cancelled' && lb.status !== 'expired' && lb.status !== 'rejected') {
+                if (!state.bookings.some(b => b.id === lb.id || (b.booking_date === lb.booking_date && b.start_time === lb.start_time))) {
+                  state.bookings.push(lb);
+                }
               }
             }
           });

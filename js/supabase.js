@@ -245,12 +245,14 @@ const SupabaseBookings = {
       if (Array.isArray(rows)) list = rows;
     } catch (_) {}
 
-    // Merge with localStorage bookings
+    // Merge with localStorage bookings ONLY if active and not cancelled
     if (typeof MockBookingStore !== 'undefined') {
       const localBookings = MockBookingStore.getBookingsForGroundDate(groundId, dateStr);
       localBookings.forEach(lb => {
-        if (!list.some(b => b.id === lb.id || (b.booking_date === lb.booking_date && b.start_time === lb.start_time))) {
-          list.push(lb);
+        if (lb.status && lb.status !== 'cancelled' && lb.status !== 'expired' && lb.status !== 'rejected') {
+          if (!list.some(b => b.id === lb.id || (b.booking_date === lb.booking_date && b.start_time === lb.start_time))) {
+            list.push(lb);
+          }
         }
       });
     }

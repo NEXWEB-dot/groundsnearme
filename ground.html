@@ -1343,6 +1343,7 @@
             const targetGroundId = ground.supabase_id || ground.id;
             const booking = await SupabaseBookings.createBooking({
               ground_id: targetGroundId,
+              ground_name: ground.name,
               booking_date: selectedDateStr,
               start_time: selectedSlot.time,
               end_time: selectedSlot.endTime,

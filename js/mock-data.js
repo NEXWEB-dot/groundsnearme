@@ -300,7 +300,7 @@ const MockBookingStore = {
   /**
    * Create a new booking. Returns the booking object with generated ref.
    */
-  createBooking({ ground_id, booking_date, start_time, end_time, duration_minutes, price_per_hour, total_amount }) {
+  createBooking({ ground_id, ground_name, booking_date, start_time, end_time, duration_minutes, price_per_hour, total_amount }) {
     const user = MockAuth.getUser();
     const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -308,6 +308,7 @@ const MockBookingStore = {
       id: 'bk-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
       booking_ref: `GNM-2026-${randSuffix}`,
       ground_id,
+      ground_name: ground_name || '',
       player_id: user ? user.id : 'guest',
       booking_date,
       start_time,
@@ -444,14 +445,33 @@ const MockSlotStore = {
  * Find a mock ground by ID or slug.
  */
 function findMockGround(idOrSlug) {
-  if (!idOrSlug) return MOCK_GROUNDS[0];
-  const exact = MOCK_GROUNDS.find(g => g.id === idOrSlug || g.slug === idOrSlug || g.supabase_id === idOrSlug);
-  if (exact) return exact;
-  const fuzzy = MOCK_GROUNDS.find(g => 
-    (g.slug && g.slug.toLowerCase() === idOrSlug.toLowerCase()) || 
-    (g.name && g.name.toLowerCase().includes(idOrSlug.toLowerCase()))
-  );
-  return fuzzy || MOCK_GROUNDS[0];
+  if (!idOrSlug) return null;
+  // 1. Check live grounds cache from Supabase
+  if (typeof SupabaseGrounds !== 'undefined' && Array.isArray(SupabaseGrounds._cache)) {
+    const live = SupabaseGrounds._cache.find(g => 
+      g.id === idOrSlug || g.slug === idOrSlug || g.supabase_id === idOrSlug ||
+      (g.name && g.name.toLowerCase() === idOrSlug.toLowerCase())
+    );
+    if (live) return live;
+  }
+  if (typeof GNM !== 'undefined' && Array.isArray(GNM.grounds)) {
+    const live = GNM.grounds.find(g => 
+      g.id === idOrSlug || g.slug === idOrSlug || g.supabase_id === idOrSlug ||
+      (g.name && g.name.toLowerCase() === idOrSlug.toLowerCase())
+    );
+    if (live) return live;
+  }
+  // 2. Check hardcoded mock grounds
+  if (typeof MOCK_GROUNDS !== 'undefined') {
+    const exact = MOCK_GROUNDS.find(g => g.id === idOrSlug || g.slug === idOrSlug || g.supabase_id === idOrSlug);
+    if (exact) return exact;
+    const fuzzy = MOCK_GROUNDS.find(g => 
+      (g.slug && g.slug.toLowerCase() === idOrSlug.toLowerCase()) || 
+      (g.name && g.name.toLowerCase().includes(idOrSlug.toLowerCase()))
+    );
+    if (fuzzy) return fuzzy;
+  }
+  return null;
 }
 
 /**

@@ -434,7 +434,12 @@
         <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
       `;
 
-      
+      try {
+        if (typeof SupabaseGrounds !== 'undefined') {
+          await SupabaseGrounds.getAll();
+        }
+      } catch (_) {}
+
       const allBookings = await SupabaseBookings.getPlayerBookings();
       const upcoming = [];
       const past = [];
@@ -508,7 +513,7 @@
 
     function createBookingCard(booking, idx, isUpcoming) {
       const ground = findMockGround(booking.ground_id);
-      const groundName = ground ? ground.name : (booking.ground_name || 'Cricket Ground');
+      const groundName = booking.ground_name || booking.ground?.name || (ground ? ground.name : 'Cricket Ground');
       const coverImg = ground ? ground.cover_image_url : 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&q=80';
       const groundUrl = ground ? `ground.html?id=${ground.slug || ground.id}` : `index.html#featured-grounds`;
 

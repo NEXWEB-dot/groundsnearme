@@ -571,7 +571,7 @@ const SupabaseAuthSecurity = {
         method: 'POST',
         body: JSON.stringify({ p_phone: phone, p_email: email || null, p_ip: 'client' })
       });
-      if (res) {
+      if (res && res.ok !== false) {
         return {
           ...res,
           demo_code: res.demo_code || onScreenCode,

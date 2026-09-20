@@ -1627,7 +1627,7 @@
         start_time: form.start_time.value + ':00',
         ground_id: form.ground_id ? form.ground_id.value : null,
         booking_ref: form.booking_ref ? form.booking_ref.value : null,
-        booking_id: form.booking_id ? form.booking_id.value : null,
+        booking_id: (() => { const v = form.booking_id ? form.booking_id.value : null; return (v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)) ? v : null; })(),
         area_id: form.area_id.value || null,
         format: form.format.value,
         skill_level: form.skill_level.value,

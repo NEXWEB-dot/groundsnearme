@@ -294,7 +294,7 @@ const GNM = {
       area_id: data.area_id || null,
       ground_id: data.ground_id || null,
       booking_ref: data.booking_ref || null,
-      booking_id: data.booking_id || null,
+      booking_id: (data.booking_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.booking_id)) ? data.booking_id : null,
       match_date: data.match_date,
       start_time: data.start_time || '20:00:00',
       players_needed: data.looking_for === 'players' ? (parseInt(data.players_needed, 10) || 2) : null,

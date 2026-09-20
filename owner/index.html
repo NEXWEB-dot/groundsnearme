@@ -950,42 +950,77 @@
     </div>
   </div>
 
-  <!-- MODAL: OWNER LOGIN -->
+  <!-- MODAL: OWNER AUTHENTICATION (SIGN IN & REGISTER) -->
   <div class="modal-backdrop" id="modal-owner-login">
     <div class="modal-dialog" style="max-width:440px;">
-      <div class="modal-header">
-        <h3 class="modal-title"><i class="ph ph-lock-key"></i> Turf Owner Sign In</h3>
+      <div class="modal-header" style="padding-bottom:12px;">
+        <h3 class="modal-title" id="auth-modal-title"><i class="ph ph-lock-key"></i> Turf Owner Portal</h3>
         <button class="btn btn-ghost btn-icon-only" onclick="closeModal('modal-owner-login')">
           <i class="ph ph-x" style="font-size:1.2rem;"></i>
         </button>
       </div>
-      <form id="form-owner-login" onsubmit="handleOwnerLogin(event)">
-        <div class="modal-body">
-          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:16px;">
-            Sign in with your verified turf owner credentials to manage your ground's live slots and bookings.
-          </p>
-          <div id="owner-login-error" style="display:none; background:var(--danger-bg); border:1px solid #fca5a5; color:var(--danger); padding:10px 14px; border-radius:var(--radius-md); font-size:0.8125rem; font-weight:600; margin-bottom:14px; line-height:1.4;">
-            <i class="ph ph-warning-circle" style="vertical-align:middle; margin-right:4px;"></i>
-            <span id="owner-login-error-text"></span>
-          </div>
+
+      <!-- Auth Mode Tabs -->
+      <div style="display:flex; border-bottom:1.5px solid var(--border); margin:0 24px 16px;">
+        <button type="button" id="tab-btn-signin" onclick="switchAuthTab('signin')" style="flex:1; padding:10px; font-weight:700; font-size:0.875rem; background:none; border:none; border-bottom:2.5px solid var(--emerald); color:var(--emerald); cursor:pointer;">
+          Sign In
+        </button>
+        <button type="button" id="tab-btn-signup" onclick="switchAuthTab('signup')" style="flex:1; padding:10px; font-weight:600; font-size:0.875rem; background:none; border:none; border-bottom:2.5px solid transparent; color:var(--muted); cursor:pointer;">
+          Register Account
+        </button>
+      </div>
+
+      <div style="padding:0 24px 24px;">
+        <div id="owner-login-error" style="display:none; background:var(--danger-bg); border:1px solid #fca5a5; color:var(--danger); padding:10px 14px; border-radius:var(--radius-md); font-size:0.8125rem; font-weight:600; margin-bottom:14px; line-height:1.4;">
+          <i class="ph ph-warning-circle" style="vertical-align:middle; margin-right:4px;"></i>
+          <span id="owner-login-error-text"></span>
+        </div>
+
+        <!-- FORM: SIGN IN -->
+        <form id="form-owner-login" onsubmit="handleOwnerLogin(event)">
           <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label">Owner Email *</label>
-            <input class="form-control" type="email" id="owner-login-email" name="email" placeholder="owner@yourground.pk" required />
+            <input class="form-control" type="email" id="owner-login-email" name="email" placeholder="owner@yourground.pk" autocomplete="email" required />
           </div>
-          <div class="form-group" style="margin-bottom:8px;">
+          <div class="form-group" style="margin-bottom:16px;">
             <label class="form-label">Password *</label>
-            <input class="form-control" type="password" id="owner-login-password" name="password" placeholder="••••••••" required />
+            <input class="form-control" type="password" id="owner-login-password" name="password" placeholder="••••••••" autocomplete="current-password" required />
           </div>
-        </div>
-        <div class="modal-footer" style="flex-direction:column; gap:10px;">
-          <button type="submit" class="btn btn-primary" style="width:100%;">Sign In to Owner Portal</button>
-          <div style="text-align:center; width:100%;">
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom:12px;">Sign In to Owner Portal</button>
+          <div style="text-align:center; width:100%; margin-bottom:12px;">
             <button type="button" onclick="signInDemoOwner()" class="btn btn-ghost btn-sm" style="color:var(--emerald); font-weight:700; font-size:0.8125rem; width:100%;">
               <i class="ph ph-lightning"></i> 1-Click Demo Sign-in (Star Indoor)
             </button>
           </div>
-        </div>
-      </form>
+          <div style="text-align:center; font-size:0.8125rem; color:var(--muted);">
+            Don't have an account? <a href="javascript:void(0)" onclick="switchAuthTab('signup')" style="color:var(--emerald); font-weight:700;">Create one here</a>
+          </div>
+        </form>
+
+        <!-- FORM: SIGN UP -->
+        <form id="form-owner-signup" onsubmit="handleOwnerSignup(event)" style="display:none;">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Your Name / Turf Manager *</label>
+            <input class="form-control" type="text" id="owner-signup-name" name="full_name" placeholder="e.g. Tariq Khan" required />
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Email Address *</label>
+            <input class="form-control" type="email" id="owner-signup-email" name="email" placeholder="manager@yourground.pk" autocomplete="email" required />
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">WhatsApp Number *</label>
+            <input class="form-control" type="tel" id="owner-signup-wa" name="whatsapp" placeholder="0300 1234567" required />
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Password * (min 6 characters)</label>
+            <input class="form-control" type="password" id="owner-signup-password" name="password" minlength="6" placeholder="••••••••" autocomplete="new-password" required />
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom:12px;">Create Owner Account</button>
+          <div style="text-align:center; font-size:0.8125rem; color:var(--muted);">
+            Already have an account? <a href="javascript:void(0)" onclick="switchAuthTab('signin')" style="color:var(--emerald); font-weight:700;">Sign in here</a>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -1153,6 +1188,127 @@
       showToast('Signed in as Demo Turf Owner (Star Indoor Cricket)', 'success');
       loadGrounds();
       refreshData();
+    }
+
+    function switchAuthTab(tab) {
+      const signInTab = document.getElementById('tab-btn-signin');
+      const signUpTab = document.getElementById('tab-btn-signup');
+      const signInForm = document.getElementById('form-owner-login');
+      const signUpForm = document.getElementById('form-owner-signup');
+      const errBox = document.getElementById('owner-login-error');
+      if (errBox) errBox.style.display = 'none';
+
+      if (tab === 'signup') {
+        if (signInTab) {
+          signInTab.style.borderBottomColor = 'transparent';
+          signInTab.style.color = 'var(--muted)';
+          signInTab.style.fontWeight = '600';
+        }
+        if (signUpTab) {
+          signUpTab.style.borderBottomColor = 'var(--emerald)';
+          signUpTab.style.color = 'var(--emerald)';
+          signUpTab.style.fontWeight = '700';
+        }
+        if (signInForm) signInForm.style.display = 'none';
+        if (signUpForm) signUpForm.style.display = 'block';
+      } else {
+        if (signUpTab) {
+          signUpTab.style.borderBottomColor = 'transparent';
+          signUpTab.style.color = 'var(--muted)';
+          signUpTab.style.fontWeight = '600';
+        }
+        if (signInTab) {
+          signInTab.style.borderBottomColor = 'var(--emerald)';
+          signInTab.style.color = 'var(--emerald)';
+          signInTab.style.fontWeight = '700';
+        }
+        if (signUpForm) signUpForm.style.display = 'none';
+        if (signInForm) signInForm.style.display = 'block';
+      }
+    }
+
+    async function handleOwnerSignup(e) {
+      e.preventDefault();
+      const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const name = form.elements['full_name'].value.trim();
+      const email = form.elements['email'].value.trim();
+      const wa = form.elements['whatsapp'].value.trim();
+      const password = form.elements['password'].value;
+
+      const errBox = document.getElementById('owner-login-error');
+      const errText = document.getElementById('owner-login-error-text');
+      if (errBox) errBox.style.display = 'none';
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Registering Account...';
+      }
+
+      try {
+        let waDigits = wa.replace(/\D/g, '');
+        if (waDigits.startsWith('03') && waDigits.length === 11) waDigits = '92' + waDigits.slice(1);
+
+        const res = await fetch(`${CONFIG.supabaseUrl}/auth/v1/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': CONFIG.supabaseAnon
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            data: {
+              full_name: name,
+              whatsapp_number: waDigits,
+              account_type: 'owner'
+            }
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error_description || data.msg || data.message || 'Registration failed');
+        }
+
+        // If session returned immediately (email confirmation disabled in Supabase)
+        if (data.access_token) {
+          state.session = data;
+          sessionStorage.setItem('gnm_owner_session', JSON.stringify(data));
+          localStorage.setItem('gnm_owner_session', JSON.stringify(data));
+          updateOwnerUI();
+          closeModal('modal-owner-login');
+          showToast(`Account created & signed in as ${email}!`, 'success');
+          await loadGrounds();
+          await refreshData();
+        } else {
+          // Email confirmation required by Supabase project
+          if (errBox && errText) {
+            errText.innerHTML = `✅ Account created! Check <strong>${escapeHtml(email)}</strong> for your confirmation email, or confirm the user in Supabase Studio → Authentication → Users.`;
+            errBox.style.background = '#d1fae5';
+            errBox.style.borderColor = '#6ee7b7';
+            errBox.style.color = '#065f46';
+            errBox.style.display = 'block';
+          }
+          showToast('Account registered! Please sign in or confirm email.', 'success');
+          switchAuthTab('signin');
+          const loginEmail = document.getElementById('owner-login-email');
+          if (loginEmail) loginEmail.value = email;
+        }
+      } catch (err) {
+        if (errBox && errText) {
+          errText.innerHTML = err.message;
+          errBox.style.background = 'var(--danger-bg)';
+          errBox.style.borderColor = '#fca5a5';
+          errBox.style.color = 'var(--danger)';
+          errBox.style.display = 'block';
+        }
+        showToast(err.message, 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Owner Account';
+        }
+      }
     }
 
     async function handleOwnerLogin(e) {

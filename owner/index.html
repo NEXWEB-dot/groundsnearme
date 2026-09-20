@@ -807,6 +807,13 @@
               <span>Maintenance & Off</span>
             </div>
           </div>
+          <div class="nav-item" data-view="settlement" onclick="switchView('settlement')">
+            <div class="nav-item-left">
+              <i class="ph ph-receipt"></i>
+              <span>Weekly Settlement</span>
+            </div>
+            <span class="badge" style="background:#fef3c7; color:#b45309; font-size:0.6875rem; font-weight:700; padding:2px 6px;">10%</span>
+          </div>
         </div>
 
         <!-- SUPERADMIN SECTION — only visible to staff accounts -->
@@ -1670,6 +1677,7 @@
         bookings: 'All Bookings History',
         pricing: 'Hourly Rates & Turf Details',
         closures: 'Ground Maintenance & Blackouts',
+        settlement: 'Weekly 10% Platform Settlement',
         admin: 'Add Ground Owner'
       };
       if (heading) heading.textContent = titles[view] || 'Owner Portal';
@@ -1684,6 +1692,7 @@
         case 'bookings': renderBookingsView(container); break;
         case 'pricing': renderPricingView(container); break;
         case 'closures': renderClosuresView(container); break;
+        case 'settlement': renderSettlementView(container); break;
         case 'admin': renderAdminView(container); break;
       }
     }
@@ -1809,6 +1818,61 @@
       }
     }
 
+    /* ==========================================================================
+       WEEKLY COMMISSION CALCULATION (10% PLATFORM SHARE)
+       ========================================================================== */
+    function getCurrentWeekRange(referenceDateStr = null) {
+      const ref = referenceDateStr ? new Date(referenceDateStr) : new Date();
+      const d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+      const day = d.getDay(); // 0: Sun, 1: Mon, ...
+      const diffToMonday = (day === 0 ? -6 : 1 - day);
+      const monday = new Date(d);
+      monday.setDate(d.getDate() + diffToMonday);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const fmt = dt => dt.toISOString().split('T')[0];
+      const fmtPretty = dt => dt.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+
+      return {
+        startStr: fmt(monday),
+        endStr: fmt(sunday),
+        label: `${fmtPretty(monday)} – ${fmtPretty(sunday)}`,
+        monday,
+        sunday
+      };
+    }
+
+    function computeOwnerCommissionMetrics(bookings = state.bookings) {
+      const week = getCurrentWeekRange();
+      const activeBookings = (bookings || []).filter(b => b.status !== 'cancelled');
+
+      // Bookings falling strictly inside the current weekly settlement window (Mon–Sun)
+      const weekBookings = activeBookings.filter(b => 
+        b.booking_date >= week.startStr && b.booking_date <= week.endStr
+      );
+
+      const weekGross = weekBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+      const weekCommission = Math.round(weekGross * 0.10);
+      const weekNet = weekGross - weekCommission;
+
+      const allTimeGross = activeBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+      const allTimeCommission = Math.round(allTimeGross * 0.10);
+      const allTimeNet = allTimeGross - allTimeCommission;
+
+      return {
+        week,
+        weekBookings,
+        weekGross,
+        weekCommission,
+        weekNet,
+        allTimeGross,
+        allTimeCommission,
+        allTimeNet
+      };
+    }
+
     function renderScheduleView(container) {
       if (!state.currentGround) {
         container.innerHTML = '<div class="empty-state"><p>No grounds found for this account.</p></div>';
@@ -1817,6 +1881,7 @@
 
       const isClosed = state.closures.some(c => state.selectedDate >= c.starts_on && state.selectedDate <= c.ends_on);
       const dayBookings = state.bookings.filter(b => b.booking_date === state.selectedDate && b.status !== 'cancelled');
+      const metrics = computeOwnerCommissionMetrics();
 
       const slots = [
         '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', 
@@ -1824,6 +1889,35 @@
       ];
 
       container.innerHTML = `
+        <!-- WEEKLY 10% COMMISSION NOTICE BANNER -->
+        <div style="background:linear-gradient(135deg, #064e3b 0%, #065f46 100%); color:#fff; border-radius:var(--radius-md); padding:16px 20px; margin-bottom:20px; box-shadow:0 4px 14px rgba(6,78,59,0.18); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
+              <i class="ph ph-receipt"></i>
+            </div>
+            <div>
+              <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; opacity:0.85; font-weight:700;">
+                Weekly 10% Platform Fee · ${metrics.week.label}
+              </div>
+              <div style="font-size:1.35rem; font-weight:800; display:flex; align-items:center; gap:10px;">
+                <span>PKR ${metrics.weekCommission.toLocaleString()}</span>
+                <span style="font-size:0.75rem; font-weight:700; background:#fef3c7; color:#92400e; padding:3px 9px; border-radius:20px;">
+                  Due Sunday Midnight
+                </span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+            <div style="text-align:right; font-size:0.8125rem; opacity:0.92;">
+              <div>Week Gross: <strong>PKR ${metrics.weekGross.toLocaleString()}</strong> (${metrics.weekBookings.length} slots)</div>
+              <div>Your Net (90%): <strong style="color:#a7f3d0;">PKR ${metrics.weekNet.toLocaleString()}</strong></div>
+            </div>
+            <button class="btn btn-sm" style="background:#fff; color:#064e3b; font-weight:700; border:none; padding:8px 14px; box-shadow:var(--shadow-sm);" onclick="switchView('settlement')">
+              Settlement Details →
+            </button>
+          </div>
+        </div>
+
         ${isClosed ? `
           <div style="background:var(--danger-bg); border:1px solid #fca5a5; color:var(--danger); padding:16px 20px; border-radius:var(--radius-md); margin-bottom:20px; display:flex; align-items:center; gap:12px;">
             <i class="ph ph-warning-circle" style="font-size:1.4rem;"></i>
@@ -1838,6 +1932,10 @@
           ${slots.map(slotTime => {
             const booking = dayBookings.find(b => b.start_time.startsWith(slotTime));
             const isBooked = Boolean(booking);
+            const totalAmt = booking ? Number(booking.total_amount || 0) : 0;
+            const commAmt = Math.round(totalAmt * 0.10);
+            const netAmt = totalAmt - commAmt;
+
             return `
               <div class="slot-card ${isBooked ? 'booked' : 'available'}">
                 <div class="slot-time">${slotTime} - ${getEndTime(slotTime)}</div>
@@ -1849,10 +1947,18 @@
                   <div class="slot-booking-info">
                     <div class="slot-player-name">${escapeHtml(booking.contact_name || 'Walk-in Player')}</div>
                     <div class="slot-ref mono">${escapeHtml(booking.booking_ref)}</div>
-                    <div style="margin-top:6px; display:flex; gap:6px;">
+                    
+                    <div style="margin-top:6px; display:flex; gap:6px; align-items:center;">
                       <span class="badge badge-${booking.payment_status}">${booking.payment_status}</span>
-                      <span class="badge" style="background:#fff;">PKR ${Number(booking.total_amount).toLocaleString()}</span>
+                      <span class="badge" style="background:#fff; font-weight:700;">PKR ${totalAmt.toLocaleString()}</span>
                     </div>
+
+                    <!-- 10% Commission Breakdown per slot -->
+                    <div style="margin-top:6px; font-size:0.7rem; background:#f8fafc; border:1px solid var(--border); padding:4px 6px; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                      <span style="color:#b45309; font-weight:700;" title="10% platform share payable at end of week">10% Comm: PKR ${commAmt.toLocaleString()}</span>
+                      <span style="color:#047857; font-weight:700;" title="90% net retained by turf owner">Net: PKR ${netAmt.toLocaleString()}</span>
+                    </div>
+
                     <div style="margin-top:8px;">
                       <button class="btn btn-secondary btn-sm" style="width:100%; color:var(--danger); border-color:#fca5a5; background:#fff;" onclick="quickReleaseSlot('${booking.id}', '${booking.booking_ref}')" title="Cancel booking and free up this slot">
                         <i class="ph ph-x-circle"></i> Release Slot
@@ -1880,7 +1986,33 @@
     }
 
     function renderBookingsView(container) {
+      const metrics = computeOwnerCommissionMetrics();
+
       container.innerHTML = `
+        <!-- COMMISSION OVERVIEW BAR -->
+        <div style="background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow:var(--shadow-sm);">
+          <div style="display:flex; gap:20px; flex-wrap:wrap;">
+            <div>
+              <div style="font-size:0.75rem; color:var(--muted); font-weight:600;">Current Week Commission (10%)</div>
+              <div class="display-num" style="font-size:1.35rem; color:#b45309; font-weight:800;">PKR ${metrics.weekCommission.toLocaleString()}</div>
+              <div style="font-size:0.72rem; color:#92400e; font-weight:600;">Due Sunday Midnight (${metrics.week.label})</div>
+            </div>
+            <div style="border-left:1px solid var(--border); padding-left:20px;">
+              <div style="font-size:0.75rem; color:var(--muted); font-weight:600;">Week Gross Booking Volume</div>
+              <div class="display-num" style="font-size:1.35rem; color:var(--ink); font-weight:800;">PKR ${metrics.weekGross.toLocaleString()}</div>
+              <div style="font-size:0.72rem; color:var(--muted);">${metrics.weekBookings.length} bookings this week</div>
+            </div>
+            <div style="border-left:1px solid var(--border); padding-left:20px;">
+              <div style="font-size:0.75rem; color:var(--muted); font-weight:600;">Your Net Take-Home (90%)</div>
+              <div class="display-num" style="font-size:1.35rem; color:var(--emerald); font-weight:800;">PKR ${metrics.weekNet.toLocaleString()}</div>
+              <div style="font-size:0.72rem; color:var(--emerald); font-weight:600;">Direct Turf Earnings</div>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="switchView('settlement')">
+            <i class="ph ph-receipt"></i> Weekly Settlement Statement
+          </button>
+        </div>
+
         <div class="panel-card">
           <div class="table-responsive">
             <table class="data-table">
@@ -1889,54 +2021,220 @@
                   <th>Booking Ref</th>
                   <th>Date</th>
                   <th>Time Slot</th>
-                  <th>Customer Name</th>
+                  <th>Customer</th>
                   <th>Phone / Notes</th>
                   <th>Source</th>
-                  <th>Amount</th>
+                  <th>Amount & 10% Comm</th>
                   <th>Payment</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                ${state.bookings.map(b => `
-                  <tr>
-                    <td class="mono font-semibold" style="color:var(--emerald);">${escapeHtml(b.booking_ref)}</td>
-                    <td>${b.booking_date}</td>
-                    <td class="mono">${b.start_time.slice(0,5)} - ${b.end_time.slice(0,5)}</td>
-                    <td style="font-weight:700;">${escapeHtml(b.contact_name || 'Walk-in')}</td>
-                    <td>
-                      <div>${escapeHtml(b.contact_phone || '—')}</div>
-                      <div style="font-size:0.75rem; color:var(--muted);">${escapeHtml(b.notes || '')}</div>
-                    </td>
-                    <td><span class="badge" style="background:#eef2f6; color:#334155;">${b.source}</span></td>
-                    <td class="display-num">PKR ${Number(b.total_amount).toLocaleString()}</td>
-                    <td><span class="badge badge-${b.payment_status}">${b.payment_status}</span></td>
-                    <td>
-                      <select class="form-control" style="padding:4px 8px; font-size:0.75rem; width:110px;" onchange="setBookingStatus('${b.id}', this.value)">
-                        <option value="confirmed" ${b.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                        <option value="completed" ${b.status === 'completed' ? 'selected' : ''}>Completed</option>
-                        <option value="cancelled" ${b.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                        <option value="no_show" ${b.status === 'no_show' ? 'selected' : ''}>No Show</option>
-                      </select>
-                    </td>
-                    <td>
-                      <div style="display:flex; gap:4px;">
-                        ${b.status !== 'cancelled' ? `
-                          <button class="btn btn-secondary btn-sm" onclick="quickReleaseSlot('${b.id}', '${b.booking_ref}')" title="Release Slot">
-                            <i class="ph ph-x-circle"></i> Release
+                ${state.bookings.map(b => {
+                  const total = Number(b.total_amount || 0);
+                  const comm = Math.round(total * 0.10);
+                  const net = total - comm;
+                  const isCancelled = b.status === 'cancelled';
+
+                  return `
+                    <tr>
+                      <td class="mono font-semibold" style="color:var(--emerald);">${escapeHtml(b.booking_ref)}</td>
+                      <td>${b.booking_date}</td>
+                      <td class="mono">${b.start_time.slice(0,5)} - ${b.end_time.slice(0,5)}</td>
+                      <td style="font-weight:700;">${escapeHtml(b.contact_name || 'Walk-in')}</td>
+                      <td>
+                        <div>${escapeHtml(b.contact_phone || '—')}</div>
+                        <div style="font-size:0.75rem; color:var(--muted);">${escapeHtml(b.notes || '')}</div>
+                      </td>
+                      <td><span class="badge" style="background:#eef2f6; color:#334155;">${b.source}</span></td>
+                      <td class="display-num">
+                        <div style="font-weight:700; color:var(--ink);">PKR ${total.toLocaleString()}</div>
+                        ${!isCancelled ? `
+                          <div style="font-size:0.72rem; color:#b45309; font-weight:700;">-10% Comm: PKR ${comm.toLocaleString()}</div>
+                          <div style="font-size:0.72rem; color:var(--emerald); font-weight:700;">Net: PKR ${net.toLocaleString()}</div>
+                        ` : `
+                          <div style="font-size:0.72rem; color:var(--muted);">Cancelled (0 PKR)</div>
+                        `}
+                      </td>
+                      <td><span class="badge badge-${b.payment_status}">${b.payment_status}</span></td>
+                      <td>
+                        <select class="form-control" style="padding:4px 8px; font-size:0.75rem; width:110px;" onchange="setBookingStatus('${b.id}', this.value)">
+                          <option value="confirmed" ${b.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                          <option value="completed" ${b.status === 'completed' ? 'selected' : ''}>Completed</option>
+                          <option value="cancelled" ${b.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                          <option value="no_show" ${b.status === 'no_show' ? 'selected' : ''}>No Show</option>
+                        </select>
+                      </td>
+                      <td>
+                        <div style="display:flex; gap:4px;">
+                          ${!isCancelled ? `
+                            <button class="btn btn-secondary btn-sm" onclick="quickReleaseSlot('${b.id}', '${b.booking_ref}')" title="Release Slot">
+                              <i class="ph ph-x-circle"></i> Release
+                            </button>
+                          ` : ''}
+                          <button class="btn btn-ghost btn-sm btn-icon-only" style="color:var(--danger);" onclick="deleteBookingRecord('${b.id}')" title="Delete Booking">
+                            <i class="ph ph-trash"></i>
                           </button>
-                        ` : ''}
-                        <button class="btn btn-ghost btn-sm btn-icon-only" style="color:var(--danger);" onclick="deleteBookingRecord('${b.id}')" title="Delete Booking">
-                          <i class="ph ph-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                `).join('') || '<tr><td colspan="10" style="text-align:center; padding:40px;">No bookings recorded for this ground.</td></tr>'}
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="10" style="text-align:center; padding:40px;">No bookings recorded for this ground.</td></tr>'}
               </tbody>
             </table>
           </div>
+        </div>
+      `;
+    }
+
+    function renderSettlementView(container) {
+      if (!state.currentGround) {
+        container.innerHTML = '<div class="empty-state"><p>No ground selected.</p></div>';
+        return;
+      }
+
+      const metrics = computeOwnerCommissionMetrics();
+      const groundName = state.currentGround.name;
+
+      const waMessage = encodeURIComponent(
+        `Assalam o Alaikum, here is the weekly 10% commission settlement for ${groundName} (${metrics.week.label}):\n\n` +
+        `• Total Bookings This Week: ${metrics.weekBookings.length}\n` +
+        `• Gross Booking Volume: PKR ${metrics.weekGross.toLocaleString()}\n` +
+        `• 10% Platform Commission Due: PKR ${metrics.weekCommission.toLocaleString()}\n` +
+        `• Net Turf Earnings: PKR ${metrics.weekNet.toLocaleString()}\n\n` +
+        `Please confirm receipt of our weekly commission payment.`
+      );
+
+      container.innerHTML = `
+        <div style="max-width:1050px; margin:0 auto; display:flex; flex-direction:column; gap:24px;">
+
+          <!-- TOP SUMMARY HERO -->
+          <div style="background:linear-gradient(135deg, #064e3b 0%, #047857 100%); color:#fff; border-radius:var(--radius-lg); padding:28px 32px; box-shadow:var(--shadow-md);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:20px;">
+              <div>
+                <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.16); padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">
+                  <i class="ph ph-calendar-check"></i> Settlement Period: ${metrics.week.label}
+                </div>
+                <h2 style="font-size:1.85rem; font-weight:800; margin:0 0 6px 0; color:#fff;">Weekly 10% Platform Settlement</h2>
+                <p style="margin:0; opacity:0.88; font-size:0.9rem;">
+                  GroundsNearMe charges a standard <strong>10% commission</strong> on confirmed/completed pitch bookings, settled every Sunday midnight.
+                </p>
+              </div>
+
+              <div style="background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius-md); padding:16px 20px; text-align:right; min-width:220px;">
+                <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px; opacity:0.85; font-weight:700;">10% Commission Due</div>
+                <div class="display-num" style="font-size:2rem; font-weight:900; color:#fde68a; margin:4px 0;">
+                  PKR ${metrics.weekCommission.toLocaleString()}
+                </div>
+                <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:800; font-size:0.75rem; padding:4px 10px;">
+                  Due Sunday Midnight
+                </span>
+              </div>
+            </div>
+
+            <!-- KEY NUMBERS GRID -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-top:24px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.15);">
+              <div>
+                <div style="font-size:0.75rem; opacity:0.8;">Weekly Slots Booked</div>
+                <div style="font-size:1.35rem; font-weight:800;">${metrics.weekBookings.length} bookings</div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem; opacity:0.8;">Weekly Gross Revenue</div>
+                <div style="font-size:1.35rem; font-weight:800;">PKR ${metrics.weekGross.toLocaleString()}</div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem; opacity:0.8;">Your Net Earnings (90%)</div>
+                <div style="font-size:1.35rem; font-weight:800; color:#a7f3d0;">PKR ${metrics.weekNet.toLocaleString()}</div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem; opacity:0.8;">All-Time Commission Settled</div>
+                <div style="font-size:1.35rem; font-weight:800; opacity:0.95;">PKR ${metrics.allTimeCommission.toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PAYMENT INSTRUCTIONS & SUBMISSION CARD -->
+          <div style="background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; box-shadow:var(--shadow-sm); display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; align-items:center;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:1.05rem; margin-bottom:8px; color:var(--ink);">
+                <i class="ph ph-bank" style="color:var(--emerald); font-size:1.3rem;"></i>
+                How to Pay Your Weekly Commission
+              </div>
+              <p style="color:var(--muted); font-size:0.85rem; line-height:1.5; margin:0 0 14px 0;">
+                Transfer <strong>PKR ${metrics.weekCommission.toLocaleString()}</strong> to the official platform account before Sunday midnight, then click the confirmation button below to notify our finance team on WhatsApp.
+              </p>
+              <div style="background:#f8fafc; border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 16px; font-size:0.85rem; display:flex; flex-direction:column; gap:6px;">
+                <div><strong>JazzCash / EasyPaisa:</strong> <span class="mono font-semibold" style="color:var(--emerald);">03362308445</span> (Faisal Shayan)</div>
+                <div><strong>Account Title:</strong> GroundsNearMe Platform</div>
+                <div><strong>Settlement Frequency:</strong> Every Sunday 11:59 PM</div>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:12px; justify-content:center; align-items:flex-start;">
+              <a href="https://wa.me/923362308445?text=${waMessage}" target="_blank" class="btn btn-emerald" style="width:100%; padding:12px 20px; font-size:0.95rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+                <i class="ph ph-whatsapp-logo" style="font-size:1.3rem;"></i>
+                Confirm Payment on WhatsApp
+              </a>
+              <div style="font-size:0.75rem; color:var(--muted); line-height:1.4;">
+                <i class="ph ph-info"></i> Automatically generates an itemized settlement report with booking count and 10% calculations pre-filled.
+              </div>
+            </div>
+          </div>
+
+          <!-- ITEMIZED WEEKLY BREAKDOWN TABLE -->
+          <div class="panel-card">
+            <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="panel-title"><i class="ph ph-list-dashes"></i> Bookings in Current Weekly Cycle (${metrics.week.label})</span>
+              <span class="badge" style="background:#f1f5f9; color:#334155; font-weight:700;">${metrics.weekBookings.length} Bookings</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Ref</th>
+                    <th>Booking Date</th>
+                    <th>Slot Time</th>
+                    <th>Customer Name</th>
+                    <th>Status</th>
+                    <th>Gross Amount</th>
+                    <th>10% Comm Due</th>
+                    <th>Net Turf (90%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${metrics.weekBookings.map(b => {
+                    const total = Number(b.total_amount || 0);
+                    const comm = Math.round(total * 0.10);
+                    const net = total - comm;
+                    return `
+                      <tr>
+                        <td class="mono font-semibold" style="color:var(--emerald);">${escapeHtml(b.booking_ref)}</td>
+                        <td>${b.booking_date}</td>
+                        <td class="mono">${b.start_time.slice(0,5)} - ${b.end_time.slice(0,5)}</td>
+                        <td style="font-weight:700;">${escapeHtml(b.contact_name || 'Walk-in')}</td>
+                        <td><span class="badge badge-${b.status}">${b.status}</span></td>
+                        <td class="display-num" style="font-weight:700;">PKR ${total.toLocaleString()}</td>
+                        <td class="display-num" style="color:#b45309; font-weight:800;">PKR ${comm.toLocaleString()}</td>
+                        <td class="display-num" style="color:var(--emerald); font-weight:700;">PKR ${net.toLocaleString()}</td>
+                      </tr>
+                    `;
+                  }).join('') || '<tr><td colspan="8" style="text-align:center; padding:36px; color:var(--muted);">No bookings recorded yet for this weekly cycle.</td></tr>'}
+                </tbody>
+                ${metrics.weekBookings.length > 0 ? `
+                  <tfoot>
+                    <tr style="background:#f8fafc; font-weight:800; border-top:2px solid var(--border);">
+                      <td colspan="5" style="text-align:right; padding:12px 16px;">Week Total:</td>
+                      <td class="display-num" style="color:var(--ink); font-size:1.05rem;">PKR ${metrics.weekGross.toLocaleString()}</td>
+                      <td class="display-num" style="color:#b45309; font-size:1.1rem;">PKR ${metrics.weekCommission.toLocaleString()}</td>
+                      <td class="display-num" style="color:var(--emerald); font-size:1.05rem;">PKR ${metrics.weekNet.toLocaleString()}</td>
+                    </tr>
+                  </tfoot>
+                ` : ''}
+              </table>
+            </div>
+          </div>
+
         </div>
       `;
     }

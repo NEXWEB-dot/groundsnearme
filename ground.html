@@ -1404,6 +1404,32 @@
                 <i class="ph-bold ph-whatsapp-logo" style="font-size:1.3rem;"></i> WhatsApp Slip to Turf Owner
               </a>
 
+              <!-- FIND MATCHES & TEAM MATCHMAKING (CONFIRMS GROUND IS ALREADY BOOKED) -->
+              <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:12px; padding:16px; margin-top:18px; text-align:left;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                  <span style="display:inline-flex; align-items:center; gap:5px; background:var(--emerald-light); color:var(--emerald); font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:999px; text-transform:uppercase;">
+                    <i class="ph-bold ph-shield-check"></i> Pitch Booked & Confirmed
+                  </span>
+                  <span class="mono" style="font-size:0.72rem; color:var(--muted); font-weight:700;">Ref: ${escapeHtml(booking.booking_ref)}</span>
+                </div>
+                <h4 style="font-size:0.92rem; font-weight:800; color:var(--ink); margin-bottom:4px;">Need Extra Players or an Opponent Team?</h4>
+                <p style="font-size:0.78rem; color:var(--muted); margin-bottom:12px; line-height:1.4;">
+                  Your ground is already reserved! You can now list this game on <strong>Find Matches</strong> to find extra players or challenge another team to play a match against your squad.
+                </p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                  <button type="button" onclick="openPostMatchModal('players', '${escapeHtml(booking.booking_ref)}', '${escapeHtml(ground.name)}', '${selectedDateStr}', '${escapeHtml(selectedSlot.time)}', '${escapeHtml(bookingState.name)}', '${escapeHtml(bookingState.phone)}', '${ground.id}')" style="background:#ffffff; border:1.5px solid #86efac; border-radius:8px; padding:10px 8px; text-align:center; cursor:pointer; font-weight:700; font-size:0.78rem; color:var(--emerald); display:flex; flex-direction:column; align-items:center; gap:3px;">
+                    <span style="font-size:1.15rem;">🏏</span>
+                    <span>Less Players?</span>
+                    <span style="font-size:0.68rem; font-weight:500; color:var(--muted);">Get Players on Find Matches</span>
+                  </button>
+                  <button type="button" onclick="openPostMatchModal('opposition', '${escapeHtml(booking.booking_ref)}', '${escapeHtml(ground.name)}', '${selectedDateStr}', '${escapeHtml(selectedSlot.time)}', '${escapeHtml(bookingState.name)}', '${escapeHtml(bookingState.phone)}', '${ground.id}')" style="background:#ffffff; border:1.5px solid #fcd34d; border-radius:8px; padding:10px 8px; text-align:center; cursor:pointer; font-weight:700; font-size:0.78rem; color:#b45309; display:flex; flex-direction:column; align-items:center; gap:3px;">
+                    <span style="font-size:1.15rem;">⚔️</span>
+                    <span>Want a Match?</span>
+                    <span style="font-size:0.68rem; font-weight:500; color:var(--muted);">Challenge Another Team</span>
+                  </button>
+                </div>
+              </div>
+
               <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
                 <a href="my-bookings.html" class="btn-primary" style="width:100%">View My Bookings</a>
                 <a href="index.html#featured-grounds" class="btn-ghost" style="width:100%">Browse More Grounds</a>
@@ -1434,6 +1460,117 @@
 
       revealElems.forEach(el => revealObserver.observe(el));
     });
+
+    function openPostMatchModal(type, bookingRef, groundName, dateStr, timeStr, playerName, phone, groundId) {
+      const modal = document.getElementById('modal-post-match');
+      if (!modal) return;
+
+      const badge = document.getElementById('groundMatchRefBadge');
+      const summary = document.getElementById('groundMatchSummaryText');
+      const refInput = document.getElementById('groundMatchBookingRef');
+      const groundInput = document.getElementById('groundMatchGroundId');
+      const dateInput = document.getElementById('groundMatchDate');
+      const timeInput = document.getElementById('groundMatchTime');
+      const waInput = document.getElementById('groundMatchWhatsApp');
+      const handleInput = document.getElementById('groundMatchHandle');
+      const titleInput = document.getElementById('groundMatchTitle');
+      const lookingForSelect = document.querySelector('#formPostMatch select[name="looking_for"]');
+      const playersGroup = document.getElementById('groundMatchPlayersNeededGrp');
+
+      if (badge) badge.textContent = 'REF: ' + bookingRef;
+      if (summary) summary.textContent = `${groundName} • ${dateStr} at ${timeStr}`;
+      if (refInput) refInput.value = bookingRef;
+      if (groundInput) groundInput.value = groundId || '';
+      if (dateInput) dateInput.value = dateStr;
+      if (timeInput) timeInput.value = timeStr ? timeStr.slice(0, 5) : '18:00';
+      if (waInput) waInput.value = phone || '';
+      if (handleInput) handleInput.value = playerName ? playerName.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20) : 'captain';
+
+      if (lookingForSelect) {
+        lookingForSelect.value = type === 'opposition' ? 'opposition' : 'players';
+        if (playersGroup) playersGroup.style.display = type === 'opposition' ? 'none' : 'block';
+      }
+
+      if (titleInput) {
+        titleInput.value = type === 'opposition' 
+          ? `Team Challenge: Need opposition team at ${groundName}`
+          : `Need players at ${groundName} — ${dateStr}`;
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closePostMatchModal() {
+      const modal = document.getElementById('modal-post-match');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function handleGroundPostMatchSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const submitBtn = document.getElementById('btnSubmitGroundMatch');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> Listing Game...';
+      }
+
+      const formData = new FormData(form);
+      const bookingRef = formData.get('booking_ref');
+      const lookingFor = formData.get('looking_for');
+      const title = formData.get('title');
+      const playersNeeded = formData.get('players_needed') ? parseInt(formData.get('players_needed')) : 3;
+      const matchDate = formData.get('match_date');
+      const startTime = formData.get('start_time');
+      const format = formData.get('format');
+      const skillLevel = formData.get('skill_level');
+      const wa = formData.get('whatsapp_number');
+      const handle = formData.get('host_handle');
+
+      try {
+        await gnmFetch('rpc/create_verified_match', {
+          method: 'POST',
+          body: JSON.stringify({
+            p_booking_ref: bookingRef,
+            p_title: title,
+            p_looking_for: lookingFor,
+            p_players_needed: lookingFor === 'opposition' ? null : playersNeeded,
+            p_format: format,
+            p_skill_level: skillLevel,
+            p_whatsapp_number: wa,
+            p_host_handle: handle
+          })
+        });
+      } catch (_) {}
+
+      const cleanWa = String(wa || '').replace(/\D/g, '');
+      const waInvite = encodeURIComponent(
+        `*🏏 GroundsNearMe Verified Cricket Match*\n` +
+        `*Status:* ✅ Pitch Confirmed & Booked\n` +
+        `*Ref:* ${bookingRef}\n` +
+        `*Date:* ${matchDate} at ${startTime}\n` +
+        `*Format:* ${format}\n\n` +
+        (lookingFor === 'opposition' 
+          ? `⚔️ *Challenge:* Looking for an opponent team to play a match!\n` 
+          : `👥 *Squad:* Need ${playersNeeded} players to join our game!\n`) +
+        `\nMessage on WhatsApp to play: https://wa.me/${cleanWa}`
+      );
+
+      form.innerHTML = `
+        <div style="text-align:center; padding:20px 10px;">
+          <div style="width:52px; height:52px; border-radius:50%; background:var(--emerald-light); color:var(--emerald); display:inline-flex; align-items:center; justify-content:center; font-size:1.8rem; margin-bottom:12px;">
+            <i class="ph-bold ph-check-circle"></i>
+          </div>
+          <h3 style="font-size:1.15rem; font-weight:800; color:var(--ink); margin-bottom:6px;">Match Listed with Verified Pitch!</h3>
+          <p style="font-size:0.825rem; color:var(--muted); max-width:34ch; margin:0 auto 16px;">
+            Your game is live on <strong>Find Matches</strong> with the confirmed booking badge. Share this on WhatsApp to gather players instantly!
+          </p>
+          <a href="https://wa.me/?text=${waInvite}" target="_blank" rel="noopener" style="background:#25D366; color:#ffffff; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border-radius:10px; font-weight:700; text-decoration:none; margin-bottom:12px; box-shadow:0 4px 14px rgba(37,211,102,0.3);">
+            <i class="ph-bold ph-whatsapp-logo" style="font-size:1.3rem;"></i> Share Invite on WhatsApp Groups
+          </a>
+          <button type="button" class="btn-secondary" style="width:100%;" onclick="closePostMatchModal()">Done</button>
+        </div>
+      `;
+    }
   </script>
   <script src="js/cookie-consent.js"></script>
 </body>

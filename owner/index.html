@@ -1113,10 +1113,28 @@
       document.getElementById('schedule-date-filter').value = state.selectedDate;
       document.getElementById('owner-booking-date').value = state.selectedDate;
       updateOwnerUI();
+
+      // Startup cleanup: remove stale local bookings older than 30 days
+      try {
+        const rawLocal = localStorage.getItem('gnm_bookings');
+        if (rawLocal) {
+          const localList = JSON.parse(rawLocal);
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          const cutoff = thirtyDaysAgo.toISOString().split('T')[0];
+          const cleaned = localList.filter(b => !b.booking_date || b.booking_date >= cutoff);
+          if (cleaned.length !== localList.length) {
+            localStorage.setItem('gnm_bookings', JSON.stringify(cleaned));
+            console.log('[GNM] Cleaned up', localList.length - cleaned.length, 'stale local bookings');
+          }
+        }
+      } catch (_) {}
+
       await loadGrounds();
       await refreshData();
       switchView('schedule');
     });
+
 
     /* ==========================================================================
        OWNER AUTHENTICATION

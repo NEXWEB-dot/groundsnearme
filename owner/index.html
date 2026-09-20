@@ -950,23 +950,13 @@
     </div>
   </div>
 
-  <!-- MODAL: OWNER AUTHENTICATION (SIGN IN & REGISTER) -->
+  <!-- MODAL: OWNER AUTHENTICATION -->
   <div class="modal-backdrop" id="modal-owner-login">
     <div class="modal-dialog" style="max-width:440px;">
       <div class="modal-header" style="padding-bottom:12px;">
-        <h3 class="modal-title" id="auth-modal-title"><i class="ph ph-lock-key"></i> Turf Owner Portal</h3>
+        <h3 class="modal-title"><i class="ph ph-lock-key"></i> Turf Owner Portal</h3>
         <button class="btn btn-ghost btn-icon-only" onclick="closeModal('modal-owner-login')">
           <i class="ph ph-x" style="font-size:1.2rem;"></i>
-        </button>
-      </div>
-
-      <!-- Auth Mode Tabs -->
-      <div style="display:flex; border-bottom:1.5px solid var(--border); margin:0 24px 16px;">
-        <button type="button" id="tab-btn-signin" onclick="switchAuthTab('signin')" style="flex:1; padding:10px; font-weight:700; font-size:0.875rem; background:none; border:none; border-bottom:2.5px solid var(--emerald); color:var(--emerald); cursor:pointer;">
-          Sign In
-        </button>
-        <button type="button" id="tab-btn-signup" onclick="switchAuthTab('signup')" style="flex:1; padding:10px; font-weight:600; font-size:0.875rem; background:none; border:none; border-bottom:2.5px solid transparent; color:var(--muted); cursor:pointer;">
-          Register Account
         </button>
       </div>
 
@@ -976,7 +966,6 @@
           <span id="owner-login-error-text"></span>
         </div>
 
-        <!-- FORM: SIGN IN -->
         <form id="form-owner-login" onsubmit="handleOwnerLogin(event)">
           <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label">Owner Email *</label>
@@ -987,37 +976,10 @@
             <input class="form-control" type="password" id="owner-login-password" name="password" placeholder="••••••••" autocomplete="current-password" required />
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom:12px;">Sign In to Owner Portal</button>
-          <div style="text-align:center; width:100%; margin-bottom:12px;">
+          <div style="text-align:center; width:100%;">
             <button type="button" onclick="signInDemoOwner()" class="btn btn-ghost btn-sm" style="color:var(--emerald); font-weight:700; font-size:0.8125rem; width:100%;">
               <i class="ph ph-lightning"></i> 1-Click Demo Sign-in (Star Indoor)
             </button>
-          </div>
-          <div style="text-align:center; font-size:0.8125rem; color:var(--muted);">
-            Don't have an account? <a href="javascript:void(0)" onclick="switchAuthTab('signup')" style="color:var(--emerald); font-weight:700;">Create one here</a>
-          </div>
-        </form>
-
-        <!-- FORM: SIGN UP -->
-        <form id="form-owner-signup" onsubmit="handleOwnerSignup(event)" style="display:none;">
-          <div class="form-group" style="margin-bottom:12px;">
-            <label class="form-label">Your Name / Turf Manager *</label>
-            <input class="form-control" type="text" id="owner-signup-name" name="full_name" placeholder="e.g. Tariq Khan" required />
-          </div>
-          <div class="form-group" style="margin-bottom:12px;">
-            <label class="form-label">Email Address *</label>
-            <input class="form-control" type="email" id="owner-signup-email" name="email" placeholder="manager@yourground.pk" autocomplete="email" required />
-          </div>
-          <div class="form-group" style="margin-bottom:12px;">
-            <label class="form-label">WhatsApp Number *</label>
-            <input class="form-control" type="tel" id="owner-signup-wa" name="whatsapp" placeholder="0300 1234567" required />
-          </div>
-          <div class="form-group" style="margin-bottom:16px;">
-            <label class="form-label">Password * (min 6 characters)</label>
-            <input class="form-control" type="password" id="owner-signup-password" name="password" minlength="6" placeholder="••••••••" autocomplete="new-password" required />
-          </div>
-          <button type="submit" class="btn btn-primary" style="width:100%; margin-bottom:12px;">Create Owner Account</button>
-          <div style="text-align:center; font-size:0.8125rem; color:var(--muted);">
-            Already have an account? <a href="javascript:void(0)" onclick="switchAuthTab('signin')" style="color:var(--emerald); font-weight:700;">Sign in here</a>
           </div>
         </form>
       </div>

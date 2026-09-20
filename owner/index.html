@@ -808,6 +808,17 @@
             </div>
           </div>
         </div>
+
+        <!-- SUPERADMIN SECTION — only visible to staff accounts -->
+        <div class="nav-group" id="admin-nav-section" style="display:none;">
+          <span class="nav-label" style="color:#d97706;">Staff Tools</span>
+          <div class="nav-item" data-view="admin" onclick="switchView('admin')" style="color:#d97706;">
+            <div class="nav-item-left">
+              <i class="ph ph-user-gear"></i>
+              <span>Add Ground Owner</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="sidebar-footer">
@@ -1110,18 +1121,29 @@
     /* ==========================================================================
        OWNER AUTHENTICATION
        ========================================================================== */
+    const SUPERADMIN_EMAILS = ['faisalshayan444@gmail.com', 'shayan@groundsnearme.pk'];
+
+    function isStaff() {
+      const email = state.session?.user?.email || '';
+      return SUPERADMIN_EMAILS.includes(email.toLowerCase());
+    }
+
     function updateOwnerUI() {
       const isAuth = Boolean(state.session?.access_token);
       const email = state.session?.user?.email || 'owner@groundsnearme.pk';
       const authBtnText = document.getElementById('owner-auth-btn-text');
       const accountRole = document.getElementById('owner-account-role');
       if (authBtnText) authBtnText.textContent = isAuth ? 'Owner Active' : 'Sign In';
-      if (accountRole) accountRole.textContent = isAuth ? 'Verified Owner' : 'Turf Manager';
+      if (accountRole) accountRole.textContent = isAuth ? (isStaff() ? '⭐ Staff Admin' : 'Verified Owner') : 'Turf Manager';
 
       const modalOwnerName = document.getElementById('modal-owner-name');
       const modalOwnerEmail = document.getElementById('modal-owner-email');
       if (modalOwnerName) modalOwnerName.textContent = email.split('@')[0];
       if (modalOwnerEmail) modalOwnerEmail.textContent = email;
+
+      // Show/hide admin nav section
+      const adminNav = document.getElementById('admin-nav-section');
+      if (adminNav) adminNav.style.display = (isAuth && isStaff()) ? '' : 'none';
     }
 
     function openOwnerAuthModal() {
@@ -1620,7 +1642,8 @@
         schedule: 'Live Slot Schedule',
         bookings: 'All Bookings History',
         pricing: 'Hourly Rates & Turf Details',
-        closures: 'Ground Maintenance & Blackouts'
+        closures: 'Ground Maintenance & Blackouts',
+        admin: 'Add Ground Owner'
       };
       if (heading) heading.textContent = titles[view] || 'Owner Portal';
       renderCurrentView();
@@ -1634,6 +1657,128 @@
         case 'bookings': renderBookingsView(container); break;
         case 'pricing': renderPricingView(container); break;
         case 'closures': renderClosuresView(container); break;
+        case 'admin': renderAdminView(container); break;
+      }
+    }
+
+    function renderAdminView(container) {
+      if (!isStaff()) {
+        container.innerHTML = '<div class="empty-state"><p>Access denied.</p></div>';
+        return;
+      }
+      container.innerHTML = `
+        <div style="max-width:560px; margin:0 auto;">
+          <div style="background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-md);">
+            <div style="background:#fef3c7; border-bottom:1px solid #fde68a; padding:16px 24px; display:flex; align-items:center; gap:12px;">
+              <i class="ph ph-user-gear" style="font-size:1.4rem; color:#d97706;"></i>
+              <div>
+                <div style="font-weight:800; font-size:1rem; color:#92400e;">Create Owner Account</div>
+                <div style="font-size:0.8rem; color:#b45309;">Generates login credentials for a new ground owner</div>
+              </div>
+            </div>
+            <div id="admin-result-box" style="display:none; margin:16px 24px 0; padding:14px 16px; border-radius:var(--radius-md); font-size:0.875rem; line-height:1.6;"></div>
+            <form id="form-create-owner" onsubmit="handleCreateOwner(event)" style="padding:24px; display:flex; flex-direction:column; gap:14px;">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Owner Full Name *</label>
+                  <input class="form-control" type="text" name="full_name" placeholder="e.g. Tariq Khan" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">WhatsApp Number *</label>
+                  <input class="form-control" type="tel" name="whatsapp" placeholder="0300 1234567" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Owner Email *</label>
+                <input class="form-control" type="email" name="email" placeholder="owner@theirground.pk" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password for Owner *</label>
+                <div style="position:relative;">
+                  <input class="form-control" type="text" name="password" id="new-owner-password" placeholder="Min 8 characters" minlength="8" required style="padding-right:110px;" />
+                  <button type="button" onclick="document.getElementById('new-owner-password').value = Math.random().toString(36).slice(2,10) + 'A1!'" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:var(--emerald-light); border:none; border-radius:6px; padding:4px 10px; font-size:0.75rem; font-weight:700; color:var(--emerald); cursor:pointer;">Generate</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ground (select from your Supabase grounds) *</label>
+                <select class="form-control" name="ground_id" required>
+                  <option value="">— Pick a ground —</option>
+                  ${(state.grounds || []).map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Commission % (optional, default 5%)</label>
+                <input class="form-control" type="number" name="commission" min="0" max="100" step="0.01" placeholder="5" value="5" />
+              </div>
+              <button type="submit" id="btn-create-owner" class="btn btn-primary" style="width:100%;">
+                <i class="ph ph-user-plus"></i> Create Owner & Link Ground
+              </button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleCreateOwner(e) {
+      e.preventDefault();
+      const form = e.target;
+      const btn = document.getElementById('btn-create-owner');
+      const resultBox = document.getElementById('admin-result-box');
+
+      const name = form.elements['full_name'].value.trim();
+      const email = form.elements['email'].value.trim();
+      const password = form.elements['password'].value;
+      const groundId = form.elements['ground_id'].value;
+      const commission = parseFloat(form.elements['commission'].value || '5') / 100;
+
+      let waDigits = form.elements['whatsapp'].value.replace(/\D/g, '');
+      if (waDigits.startsWith('03') && waDigits.length === 11) waDigits = '92' + waDigits.slice(1);
+
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Creating account...'; }
+      if (resultBox) resultBox.style.display = 'none';
+
+      try {
+        // Call admin_onboard_owner RPC (requires staff/service_role or postgres)
+        const res = await sbFetch('rpc/admin_onboard_owner', {
+          method: 'POST',
+          body: JSON.stringify({
+            p_ground_id: groundId,
+            p_name: name,
+            p_whatsapp: waDigits,
+            p_email: email,
+            p_password: password,
+            p_commission: commission
+          })
+        });
+
+        if (resultBox) {
+          resultBox.style.background = '#d1fae5';
+          resultBox.style.border = '1px solid #6ee7b7';
+          resultBox.style.color = '#065f46';
+          resultBox.innerHTML = `
+            <strong>✅ Owner account created!</strong><br>
+            <span style="font-family:monospace;">Email: ${escapeHtml(email)}</span><br>
+            <span style="font-family:monospace;">Password: ${escapeHtml(password)}</span><br>
+            <small style="color:#047857; display:block; margin-top:6px;">Share these credentials with the ground owner. They can sign in immediately.</small>
+          `;
+          resultBox.style.display = 'block';
+        }
+        showToast(`Owner account created for ${email}`, 'success');
+        form.reset();
+        // Re-render to refresh ground dropdown
+        await loadGrounds();
+        renderAdminView(document.getElementById('main-content'));
+      } catch (err) {
+        if (resultBox) {
+          resultBox.style.background = 'var(--danger-bg)';
+          resultBox.style.border = '1px solid #fca5a5';
+          resultBox.style.color = 'var(--danger)';
+          resultBox.innerHTML = `<strong>Error:</strong> ${escapeHtml(err.message)}`;
+          resultBox.style.display = 'block';
+        }
+        showToast(err.message, 'error');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-user-plus"></i> Create Owner & Link Ground'; }
       }
     }
 

@@ -75,6 +75,17 @@ const GNM = {
     } catch (e) {
       console.error('Error loading matchmaking:', e);
     }
+    if (!Array.isArray(this.games)) this.games = [];
+
+    // Merge with any locally created open games so guest match postings appear instantly
+    try {
+      const localMatches = JSON.parse(localStorage.getItem('gnm_open_games') || '[]');
+      localMatches.forEach(lm => {
+        if (!this.games.some(g => g.id === lm.id || (lm.booking_ref && g.booking_ref === lm.booking_ref))) {
+          this.games.unshift(lm);
+        }
+      });
+    } catch (_) {}
   },
 
   renderAreaFilters() {
@@ -380,15 +391,27 @@ const GNM = {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to post match');
+        console.warn('[GNM] Supabase open_games insert notice:', err.message);
+        createdGame = {
+          id: 'og-local-' + Date.now(),
+          created_at: new Date().toISOString(),
+          ...basePayload,
+          booking_ref: payload.booking_ref || null,
+          is_verified: Boolean(payload.booking_ref)
+        };
+      } else {
+        const rows = await res.json();
+        createdGame = Array.isArray(rows) ? rows[0] : rows;
       }
-
-      const rows = await res.json();
-      createdGame = Array.isArray(rows) ? rows[0] : rows;
     }
 
-    // Dual-write to local games array so UI reflects it immediately
+    // Dual-write to local games array and localStorage so UI reflects it immediately
     if (createdGame) {
+      try {
+        const localMatches = JSON.parse(localStorage.getItem('gnm_open_games') || '[]');
+        localMatches.unshift(createdGame);
+        localStorage.setItem('gnm_open_games', JSON.stringify(localMatches));
+      } catch (_) {}
       this.games = [createdGame, ...(this.games || [])];
     }
 

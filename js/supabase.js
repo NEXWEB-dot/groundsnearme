@@ -372,9 +372,19 @@ const LiveSlotStore = {
       .map(b => b.start_time ? b.start_time.slice(0, 5) : null)
       .filter(Boolean);
 
-    const todayStr = typeof getTodayStr === 'function' ? getTodayStr() : new Date().toISOString().split('T')[0];
-    const isToday = dateStr === todayStr;
-    const currentHour = new Date().getHours();
+    // Compute local date in YYYY-MM-DD (not UTC) to match local clock accurately
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const curDay = String(now.getDate()).padStart(2, '0');
+    const localTodayStr = `${curYear}-${curMonth}-${curDay}`;
+
+    const isPastDate = dateStr < localTodayStr;
+    const isToday = dateStr === localTodayStr;
+
+    const curHour = now.getHours();
+    // Normalize hour for operating day (9 AM to 2 AM): 0-5 AM normalized to 24-29
+    const normalizedCurHour = (curHour < 6) ? (curHour + 24) : curHour;
 
     const slots = [];
     for (let h = 9; h < 26; h++) {
@@ -387,8 +397,15 @@ const LiveSlotStore = {
       const isBooked = bookedTimes.includes(time);
       let status = isBooked ? 'booked' : 'available';
 
-      if (isToday && h < 24 && actualH <= currentHour) {
+      // Time Passed Check:
+      // 1. If entire date is in the past, all slots are 'past'
+      // 2. If it is today and slot start hour has already arrived/passed, mark as 'past'
+      if (isPastDate) {
         status = 'past';
+      } else if (isToday) {
+        if (h <= normalizedCurHour) {
+          status = 'past';
+        }
       }
 
       slots.push({

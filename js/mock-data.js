@@ -413,6 +413,18 @@ const MockSlotStore = {
       .filter(b => b.status === 'cancelled')
       .map(b => b.start_time.slice(0, 5));
 
+    // Compute local date in YYYY-MM-DD
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = String(now.getMonth() + 1).padStart(2, '0');
+    const curDay = String(now.getDate()).padStart(2, '0');
+    const localTodayStr = `${curYear}-${curMonth}-${curDay}`;
+
+    const isPastDate = dateStr < localTodayStr;
+    const isToday = dateStr === localTodayStr;
+    const curHour = now.getHours();
+    const normalizedCurHour = (curHour < 6) ? (curHour + 24) : curHour;
+
     const slots = [];
     for (let h = 9; h < 26; h++) {
       const actualH = h % 24;
@@ -426,7 +438,15 @@ const MockSlotStore = {
       const isExplicitlyBooked = bookedSlots.includes(time);
 
       const isBooked = isExplicitlyBooked && !isExplicitlyCancelled;
-      slots.push({ time: time + ':00', endTime: endTime + ':00', label, status: isBooked ? 'booked' : 'available' });
+      let status = isBooked ? 'booked' : 'available';
+
+      if (isPastDate) {
+        status = 'past';
+      } else if (isToday && h <= normalizedCurHour) {
+        status = 'past';
+      }
+
+      slots.push({ time: time + ':00', endTime: endTime + ':00', label, status });
     }
     return slots;
   },

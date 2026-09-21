@@ -990,7 +990,10 @@
         for (let i = 0; i < 7; i++) {
           const d = new Date();
           d.setDate(d.getDate() + i);
-          const dStr = d.toISOString().split('T')[0];
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const dStr = `${y}-${m}-${day}`;
           
           let label = '';
           if (i === 0) label = 'Today';

@@ -29,19 +29,38 @@ const GNM = {
     return await res.json();
   },
 
-  async fetchCached(endpoint, ttlSeconds = 300, options = {}) {
-    const cacheKey = `gnm_cache_${endpoint.slice(0, 40)}`;
+  async fetchCached(endpoint, ttlSeconds = 600, options = {}) {
+    const cacheKey = `gnm_cache_${endpoint.slice(0, 45)}`;
+    let cachedItem = null;
     try {
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached) {
-        const item = JSON.parse(cached);
-        if (Date.now() < item.exp && item.data) return item.data;
-      }
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) cachedItem = JSON.parse(raw);
     } catch (_) {}
 
+    // Fast-path: return cached data immediately (0ms instant render)
+    if (cachedItem && cachedItem.data) {
+      const isExpired = Date.now() > (cachedItem.exp || 0);
+      if (!isExpired) {
+        return cachedItem.data;
+      }
+      // Stale-While-Revalidate: Return stale data instantly to user, refresh in background
+      this.fetch(endpoint, options).then(fresh => {
+        if (fresh) {
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({
+              exp: Date.now() + (ttlSeconds * 1000),
+              data: fresh
+            }));
+          } catch (_) {}
+        }
+      }).catch(() => {});
+      return cachedItem.data;
+    }
+
+    // Cold-path: first visit, fetch and warm up cache
     const data = await this.fetch(endpoint, options);
     try {
-      sessionStorage.setItem(cacheKey, JSON.stringify({
+      localStorage.setItem(cacheKey, JSON.stringify({
         exp: Date.now() + (ttlSeconds * 1000),
         data
       }));

@@ -1,10 +1,33 @@
 # robots.txt — GroundsNearMe (groundsnearme.pk)
-# Generated: 10 September 2026
+# Updated: 22 September 2026
 
+# General search engines (Google, Bing, Yahoo, DuckDuckGo) — Allow indexing
+User-agent: Googlebot
+User-agent: Bingbot
+User-agent: Slurp
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /owner/
+Disallow: /my-bookings.html
+
+# Block heavy AI crawlers & commercial scrapers (saves bandwidth & API quota)
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: CCBot
+User-agent: anthropic-ai
+User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: Bytespider
+User-agent: PetalBot
+User-agent: Amazonbot
+User-agent: Scrapy
+User-agent: Diffbot
+User-agent: FacebookBot
+Disallow: /
+
+# Default rules for all other crawlers
 User-agent: *
 Allow: /
-
-# Private / authenticated pages — do not index
 Disallow: /owner/
 Disallow: /my-bookings.html
 

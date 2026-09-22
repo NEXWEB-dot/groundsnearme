@@ -29,6 +29,26 @@ const GNM = {
     return await res.json();
   },
 
+  async fetchCached(endpoint, ttlSeconds = 300, options = {}) {
+    const cacheKey = `gnm_cache_${endpoint.slice(0, 40)}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const item = JSON.parse(cached);
+        if (Date.now() < item.exp && item.data) return item.data;
+      }
+    } catch (_) {}
+
+    const data = await this.fetch(endpoint, options);
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        exp: Date.now() + (ttlSeconds * 1000),
+        data
+      }));
+    } catch (_) {}
+    return data;
+  },
+
   async init() {
     try {
       await Promise.allSettled([
@@ -50,7 +70,7 @@ const GNM = {
 
   async loadAreas() {
     try {
-      this.areas = await this.fetch('areas?select=id,name,slug,sort_order&is_active=eq.true&order=sort_order.asc');
+      this.areas = await this.fetchCached('areas?select=id,name,slug,sort_order&is_active=eq.true&order=sort_order.asc', 600);
     } catch (e) {
       console.error('Error loading areas:', e);
     }
@@ -58,7 +78,7 @@ const GNM = {
 
   async loadGrounds() {
     try {
-      this.grounds = await this.fetch('grounds?select=id,slug,name,owner_id,area_id,city,address,description,ground_type,surface,pitch_count,price_per_hour,weekend_price_per_hour,whatsapp_number,contact_name,amenities,cover_image_url,status,listing_tier,is_featured,featured_rank,rating,review_count,area:areas(name,slug)&status=eq.active&order=is_featured.desc,featured_rank.asc,created_at.desc');
+      this.grounds = await this.fetchCached('grounds?select=id,slug,name,owner_id,area_id,city,address,description,ground_type,surface,pitch_count,price_per_hour,weekend_price_per_hour,whatsapp_number,contact_name,amenities,cover_image_url,status,listing_tier,is_featured,featured_rank,rating,review_count,area:areas(name,slug)&status=eq.active&order=is_featured.desc,featured_rank.asc,created_at.desc', 300);
     } catch (e) {
       console.error('Error loading grounds:', e);
     }

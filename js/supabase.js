@@ -234,25 +234,54 @@ const SupabaseBookings = {
   },
 
   /**
-   * Fetch bookings for a specific ground + date.
+   * Fetch booked slot times for a specific ground + date.
+   * Uses get_booked_slots RPC (security definer) so anon role can read
+   * slot availability without being blocked by RLS on the bookings table.
+   * Only returns {start_time, end_time, status} — no PII exposed.
    */
   async getBookingsForGroundDate(groundId, dateStr) {
     let list = [];
-    try {
-      const rows = await gnmFetch(
-        `bookings?ground_id=eq.${encodeURIComponent(groundId)}&booking_date=eq.${dateStr}&select=id,start_time,end_time,status`
-      );
-      if (Array.isArray(rows)) list = rows;
-    } catch (_) {}
 
-    // Merge with localStorage bookings ONLY if active and not cancelled
+    // PRIMARY: Use get_booked_slots RPC — works for anon, authenticated, any browser
+    try {
+      const rows = await gnmFetch('rpc/get_booked_slots', {
+        method: 'POST',
+        body: JSON.stringify({
+          p_ground_id:    groundId,
+          p_booking_date: dateStr
+        })
+      });
+      if (Array.isArray(rows)) {
+        // Normalize: RPC returns time strings like "20:00:00", match format used downstream
+        list = rows.map(r => ({
+          id:           r.id || null,
+          start_time:   r.start_time,
+          end_time:     r.end_time,
+          booking_date: dateStr,
+          status:       r.status
+        }));
+      }
+    } catch (rpcErr) {
+      console.warn('[GNM] get_booked_slots RPC failed, falling back to direct query:', rpcErr.message);
+      // FALLBACK: direct table query (only works if authenticated with right role)
+      try {
+        const rows = await gnmFetch(
+          `bookings?ground_id=eq.${encodeURIComponent(groundId)}&booking_date=eq.${dateStr}&select=id,start_time,end_time,status`
+        );
+        if (Array.isArray(rows)) list = rows;
+      } catch (_) {}
+    }
+
+    // Merge with localStorage bookings so walk-in / owner-blocked slots also show as booked
     if (typeof MockBookingStore !== 'undefined') {
       const localBookings = MockBookingStore.getBookingsForGroundDate(groundId, dateStr);
       localBookings.forEach(lb => {
         if (lb.status && lb.status !== 'cancelled' && lb.status !== 'expired' && lb.status !== 'rejected') {
-          if (!list.some(b => b.id === lb.id || (b.booking_date === lb.booking_date && b.start_time === lb.start_time))) {
-            list.push(lb);
-          }
+          const alreadyCovered = list.some(b =>
+            b.id === lb.id ||
+            (lb.start_time && b.start_time && b.start_time.startsWith(lb.start_time.slice(0, 5)))
+          );
+          if (!alreadyCovered) list.push(lb);
         }
       });
     }

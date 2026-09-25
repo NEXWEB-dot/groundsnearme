@@ -1646,13 +1646,23 @@
     async function refreshData(silent = false) {
       if (!state.currentGround) return;
       try {
-        const bookingsSelect = 'id,booking_ref,ground_id,booking_date,start_time,end_time,duration_minutes,contact_name,contact_phone,notes,source,payment_status,status,price_per_hour,total_amount';
         const closuresSelect = 'id,ground_id,starts_on,ends_on,reason';
 
         const prevCount = state.bookings.length;
 
+        // Use get_ground_bookings RPC (security-definer) — bypasses RLS owner_id mismatch/null issue.
+        // Falls back to direct table query for staff users if RPC unavailable.
+        const bookingsFetch = sbFetch('rpc/get_ground_bookings', {
+          method: 'POST',
+          body: JSON.stringify({ p_ground_id: state.currentGround.id, p_limit: 500 })
+        }).catch(async (rpcErr) => {
+          console.warn('[GNM] get_ground_bookings RPC failed, falling back to direct query:', rpcErr.message);
+          const bookingsSelect = 'id,booking_ref,ground_id,booking_date,start_time,end_time,duration_minutes,contact_name,contact_phone,notes,source,payment_status,status,price_per_hour,total_amount';
+          return sbFetch(`bookings?select=${bookingsSelect}&ground_id=eq.${state.currentGround.id}&order=booking_date.desc,start_time.asc`);
+        });
+
         const [bookings, closures] = await Promise.allSettled([
-          sbFetch(`bookings?select=${bookingsSelect}&ground_id=eq.${state.currentGround.id}&order=booking_date.desc,start_time.asc`),
+          bookingsFetch,
           sbFetch(`ground_closures?select=${closuresSelect}&ground_id=eq.${state.currentGround.id}&order=starts_on.desc`)
         ]);
 

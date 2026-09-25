@@ -7,7 +7,7 @@
   <meta name="description" id="pageMetaDesc" content="Book cricket grounds, indoor cricket pitches, and box cricket turf near you in Karachi. Check live available slots, hourly rates, amenities, and book instantly." />
   <meta name="keywords" content="indoor cricket karachi, cricket grounds near me, indoor cricket near me, cricket ground booking karachi, box cricket karachi, turf booking karachi, cricket ground hourly rate" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
-  <link rel="canonical" id="pageCanonical" href="https://groundsnearme.pk/ground.html" />
+  <link rel="canonical" id="pageCanonical" href="https://groundsnearme.com/ground.html" />
 
   <!-- Geotags -->
   <meta name="geo.region" content="PK-SD" />
@@ -701,8 +701,8 @@
       // Dynamic SEO Meta & Schema Generation
       const pageTitle = `${ground.name} Karachi — Book Cricket Slots Online | GroundsNearMe`;
       const pageDesc = `Book slots at ${ground.name} in ${ground.area?.name || 'Karachi'}. Hourly rate: PKR ${Number(ground.price_per_hour).toLocaleString()} / hour. Surface: ${ground.surface || 'Turf'}. Check live available slots and book instantly.`;
-      const groundImg = ground.cover_image_url || (ground.gallery_images && ground.gallery_images[0]) || 'https://groundsnearme.pk/assets/hero-cricket.jpg';
-      const groundUrl = `https://groundsnearme.pk/ground.html?id=${ground.slug || ground.id}`;
+      const groundImg = ground.cover_image_url || (ground.gallery_images && ground.gallery_images[0]) || 'https://groundsnearme.com/assets/hero-cricket.jpg';
+      const groundUrl = `https://groundsnearme.com/ground.html?id=${ground.slug || ground.id}`;
 
       document.title = pageTitle;
       const metaDescEl = document.getElementById('pageMetaDesc');

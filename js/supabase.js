@@ -291,31 +291,50 @@ const SupabaseBookings = {
 
   /**
    * Fetch all bookings for the currently logged-in player.
+   * Primary path: get_my_bookings_by_phone RPC (anon-safe, works for guest bookings).
+   * Secondary: direct table query if user has a Supabase player_id.
+   * Merged with localStorage (MockBookingStore) for offline/fallback bookings.
    */
   async getPlayerBookings() {
     const user = typeof MockAuth !== 'undefined' ? MockAuth.getUser() : null;
     let list = [];
 
-    // 1. Fetch from Supabase
-    try {
-      let query = 'bookings?order=booking_date.desc,start_time.asc&select=*';
-      if (user?.id && user.id.length === 36 && user.id.includes('-')) {
-        query = `bookings?player_id=eq.${user.id}&order=booking_date.desc,start_time.asc&select=*`;
-      }
-      const rows = await gnmFetch(query);
-      if (Array.isArray(rows) && rows.length > 0) {
-        if (user && user.phone) {
-          const userPhoneDigits = user.phone.replace(/\D/g, '');
-          list = rows.filter(b => (b.player_id === user.id) || (b.contact_phone && b.contact_phone.replace(/\D/g, '') === userPhoneDigits));
-        } else {
+    // 1. Primary: lookup by phone number via security-definer RPC (works even for guest/anon bookings
+    //    because create_guest_booking stores contact_phone but NOT player_id for unauthenticated users).
+    const phone = user?.phone || (typeof MockAuth !== 'undefined' ? MockAuth.getPhone?.() : null);
+    if (phone && phone.replace(/\D/g, '').length >= 10) {
+      try {
+        const rows = await gnmFetch('rpc/get_my_bookings_by_phone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_phone: phone })
+        });
+        if (Array.isArray(rows) && rows.length > 0) {
           list = rows;
         }
+      } catch (err) {
+        console.warn('[GNM] get_my_bookings_by_phone RPC failed:', err.message);
       }
-    } catch (err) {
-      console.warn('[GNM] Supabase player bookings fetch failed:', err.message);
     }
 
-    // 2. Merge with local bookings
+    // 2. Secondary: if user has a real Supabase UUID, also fetch bookings where player_id matches
+    //    (covers future authenticated bookings).
+    if (user?.id && user.id.length === 36 && user.id.includes('-')) {
+      try {
+        const rows = await gnmFetch(`bookings?player_id=eq.${user.id}&order=booking_date.desc,start_time.asc&select=id,booking_ref,ground_id,booking_date,start_time,end_time,duration_minutes,status,payment_status,total_amount,contact_name`);
+        if (Array.isArray(rows) && rows.length > 0) {
+          rows.forEach(r => {
+            if (!list.some(b => b.id === r.id || b.booking_ref === r.booking_ref)) {
+              list.push(r);
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('[GNM] Supabase player bookings (player_id) fetch failed:', err.message);
+      }
+    }
+
+    // 3. Merge with local/offline bookings (MockBookingStore)
     if (typeof MockBookingStore !== 'undefined') {
       const local = MockBookingStore.getPlayerBookings();
       local.forEach(lb => {
